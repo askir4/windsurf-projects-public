@@ -103,7 +103,7 @@ class FertilizerControlSystem {
         // Server-Konfiguration
         this.serverConfig = {
             enabled: false,
-            url: 'http://localhost:3001',
+            url: '',
             autoSync: true,
             syncInterval: 30000 // 30 Sekunden
         };
@@ -294,6 +294,7 @@ class FertilizerControlSystem {
         document.getElementById('zoomOut').addEventListener('click', () => this.zoomOut());
         document.getElementById('resetView').addEventListener('click', () => this.resetView());
         document.getElementById('clearAll').addEventListener('click', () => this.clearAll());
+        document.getElementById('clearAllData')?.addEventListener('click', () => this.clearAll());
         
         // Wassertank-Einstellungen
         const updateTankBtn = document.getElementById('updateTank');
@@ -435,7 +436,12 @@ class FertilizerControlSystem {
     }
     
     setMode(mode) {
+        if (typeof authManager !== 'undefined' && authManager && !authManager.isAuthenticated() && mode !== 'view') {
+            this.showToast('Bitte anmelden, um diesen Modus zu verwenden', 'error');
+            return;
+        }
         this.mode = mode;
+        document.body.classList.toggle('profile-mode', mode === 'profile');
         
         // UI aktualisieren
         document.getElementById('viewMode').classList.toggle('active', mode === 'view');
@@ -454,12 +460,23 @@ class FertilizerControlSystem {
         const rightSidebar = document.querySelector('.right-sidebar');
         const bedDetails = document.getElementById('bedDetailsSection');
         const sensorDashboard = document.querySelector('.sensor-dashboard-fullwidth');
+        const waterTankSection = document.querySelector('.water-tank-modern');
+        const fertilizerControl = document.querySelector('.fertilizer-control');
+        const statisticsSection = document.querySelector('.statistics');
+        const logsPanel = document.getElementById('logsPanel');
+        const mapViewContent = document.getElementById('mapViewContent');
         
-        const showMap = (mode === 'view' || mode === 'edit');
-        mapContainer?.classList.toggle('hidden', !showMap);
-        rightSidebar?.classList.toggle('hidden', !showMap);
-        bedDetails?.classList.toggle('hidden', !showMap);
-        sensorDashboard?.classList.toggle('hidden', mode === 'profile');
+        const showMapPanels = (mode === 'view' || mode === 'edit');
+        mapContainer?.classList.remove('hidden');
+        rightSidebar?.classList.toggle('hidden', !showMapPanels);
+        bedDetails?.classList.toggle('hidden', !showMapPanels);
+        sensorDashboard?.classList.toggle('hidden', mode === 'profile' || mode === 'admin');
+        waterTankSection?.classList.toggle('hidden', mode === 'profile' || mode === 'admin');
+        fertilizerControl?.classList.toggle('hidden', mode === 'admin');
+        statisticsSection?.classList.toggle('hidden', mode === 'admin');
+        logsPanel?.classList.toggle('hidden', mode !== 'profile' && mode !== 'admin');
+        mapViewContent?.classList.toggle('hidden', mode === 'profile');
+        rightSidebar?.classList.toggle('hidden', mode === 'profile');
         
         // Editor-UI aktualisieren
         if (mode === 'edit') {
@@ -2833,7 +2850,7 @@ class FertilizerControlSystem {
                 timestamp: r.timestamp,
                 level: r.level,
                 message: r.message,
-                data: r.data ? JSON.parse(r.data) : null
+                data: this.safeParseLogData(r.data)
             }));
         } catch {
             return null;
@@ -2882,6 +2899,18 @@ class FertilizerControlSystem {
 
         html += '</div>';
         container.innerHTML = html;
+    }
+
+    safeParseLogData(value) {
+        if (value === null || value === undefined) return null;
+        if (typeof value === 'string') {
+            try {
+                return JSON.parse(value);
+            } catch {
+                return value;
+            }
+        }
+        return value;
     }
     
     reconnectNodeRed() {

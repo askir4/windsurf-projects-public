@@ -3,8 +3,10 @@ class AuthManager {
     constructor(system) {
         this.system = system;
         this.currentUser = null;
-        // Immer localhost:3001 verwenden da Server dort läuft
-        this.serverUrl = 'http://localhost:3001';
+        this.isGuest = true;
+        this.guestZoomApplied = false;
+        // Relative URLs verwenden - funktioniert mit jedem Origin
+        this.serverUrl = '';
         this.init();
     }
     
@@ -39,16 +41,24 @@ class AuthManager {
             e.preventDefault();
             this.handleLogout();
         });
+
+        // Login Button (öffnet Modal für Gast)
+        document.getElementById('openLogin')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.openModal('loginModal');
+        });
         
         // Passwort ändern Form (im Profil-Panel)
         document.getElementById('changePasswordForm')?.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleChangePassword();
+            this.handleChangePassword(e.target);
         });
         
-        // Avatar Upload (im Profil-Panel)
-        document.getElementById('avatarUpload')?.addEventListener('change', (e) => {
-            this.handleAvatarUpload(e);
+        // Avatar Upload (Profil-Panel + Profil-Modal)
+        ['profileAvatarUpload', 'profileModalAvatarUpload'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', (e) => {
+                this.handleAvatarUpload(e);
+            });
         });
         
         // Modal Close Buttons
@@ -68,11 +78,15 @@ class AuthManager {
             });
         });
         
-        // Password Change
-        document.getElementById('savePassword')?.addEventListener('click', () => this.handlePasswordChange());
-        
-        // Avatar Upload
-        document.getElementById('avatarUpload')?.addEventListener('change', (e) => this.handleAvatarUpload(e));
+        // Passwort ändern (Modal)
+        document.getElementById('savePassword')?.addEventListener('click', () => {
+            const form = document.getElementById('passwordForm');
+            this.handleChangePassword(form);
+        });
+        document.getElementById('passwordForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleChangePassword(e.target);
+        });
         
         // Admin: Add User
         document.getElementById('addUserBtn')?.addEventListener('click', () => this.openUserEditModal());
@@ -108,15 +122,18 @@ class AuthManager {
             
             if (data.user) {
                 this.currentUser = data.user;
+                this.isGuest = false;
                 this.updateUI(true);
             } else {
+                this.currentUser = null;
+                this.isGuest = true;
                 this.updateUI(false);
-                this.showLoginModal();
             }
         } catch (e) {
             console.error('Auth check failed:', e);
+            this.currentUser = null;
+            this.isGuest = true;
             this.updateUI(false);
-            this.showLoginModal();
         }
     }
     
@@ -139,6 +156,7 @@ class AuthManager {
             
             if (res.ok && data.success) {
                 this.currentUser = data.user;
+                this.isGuest = false;
                 this.updateUI(true);
                 this.closeModal('loginModal');
                 this.system?.showToast('Erfolgreich angemeldet', 'success');
@@ -163,15 +181,15 @@ class AuthManager {
         }
         
         this.currentUser = null;
+        this.isGuest = true;
         this.updateUI(false);
-        this.showLoginModal();
         this.system?.showToast('Abgemeldet', 'info');
     }
     
-    async handleChangePassword() {
-        const currentPassword = document.getElementById('currentPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
+    async handleChangePassword(formEl = null) {
+        const currentPassword = this.getPasswordFieldValue(formEl, 'current');
+        const newPassword = this.getPasswordFieldValue(formEl, 'new');
+        const confirmPassword = this.getPasswordFieldValue(formEl, 'confirm');
         
         if (newPassword !== confirmPassword) {
             this.system?.showToast('Passwörter stimmen nicht überein', 'error');
@@ -194,7 +212,11 @@ class AuthManager {
             const data = await res.json();
             
             if (res.ok && data.success) {
-                document.getElementById('changePasswordForm').reset();
+                if (formEl) {
+                    formEl.reset();
+                } else {
+                    document.getElementById('changePasswordForm')?.reset();
+                }
                 this.system?.showToast('Passwort erfolgreich geändert', 'success');
             } else {
                 this.system?.showToast(data.error || 'Fehler beim Ändern', 'error');
@@ -504,10 +526,31 @@ class AuthManager {
     updateUI(isLoggedIn) {
         const userMenu = document.getElementById('userMenu');
         const mainContent = document.querySelector('main');
+        const loginBtn = document.getElementById('openLogin');
+        const editModeBtn = document.getElementById('editMode');
+        const profileModeBtn = document.getElementById('profileMode');
+        const controlPanel = document.querySelector('.control-panel');
+        const rightPanel = document.querySelector('.right-panel');
+        const fertilizerControl = document.querySelector('.fertilizer-control');
+        const statisticsSection = document.querySelector('.statistics');
+        const body = document.body;
         
         if (isLoggedIn && this.currentUser) {
             userMenu?.classList.remove('hidden');
             mainContent?.classList.remove('hidden');
+            loginBtn?.classList.add('hidden');
+            editModeBtn?.removeAttribute('disabled');
+            profileModeBtn?.removeAttribute('disabled');
+            controlPanel?.classList.remove('hidden');
+            rightPanel?.classList.remove('hidden');
+            fertilizerControl?.classList.remove('hidden');
+            statisticsSection?.classList.remove('hidden');
+            body?.classList.remove('guest-view');
+            if (this.system && this.guestZoomApplied) {
+                this.system.zoom = 1;
+                this.system.applyZoom();
+                this.guestZoomApplied = false;
+            }
             
             this.updateAvatars();
             
@@ -518,12 +561,40 @@ class AuthManager {
             });
             
             // Update username
-            document.getElementById('headerUsername').textContent = this.currentUser.username;
-            document.getElementById('dropdownUsername').textContent = this.currentUser.username;
-            document.getElementById('dropdownRole').textContent = 
-                this.currentUser.role === 'ADMIN' ? 'Administrator' : 'Benutzer';
+            const headerUsername = document.getElementById('headerUsername');
+            if (headerUsername) headerUsername.textContent = this.currentUser.username;
+            const dropdownUsername = document.getElementById('dropdownUsername');
+            if (dropdownUsername) dropdownUsername.textContent = this.currentUser.username;
+            const dropdownRole = document.getElementById('dropdownRole');
+            if (dropdownRole) {
+                dropdownRole.textContent = this.currentUser.role === 'ADMIN' ? 'Administrator' : 'Benutzer';
+            }
         } else {
             userMenu?.classList.add('hidden');
+            loginBtn?.classList.remove('hidden');
+            editModeBtn?.setAttribute('disabled', '');
+            profileModeBtn?.setAttribute('disabled', '');
+            controlPanel?.classList.add('hidden');
+            rightPanel?.classList.add('hidden');
+            fertilizerControl?.classList.add('hidden');
+            statisticsSection?.classList.add('hidden');
+            body?.classList.add('guest-view');
+            if (this.system && !this.guestZoomApplied) {
+                this.system.zoom = 0.85;
+                this.system.applyZoom();
+                this.guestZoomApplied = true;
+            }
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.classList.add('hidden');
+            });
+            if (this.system?.mode !== 'view') {
+                this.system?.setMode('view');
+            }
+        }
+
+        if (typeof logPanelController !== 'undefined' && logPanelController) {
+            logPanelController.refreshAccess();
+            logPanelController.loadLogs();
         }
     }
     
@@ -531,6 +602,7 @@ class AuthManager {
         const avatarUrl = this.currentUser?.avatar_url || '/assets/default-avatar.svg';
         document.getElementById('headerAvatar')?.setAttribute('src', avatarUrl);
         document.getElementById('profileAvatar')?.setAttribute('src', avatarUrl);
+        document.getElementById('profileAvatarPreview')?.setAttribute('src', avatarUrl);
     }
     
     loadProfileData() {
@@ -580,10 +652,22 @@ class AuthManager {
         div.textContent = text;
         return div.innerHTML;
     }
+
+    getPasswordFieldValue(formEl, type) {
+        if (formEl) {
+            const field = formEl.querySelector(`[data-password="${type}"]`);
+            if (field) return field.value;
+        }
+        return '';
+    }
     
     // Check if current user is admin
     isAdmin() {
         return this.currentUser?.role === 'ADMIN';
+    }
+
+    isAuthenticated() {
+        return !!this.currentUser && !this.isGuest;
     }
     
     // Get current user ID

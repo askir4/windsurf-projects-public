@@ -711,6 +711,34 @@ body.dark-mode .sensor-trend {
     align-items: start;
 }
 
+/* Gast-Ansicht: Map nutzt volle Breite */
+body.guest-view .container {
+    grid-template-columns: 1fr;
+}
+
+body.guest-view .map-container {
+    grid-column: 1 / -1;
+}
+
+/* Profil-Ansicht: Settings links, Logs in der Mitte */
+body.profile-mode .container {
+    grid-template-columns: 280px 1fr;
+}
+
+body.profile-mode .control-panel {
+    position: static;
+    max-height: none;
+}
+
+body.profile-mode .profile-panel {
+    max-width: 100%;
+    margin: 0;
+}
+
+body.profile-mode .right-panel {
+    display: none;
+}
+
 .control-panel {
     display: flex;
     flex-direction: column;

@@ -23,6 +23,10 @@
                         <i class="fas fa-sign-out-alt"></i>
                     </button>
                 </div>
+
+                <button class="btn btn-primary btn-sm" id="openLogin">
+                    <i class="fas fa-sign-in-alt"></i> Anmelden
+                </button>
                 
                 <label class="dark-mode-switch" id="darkModeToggle">
                     <input type="checkbox" id="darkModeCheckbox">
@@ -74,13 +78,13 @@
                     <img src="/assets/default-avatar.svg" alt="Avatar" class="profile-avatar-preview" id="profileAvatarPreview">
                     <label class="btn btn-secondary avatar-upload-btn">
                         <i class="fas fa-camera"></i> Avatar ändern
-                        <input type="file" id="avatarUpload" accept=".png,.jpg,.jpeg,.webp" hidden>
+                        <input type="file" id="profileModalAvatarUpload" accept=".png,.jpg,.jpeg,.webp" hidden>
                     </label>
                 </div>
                 <form id="profileForm">
                     <div class="form-group">
                         <label>Benutzername</label>
-                        <input type="text" id="profileUsername" disabled>
+                        <input type="text" id="profileModalUsername" disabled>
                     </div>
                     <div class="form-group">
                         <label for="profileEmail">E-Mail</label>
@@ -104,16 +108,16 @@
             </div>
             <form id="passwordForm" class="modal-body">
                 <div class="form-group">
-                    <label for="currentPassword">Aktuelles Passwort</label>
-                    <input type="password" id="currentPassword" required>
+                    <label for="modalCurrentPassword">Aktuelles Passwort</label>
+                    <input type="password" id="modalCurrentPassword" data-password="current" required>
                 </div>
                 <div class="form-group">
-                    <label for="newPassword">Neues Passwort (mind. 8 Zeichen)</label>
-                    <input type="password" id="newPassword" required minlength="8">
+                    <label for="modalNewPassword">Neues Passwort (mind. 8 Zeichen)</label>
+                    <input type="password" id="modalNewPassword" data-password="new" required minlength="8">
                 </div>
                 <div class="form-group">
-                    <label for="confirmPassword">Passwort bestätigen</label>
-                    <input type="password" id="confirmPassword" required>
+                    <label for="modalConfirmPassword">Passwort bestätigen</label>
+                    <input type="password" id="modalConfirmPassword" data-password="confirm" required>
                 </div>
                 <div class="form-error hidden" id="passwordError"></div>
             </form>
@@ -418,7 +422,7 @@
                             <img src="/assets/default-avatar.svg" alt="Avatar" class="profile-avatar-large" id="profileAvatar">
                             <label class="btn btn-secondary btn-sm avatar-upload-btn">
                                 <i class="fas fa-camera"></i> Foto ändern
-                                <input type="file" id="avatarUpload" accept="image/*" hidden>
+                                <input type="file" id="profileAvatarUpload" accept="image/*" hidden>
                             </label>
                         </div>
                         <div class="profile-info">
@@ -442,16 +446,16 @@
                         <div class="accordion-body">
                             <form id="changePasswordForm">
                                 <div class="form-group">
-                                    <label for="currentPassword">Aktuelles Passwort</label>
-                                    <input type="password" id="currentPassword" required>
+                                    <label for="profileCurrentPassword">Aktuelles Passwort</label>
+                                    <input type="password" id="profileCurrentPassword" data-password="current" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="newPassword">Neues Passwort</label>
-                                    <input type="password" id="newPassword" required minlength="8">
+                                    <label for="profileNewPassword">Neues Passwort</label>
+                                    <input type="password" id="profileNewPassword" data-password="new" required minlength="8">
                                 </div>
                                 <div class="form-group">
-                                    <label for="confirmPassword">Passwort bestätigen</label>
-                                    <input type="password" id="confirmPassword" required>
+                                    <label for="profileConfirmPassword">Passwort bestätigen</label>
+                                    <input type="password" id="profileConfirmPassword" data-password="confirm" required>
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-block">
                                     <i class="fas fa-save"></i> Passwort speichern
@@ -464,25 +468,26 @@
             </aside>
 
             <section class="map-container">
-                <div class="map-header">
-                    <h2><i class="fas fa-map"></i> Pflanzenkarte</h2>
-                    <div class="map-controls">
-                        <button id="zoomIn" class="btn btn-secondary">
-                            <i class="fas fa-search-plus"></i>
-                        </button>
-                        <button id="zoomOut" class="btn btn-secondary">
-                            <i class="fas fa-search-minus"></i>
-                        </button>
-                        <button id="resetView" class="btn btn-secondary">
-                            <i class="fas fa-compress"></i> Reset
-                        </button>
-                        <button id="clearAll" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> Alle löschen
-                        </button>
+                <div id="mapViewContent">
+                    <div class="map-header">
+                        <h2><i class="fas fa-map"></i> Pflanzenkarte</h2>
+                        <div class="map-controls">
+                            <button id="zoomIn" class="btn btn-secondary">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button id="zoomOut" class="btn btn-secondary">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button id="resetView" class="btn btn-secondary">
+                                <i class="fas fa-compress"></i> Reset
+                            </button>
+                            <button id="clearAll" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Alle löschen
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div id="plantMap" class="plant-map">
-                    <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+                    <div id="plantMap" class="plant-map">
+                        <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
                         <defs>
                             <!-- Gras-Hintergrund -->
                             <pattern id="grassPattern" width="4" height="4" patternUnits="userSpaceOnUse">
@@ -655,16 +660,101 @@
                         
                         <!-- Pflanzen-Gruppe -->
                         <g id="plantsGroup"></g>
-                    </svg>
-                </div>
-                <div class="plant-search-container">
-                    <div class="plant-search-input">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="plantSearchGlobal" placeholder="Pflanze suchen..." autocomplete="off">
-                        <button class="search-clear hidden" id="searchClearBtn"><i class="fas fa-times"></i></button>
+                        </svg>
                     </div>
-                    <div class="plant-search-results hidden" id="plantSearchResults"></div>
+                    <div class="plant-search-container">
+                        <div class="plant-search-input">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="plantSearchGlobal" placeholder="Pflanze suchen..." autocomplete="off">
+                            <button class="search-clear hidden" id="searchClearBtn"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="plant-search-results hidden" id="plantSearchResults"></div>
+                    </div>
                 </div>
+
+                <!-- Logs (Profil/Admin Mitte) -->
+                <section class="logs-panel-fullwidth hidden" id="logsPanel">
+                    <div class="logs-panel-header">
+                        <div class="logs-panel-title">
+                            <i class="fas fa-stream"></i>
+                            <h2>Live-Protokoll</h2>
+                        </div>
+                        
+                        <div class="logs-panel-controls">
+                            <!-- Log Type Toggle -->
+                            <div class="log-type-toggle">
+                                <button class="log-type-btn active" data-type="system" id="showSystemLogs">
+                                    <i class="fas fa-server"></i> System
+                                </button>
+                                <button class="log-type-btn" data-type="audit" id="showAuditLogs">
+                                    <i class="fas fa-user-clock"></i> Benutzer
+                                </button>
+                            </div>
+                            
+                            <!-- Search -->
+                            <div class="log-search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="logSearchInput" placeholder="Logs durchsuchen...">
+                            </div>
+                            
+                            <!-- Filter -->
+                            <select id="logLevelFilterPanel" class="log-filter-select">
+                                <option value="">Alle Level</option>
+                                <option value="ERROR">Error</option>
+                                <option value="WARN">Warning</option>
+                                <option value="INFO">Info</option>
+                                <option value="DEBUG">Debug</option>
+                            </select>
+                            
+                            <!-- Audit Filter (nur bei Audit-Logs sichtbar) -->
+                            <select id="logActionFilterPanel" class="log-filter-select hidden">
+                                <option value="">Alle Aktionen</option>
+                                <option value="LOGIN_SUCCESS">Login</option>
+                                <option value="LOGOUT">Logout</option>
+                                <option value="USER_CREATED">User erstellt</option>
+                                <option value="PASSWORD_CHANGED">Passwort geändert</option>
+                                <option value="PLANT_ADDED">Pflanze hinzugefügt</option>
+                                <option value="FERTILIZER_APPLIED">Gedüngt</option>
+                            </select>
+                            
+                            <!-- Export -->
+                            <div class="log-export-dropdown">
+                                <button class="btn btn-secondary log-export-btn" id="exportLogsBtn">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                                <div class="export-dropdown-menu hidden" id="exportDropdownMenu">
+                                    <button class="export-option" data-format="json">
+                                        <i class="fas fa-code"></i> JSON
+                                    </button>
+                                    <button class="export-option" data-format="csv">
+                                        <i class="fas fa-file-csv"></i> CSV
+                                    </button>
+                                    <button class="export-option" data-format="txt">
+                                        <i class="fas fa-file-alt"></i> Text
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Refresh -->
+                            <button class="btn btn-icon log-refresh-btn" id="refreshLogsBtn" title="Aktualisieren">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="logs-panel-body" id="logsPanelBody">
+                        <!-- Logs werden hier dynamisch gerendert -->
+                        <div class="log-loading-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Lade Logs...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="logs-panel-footer">
+                        <span class="log-count" id="logCount">0 Einträge</span>
+                        <span class="log-last-update" id="logLastUpdate">Zuletzt aktualisiert: --</span>
+                    </div>
+                </section>
             </section>
 
             <aside class="right-panel">
@@ -720,6 +810,90 @@
                             <span class="stat-value" id="totalPotassium">0</span>
                             <span class="stat-label">K (kg)</span>
                         </div>
+                    </div>
+                </section>
+
+                <!-- Logs (nur für Admins) -->
+                <section class="logs-panel-fullwidth admin-only hidden" id="logsPanel">
+                    <div class="logs-panel-header">
+                        <div class="logs-panel-title">
+                            <i class="fas fa-stream"></i>
+                            <h2>Live-Protokoll</h2>
+                        </div>
+                        
+                        <div class="logs-panel-controls">
+                            <!-- Log Type Toggle -->
+                            <div class="log-type-toggle">
+                                <button class="log-type-btn active" data-type="system" id="showSystemLogs">
+                                    <i class="fas fa-server"></i> System
+                                </button>
+                                <button class="log-type-btn" data-type="audit" id="showAuditLogs">
+                                    <i class="fas fa-user-clock"></i> Benutzer
+                                </button>
+                            </div>
+                            
+                            <!-- Search -->
+                            <div class="log-search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="logSearchInput" placeholder="Logs durchsuchen...">
+                            </div>
+                            
+                            <!-- Filter -->
+                            <select id="logLevelFilterPanel" class="log-filter-select">
+                                <option value="">Alle Level</option>
+                                <option value="ERROR">Error</option>
+                                <option value="WARN">Warning</option>
+                                <option value="INFO">Info</option>
+                                <option value="DEBUG">Debug</option>
+                            </select>
+                            
+                            <!-- Audit Filter (nur bei Audit-Logs sichtbar) -->
+                            <select id="logActionFilterPanel" class="log-filter-select hidden">
+                                <option value="">Alle Aktionen</option>
+                                <option value="LOGIN_SUCCESS">Login</option>
+                                <option value="LOGOUT">Logout</option>
+                                <option value="USER_CREATED">User erstellt</option>
+                                <option value="PASSWORD_CHANGED">Passwort geändert</option>
+                                <option value="PLANT_ADDED">Pflanze hinzugefügt</option>
+                                <option value="FERTILIZER_APPLIED">Gedüngt</option>
+                            </select>
+                            
+                            <!-- Export -->
+                            <div class="log-export-dropdown">
+                                <button class="btn btn-secondary log-export-btn" id="exportLogsBtn">
+                                    <i class="fas fa-download"></i> Export
+                                </button>
+                                <div class="export-dropdown-menu hidden" id="exportDropdownMenu">
+                                    <button class="export-option" data-format="json">
+                                        <i class="fas fa-code"></i> JSON
+                                    </button>
+                                    <button class="export-option" data-format="csv">
+                                        <i class="fas fa-file-csv"></i> CSV
+                                    </button>
+                                    <button class="export-option" data-format="txt">
+                                        <i class="fas fa-file-alt"></i> Text
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Refresh -->
+                            <button class="btn btn-icon log-refresh-btn" id="refreshLogsBtn" title="Aktualisieren">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="logs-panel-body" id="logsPanelBody">
+                        <!-- Logs werden hier dynamisch gerendert -->
+                        <div class="log-loading-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Lade Logs...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="logs-panel-footer">
+                        <span class="log-count" id="logCount">0 Einträge</span>
+                        <span class="log-last-update" id="logLastUpdate">Zuletzt aktualisiert: --</span>
                     </div>
                 </section>
             </aside>
@@ -976,89 +1150,6 @@
             </div>
         </section>
         
-        <!-- Permanentes Log-Panel (nur für Admins) -->
-        <section class="logs-panel-fullwidth admin-only hidden" id="logsPanel">
-            <div class="logs-panel-header">
-                <div class="logs-panel-title">
-                    <i class="fas fa-stream"></i>
-                    <h2>Live-Protokoll</h2>
-                </div>
-                
-                <div class="logs-panel-controls">
-                    <!-- Log Type Toggle -->
-                    <div class="log-type-toggle">
-                        <button class="log-type-btn active" data-type="system" id="showSystemLogs">
-                            <i class="fas fa-server"></i> System
-                        </button>
-                        <button class="log-type-btn" data-type="audit" id="showAuditLogs">
-                            <i class="fas fa-user-clock"></i> Benutzer
-                        </button>
-                    </div>
-                    
-                    <!-- Search -->
-                    <div class="log-search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="logSearchInput" placeholder="Logs durchsuchen...">
-                    </div>
-                    
-                    <!-- Filter -->
-                    <select id="logLevelFilterPanel" class="log-filter-select">
-                        <option value="">Alle Level</option>
-                        <option value="ERROR">Error</option>
-                        <option value="WARN">Warning</option>
-                        <option value="INFO">Info</option>
-                        <option value="DEBUG">Debug</option>
-                    </select>
-                    
-                    <!-- Audit Filter (nur bei Audit-Logs sichtbar) -->
-                    <select id="logActionFilterPanel" class="log-filter-select hidden">
-                        <option value="">Alle Aktionen</option>
-                        <option value="LOGIN_SUCCESS">Login</option>
-                        <option value="LOGOUT">Logout</option>
-                        <option value="USER_CREATED">User erstellt</option>
-                        <option value="PASSWORD_CHANGED">Passwort geändert</option>
-                        <option value="PLANT_ADDED">Pflanze hinzugefügt</option>
-                        <option value="FERTILIZER_APPLIED">Gedüngt</option>
-                    </select>
-                    
-                    <!-- Export -->
-                    <div class="log-export-dropdown">
-                        <button class="btn btn-secondary log-export-btn" id="exportLogsBtn">
-                            <i class="fas fa-download"></i> Export
-                        </button>
-                        <div class="export-dropdown-menu hidden" id="exportDropdownMenu">
-                            <button class="export-option" data-format="json">
-                                <i class="fas fa-code"></i> JSON
-                            </button>
-                            <button class="export-option" data-format="csv">
-                                <i class="fas fa-file-csv"></i> CSV
-                            </button>
-                            <button class="export-option" data-format="txt">
-                                <i class="fas fa-file-alt"></i> Text
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Refresh -->
-                    <button class="btn btn-icon log-refresh-btn" id="refreshLogsBtn" title="Aktualisieren">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="logs-panel-body" id="logsPanelBody">
-                <!-- Logs werden hier dynamisch gerendert -->
-                <div class="log-loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Lade Logs...</p>
-                </div>
-            </div>
-            
-            <div class="logs-panel-footer">
-                <span class="log-count" id="logCount">0 Einträge</span>
-                <span class="log-last-update" id="logLastUpdate">Zuletzt aktualisiert: --</span>
-            </div>
-        </section>
     </main>
 
     <footer>

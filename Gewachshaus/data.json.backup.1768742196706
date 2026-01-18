@@ -1,0 +1,149 @@
+{
+  "zones": [
+    {
+      "id": 1,
+      "name": "Hochbeet1",
+      "color": "#22c55e",
+      "rows": 3,
+      "cols": 4,
+      "created_at": "2026-01-17T16:17:33.007Z"
+    }
+  ],
+  "slots": [],
+  "plants": [],
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "727a99cd95bdaef2018c75b8b9990c54d34e764a058fbb1c7a755182118a541c",
+      "role": "ADMIN",
+      "created_at": "2026-01-17T16:14:41.783Z"
+    }
+  ],
+  "logs": [
+    {
+      "timestamp": "2026-01-18T13:15:57.112Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-01-18T13:11:57.910Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:06:32.323Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:02:17.664Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:55.533Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:50.522Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:48.640Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:42.382Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:31.618Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:31.016Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:29.148Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:12.777Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:11.436Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:07.991Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:00:05.974Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-17T16:20:58.466Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-17T16:20:21.723Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-17T16:20:21.706Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-01-17T16:20:05.392Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-01-17T16:17:33.007Z",
+      "level": "INFO",
+      "message": "Zone erstellt: Hochbeet1"
+    },
+    {
+      "timestamp": "2026-01-17T16:17:16.689Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-17T16:14:41.801Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-17T16:14:41.784Z",
+      "level": "INFO",
+      "message": "Neue Datenbank erstellt mit Admin-User"
+    }
+  ],
+  "settings": {}
+}
+    {
+      "timestamp": "2026-01-17T16:14:41.784Z",
+      "level": "INFO",
+      "message": "Neue Datenbank erstellt mit Admin-User"
+    }
+  ],
+  "settings": {}
+}

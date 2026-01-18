@@ -306,13 +306,14 @@ class LogPanelController {
         this.searchTerm = '';
         this.levelFilter = '';
         this.actionFilter = '';
-        this.serverUrl = 'http://localhost:3001';
+        this.serverUrl = '';
         
         this.init();
     }
     
     init() {
         this.bindEvents();
+        this.refreshAccess();
         this.loadLogs();
         
         // Auto-refresh alle 30 Sekunden
@@ -393,6 +394,23 @@ class LogPanelController {
         
         await this.loadLogs();
     }
+
+    refreshAccess() {
+        const isAdmin = typeof authManager !== 'undefined' && authManager?.isAdmin?.();
+        const auditBtn = document.getElementById('showAuditLogs');
+        const actionFilter = document.getElementById('logActionFilterPanel');
+        const levelFilter = document.getElementById('logLevelFilterPanel');
+
+        if (!isAdmin) {
+            if (auditBtn) auditBtn.classList.add('hidden');
+            if (actionFilter) actionFilter.classList.add('hidden');
+            if (levelFilter) levelFilter.classList.remove('hidden');
+            this.currentType = 'system';
+            this.actionFilter = '';
+        } else {
+            if (auditBtn) auditBtn.classList.remove('hidden');
+        }
+    }
     
     async loadLogs() {
         const body = document.getElementById('logsPanelBody');
@@ -415,15 +433,35 @@ class LogPanelController {
     
     async loadSystemLogs() {
         try {
+            const isAdmin = typeof authManager !== 'undefined' && authManager?.isAdmin?.();
+            if (!isAdmin) {
+                if (typeof system !== 'undefined' && system.localLogs) {
+                    this.logs = [...system.localLogs].reverse().map(l => ({ ...l, type: 'system' }));
+                } else {
+                    this.logs = [];
+                }
+                return;
+            }
             const res = await fetch(`${this.serverUrl}/api/logs?limit=200`);
             if (!res.ok) throw new Error('Failed to fetch logs');
             
             const rows = await res.json();
+            const parseLogData = (value) => {
+                if (value === null || value === undefined) return null;
+                if (typeof value === 'string') {
+                    try {
+                        return JSON.parse(value);
+                    } catch {
+                        return value;
+                    }
+                }
+                return value;
+            };
             this.logs = rows.map(r => ({
                 timestamp: r.timestamp,
                 level: r.level,
                 message: r.message,
-                data: r.data ? JSON.parse(r.data) : null,
+                data: parseLogData(r.data),
                 type: 'system'
             }));
         } catch (e) {

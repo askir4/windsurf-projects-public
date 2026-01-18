@@ -1,0 +1,177 @@
+{
+  "zones": [],
+  "slots": [],
+  "plants": [],
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "ce77dceac0fafef1cdb900860c1f68ac0e1dbc61d3e39fc7f371529e37e05402",
+      "role": "ADMIN",
+      "created_at": "2026-01-18T13:18:00.000Z"
+    },
+    {
+      "id": 2,
+      "username": "test",
+      "email": null,
+      "password": "f8f484311b5c51be203c67c4395b6ee19f9da51daeae51e2c32f629883a8ec34",
+      "role": "NORMAL_USER",
+      "created_at": "2026-01-18T22:56:48.429Z"
+    }
+  ],
+  "logs": [
+    {
+      "timestamp": "2026-01-18T22:57:34.741Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T22:57:08.877Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: test"
+    },
+    {
+      "timestamp": "2026-01-18T22:56:48.429Z",
+      "level": "INFO",
+      "message": "User erstellt: test"
+    },
+    {
+      "timestamp": "2026-01-18T22:53:03.515Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T22:46:15.182Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T14:02:02.573Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T14:01:46.776Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-18T14:01:46.755Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-01-18T14:01:25.650Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-01-18T13:25:36.851Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:25:13.012Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-18T13:25:12.995Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-01-18T13:24:40.019Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-01-18T13:22:18.040Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:22:15.199Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:22:03.528Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:21:20.155Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-18T13:21:20.143Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-01-18T13:21:04.210Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-01-18T13:18:36.082Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:18:14.517Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:17:50.751Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-18T13:17:50.739Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-01-18T13:17:23.749Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-01-18T13:17:03.896Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:16:52.792Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-01-18T13:16:36.715Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-18T13:16:36.702Z",
+      "level": "ERROR",
+      "message": "Fehler beim Laden der Daten: Unexpected non-whitespace character after JSON at position 3494 (line 142 column 5)"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": 1,
+      "actor_user_id": 1,
+      "actor_username": "admin",
+      "action": "USER_CREATED",
+      "entity_type": "user",
+      "entity_id": "2",
+      "metadata_json": "{\"username\":\"test\"}",
+      "created_at": "2026-01-18T22:56:48.429Z"
+    }
+  ],
+  "settings": {}
+}
