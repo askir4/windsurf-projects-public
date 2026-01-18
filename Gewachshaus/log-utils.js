@@ -442,7 +442,9 @@ class LogPanelController {
                 }
                 return;
             }
-            const res = await fetch(`${this.serverUrl}/api/logs?limit=200`);
+            const res = await fetch(`${this.serverUrl}/api/logs?limit=200`, {
+                credentials: 'include'
+            });
             if (!res.ok) throw new Error('Failed to fetch logs');
             
             const rows = await res.json();

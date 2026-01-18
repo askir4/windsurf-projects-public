@@ -21,6 +21,26 @@
   ],
   "logs": [
     {
+      "timestamp": "2026-01-18T23:23:08.831Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-18T23:22:38.811Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-18T23:22:38.789Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-01-18T23:22:28.175Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
       "timestamp": "2026-01-18T22:57:34.741Z",
       "level": "INFO",
       "message": "Login erfolgreich: admin"

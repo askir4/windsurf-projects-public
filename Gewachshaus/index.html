@@ -411,6 +411,126 @@
                             <p class="warning-text"><i class="fas fa-exclamation-triangle"></i> Achtung: Diese Aktion kann nicht rückgängig gemacht werden!</p>
                         </div>
                     </details>
+
+                    <details class="accordion-card" id="colorSettingsCard">
+                        <summary class="accordion-summary"><i class="fas fa-palette"></i> Farbschema anpassen</summary>
+                        <div class="accordion-body">
+                            <p class="admin-info">Passe das globale Farbschema für alle Benutzer an.</p>
+                            
+                            <div class="color-settings-grid">
+                                <div class="color-group">
+                                    <h4><i class="fas fa-paint-brush"></i> Hauptfarben</h4>
+                                    <div class="color-input-row">
+                                        <label for="colorPrimary">Primärfarbe</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorPrimary" value="#3498db">
+                                            <input type="text" id="colorPrimaryHex" value="#3498db" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-input-row">
+                                        <label for="colorPrimaryHover">Primär (Hover)</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorPrimaryHover" value="#2980b9">
+                                            <input type="text" id="colorPrimaryHoverHex" value="#2980b9" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-input-row">
+                                        <label for="colorSecondary">Sekundärfarbe</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorSecondary" value="#6b7280">
+                                            <input type="text" id="colorSecondaryHex" value="#6b7280" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="color-group">
+                                    <h4><i class="fas fa-check-circle"></i> Statusfarben</h4>
+                                    <div class="color-input-row">
+                                        <label for="colorSuccess">Erfolg</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorSuccess" value="#27ae60">
+                                            <input type="text" id="colorSuccessHex" value="#27ae60" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-input-row">
+                                        <label for="colorWarning">Warnung</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorWarning" value="#f39c12">
+                                            <input type="text" id="colorWarningHex" value="#f39c12" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-input-row">
+                                        <label for="colorDanger">Fehler</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorDanger" value="#e74c3c">
+                                            <input type="text" id="colorDangerHex" value="#e74c3c" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="color-group">
+                                    <h4><i class="fas fa-image"></i> Hintergrund</h4>
+                                    <div class="color-input-row">
+                                        <label for="colorBgStart">Gradient Start</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorBgStart" value="#667eea">
+                                            <input type="text" id="colorBgStartHex" value="#667eea" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-input-row">
+                                        <label for="colorBgEnd">Gradient Ende</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorBgEnd" value="#764ba2">
+                                            <input type="text" id="colorBgEndHex" value="#764ba2" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="color-group">
+                                    <h4><i class="fas fa-font"></i> Text</h4>
+                                    <div class="color-input-row">
+                                        <label for="colorText">Haupttext</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorText" value="#1f2937">
+                                            <input type="text" id="colorTextHex" value="#1f2937" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                    <div class="color-input-row">
+                                        <label for="colorTextMuted">Gedämpfter Text</label>
+                                        <div class="color-input-wrapper">
+                                            <input type="color" id="colorTextMuted" value="#6b7280">
+                                            <input type="text" id="colorTextMutedHex" value="#6b7280" maxlength="7" class="hex-input">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="color-preview-section">
+                                <h4><i class="fas fa-eye"></i> Vorschau</h4>
+                                <div class="color-preview-box" id="colorPreviewBox">
+                                    <div class="preview-header">Header-Bereich</div>
+                                    <div class="preview-content">
+                                        <button class="preview-btn primary">Primär</button>
+                                        <button class="preview-btn secondary">Sekundär</button>
+                                        <button class="preview-btn success">Erfolg</button>
+                                        <button class="preview-btn warning">Warnung</button>
+                                        <button class="preview-btn danger">Fehler</button>
+                                    </div>
+                                    <p class="preview-text">Beispieltext in der Hauptfarbe</p>
+                                    <p class="preview-muted">Gedämpfter Text für weniger wichtige Infos</p>
+                                </div>
+                            </div>
+
+                            <div class="color-actions">
+                                <button id="saveColors" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Farben speichern
+                                </button>
+                                <button id="resetColors" class="btn btn-secondary">
+                                    <i class="fas fa-undo"></i> Zurücksetzen
+                                </button>
+                            </div>
+                        </div>
+                    </details>
                 </section>
                 
                 <!-- Profil Panel -->
@@ -813,89 +933,6 @@
                     </div>
                 </section>
 
-                <!-- Logs (nur für Admins) -->
-                <section class="logs-panel-fullwidth admin-only hidden" id="logsPanel">
-                    <div class="logs-panel-header">
-                        <div class="logs-panel-title">
-                            <i class="fas fa-stream"></i>
-                            <h2>Live-Protokoll</h2>
-                        </div>
-                        
-                        <div class="logs-panel-controls">
-                            <!-- Log Type Toggle -->
-                            <div class="log-type-toggle">
-                                <button class="log-type-btn active" data-type="system" id="showSystemLogs">
-                                    <i class="fas fa-server"></i> System
-                                </button>
-                                <button class="log-type-btn" data-type="audit" id="showAuditLogs">
-                                    <i class="fas fa-user-clock"></i> Benutzer
-                                </button>
-                            </div>
-                            
-                            <!-- Search -->
-                            <div class="log-search-box">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="logSearchInput" placeholder="Logs durchsuchen...">
-                            </div>
-                            
-                            <!-- Filter -->
-                            <select id="logLevelFilterPanel" class="log-filter-select">
-                                <option value="">Alle Level</option>
-                                <option value="ERROR">Error</option>
-                                <option value="WARN">Warning</option>
-                                <option value="INFO">Info</option>
-                                <option value="DEBUG">Debug</option>
-                            </select>
-                            
-                            <!-- Audit Filter (nur bei Audit-Logs sichtbar) -->
-                            <select id="logActionFilterPanel" class="log-filter-select hidden">
-                                <option value="">Alle Aktionen</option>
-                                <option value="LOGIN_SUCCESS">Login</option>
-                                <option value="LOGOUT">Logout</option>
-                                <option value="USER_CREATED">User erstellt</option>
-                                <option value="PASSWORD_CHANGED">Passwort geändert</option>
-                                <option value="PLANT_ADDED">Pflanze hinzugefügt</option>
-                                <option value="FERTILIZER_APPLIED">Gedüngt</option>
-                            </select>
-                            
-                            <!-- Export -->
-                            <div class="log-export-dropdown">
-                                <button class="btn btn-secondary log-export-btn" id="exportLogsBtn">
-                                    <i class="fas fa-download"></i> Export
-                                </button>
-                                <div class="export-dropdown-menu hidden" id="exportDropdownMenu">
-                                    <button class="export-option" data-format="json">
-                                        <i class="fas fa-code"></i> JSON
-                                    </button>
-                                    <button class="export-option" data-format="csv">
-                                        <i class="fas fa-file-csv"></i> CSV
-                                    </button>
-                                    <button class="export-option" data-format="txt">
-                                        <i class="fas fa-file-alt"></i> Text
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Refresh -->
-                            <button class="btn btn-icon log-refresh-btn" id="refreshLogsBtn" title="Aktualisieren">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="logs-panel-body" id="logsPanelBody">
-                        <!-- Logs werden hier dynamisch gerendert -->
-                        <div class="log-loading-state">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Lade Logs...</p>
-                        </div>
-                    </div>
-                    
-                    <div class="logs-panel-footer">
-                        <span class="log-count" id="logCount">0 Einträge</span>
-                        <span class="log-last-update" id="logLastUpdate">Zuletzt aktualisiert: --</span>
-                    </div>
-                </section>
             </aside>
 
         </div>
@@ -1182,6 +1219,7 @@
         </div>
     </div>
 
+    <script src="color-manager.js"></script>
     <script src="log-utils.js"></script>
     <script src="auth.js"></script>
     <script src="script.js"></script>

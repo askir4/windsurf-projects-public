@@ -15,6 +15,10 @@ const DB_FILE = path.join(__dirname, 'data.json');
 const SESSION_SECRET = process.env.SESSION_SECRET || 'gewachshaus-fixed-secret-key-2024';
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
 
 // ============== EINFACHE DATENBANK (JSON-Datei) ==============
 let data = {
@@ -44,6 +48,9 @@ function loadData() {
             });
             saveData();
             log('INFO', 'Neue Datenbank erstellt mit Admin-User');
+            if (ADMIN_PASS === 'admin123') {
+                log('WARN', 'Standard-Admin-Passwort aktiv - bitte ADMIN_PASS setzen');
+            }
         }
     } catch (e) {
         log('ERROR', 'Fehler beim Laden der Daten: ' + e.message);
@@ -73,11 +80,26 @@ setInterval(() => {
 
 // ============== EINFACHES PASSWORT-HASHING ==============
 function hashPassword(password) {
-    return crypto.createHash('sha256').update(password + SESSION_SECRET).digest('hex');
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+    return `scrypt$${salt}$${hash}`;
 }
 
-function verifyPassword(password, hash) {
-    return hashPassword(password) === hash;
+function verifyPassword(password, stored) {
+    if (!stored) return false;
+    if (stored.startsWith('scrypt$')) {
+        const parts = stored.split('$');
+        if (parts.length !== 3) return false;
+        const salt = parts[1];
+        const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+        const storedBuf = Buffer.from(parts[2], 'hex');
+        const hashBuf = Buffer.from(hash, 'hex');
+        if (storedBuf.length !== hashBuf.length) return false;
+        return crypto.timingSafeEqual(storedBuf, hashBuf);
+    }
+    // Legacy SHA256 (salted with SESSION_SECRET)
+    const legacy = crypto.createHash('sha256').update(password + SESSION_SECRET).digest('hex');
+    return legacy === stored;
 }
 
 // ============== SESSION MANAGEMENT (In-Memory) ==============
@@ -134,6 +156,27 @@ function log(level, message) {
         data.logs = data.logs.slice(0, 500);
     }
     dataChanged = true;
+}
+
+// Default Color Scheme
+function getDefaultColors() {
+    return {
+        primary: '#3498db',
+        primaryHover: '#2980b9',
+        secondary: '#6b7280',
+        success: '#27ae60',
+        warning: '#f39c12',
+        danger: '#e74c3c',
+        bgGradientStart: '#667eea',
+        bgGradientEnd: '#764ba2',
+        bgSurface: 'rgba(255, 255, 255, 0.92)',
+        bgSurfaceStrong: 'rgba(255, 255, 255, 0.96)',
+        text: '#1f2937',
+        textMuted: '#6b7280',
+        border: 'rgba(17, 24, 39, 0.12)',
+        headerBg: 'rgba(255, 255, 255, 0.96)',
+        cardBg: 'rgba(255, 255, 255, 0.92)'
+    };
 }
 
 // Audit Log Funktion
@@ -201,33 +244,61 @@ function getCookie(req, name) {
 }
 
 // Global request context for CORS
-let currentRequestOrigin = '*';
+let currentRequestOrigin = '';
 
-function sendJson(res, data, status = 200) {
+function isAllowedOrigin(req) {
+    const origin = req.headers.origin;
+    if (!origin) return true;
+    if (ALLOWED_ORIGINS.length > 0) {
+        return ALLOWED_ORIGINS.includes(origin);
+    }
+    try {
+        const originUrl = new URL(origin);
+        return originUrl.host === req.headers.host;
+    } catch {
+        return false;
+    }
+}
+
+function setSecurityHeaders(res, req = null) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    const isSecure = req && (req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https');
+    if (isSecure) {
+        res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+    }
+}
+
+function sendJson(res, data, status = 200, req = null) {
+    setSecurityHeaders(res, req);
     res.writeHead(status, {
         'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': currentRequestOrigin,
+        ...(currentRequestOrigin ? { 'Access-Control-Allow-Origin': currentRequestOrigin } : {}),
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Credentials': 'true'
+        ...(currentRequestOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {})
     });
     res.end(JSON.stringify(data));
 }
 
-function sendError(res, message, status = 400) {
-    sendJson(res, { error: message }, status);
+function sendError(res, message, status = 400, req = null) {
+    sendJson(res, { error: message }, status, req);
 }
 
-function sendFile(res, filePath) {
+function sendFile(res, filePath, req = null) {
     const ext = path.extname(filePath).toLowerCase();
     const mimeType = MIME_TYPES[ext] || 'application/octet-stream';
     
     fs.readFile(filePath, (err, content) => {
         if (err) {
+            setSecurityHeaders(res, req);
             res.writeHead(404);
             res.end('Not Found');
             return;
         }
+        setSecurityHeaders(res, req);
         res.writeHead(200, { 'Content-Type': mimeType });
         res.end(content);
     });
@@ -236,6 +307,8 @@ function sendFile(res, filePath) {
 // ============== RATE LIMITING ==============
 const rateLimits = new Map();
 const RATE_LIMIT = 100; // Requests pro Minute
+const AUTH_RATE_LIMIT = 10; // Login-Versuche pro 10 Minuten
+const authRateLimits = new Map();
 
 function checkRateLimit(ip) {
     const now = Date.now();
@@ -254,6 +327,24 @@ function checkRateLimit(ip) {
     return true;
 }
 
+function checkAuthRateLimit(ip) {
+    const now = Date.now();
+    const record = authRateLimits.get(ip);
+    const windowMs = 10 * 60 * 1000;
+    
+    if (!record || now - record.start > windowMs) {
+        authRateLimits.set(ip, { start: now, count: 1 });
+        return true;
+    }
+    
+    if (record.count >= AUTH_RATE_LIMIT) {
+        return false;
+    }
+    
+    record.count++;
+    return true;
+}
+
 // Cleanup alle 5 Minuten
 setInterval(() => {
     const now = Date.now();
@@ -262,31 +353,63 @@ setInterval(() => {
             rateLimits.delete(ip);
         }
     }
+    for (const [ip, record] of authRateLimits.entries()) {
+        if (now - record.start > 10 * 60 * 1000) {
+            authRateLimits.delete(ip);
+        }
+    }
 }, 5 * 60 * 1000);
 
 // ============== API ROUTES ==============
 async function handleAPI(req, res, urlPath, method) {
     const sessionId = getCookie(req, 'session');
     const session = getSession(sessionId);
+    const requireAuth = () => {
+        if (!session) {
+            sendError(res, 'Nicht authentifiziert', 401, req);
+            return false;
+        }
+        return true;
+    };
+    const requireAdmin = () => {
+        if (!session || session.role !== 'ADMIN') {
+            sendError(res, 'Keine Berechtigung', 403, req);
+            return false;
+        }
+        return true;
+    };
     
     // AUTH ENDPOINTS
     if (urlPath === '/api/auth/login' && method === 'POST') {
+        const ip = req.socket.remoteAddress || 'unknown';
+        if (!checkAuthRateLimit(ip)) {
+            return sendError(res, 'Zu viele Login-Versuche', 429, req);
+        }
         const body = await parseBody(req);
         const user = data.users.find(u => u.username === body.username);
         
         if (!user || !verifyPassword(body.password, user.password)) {
             log('WARN', `Login fehlgeschlagen: ${body.username}`);
-            return sendError(res, 'Ungültige Anmeldedaten', 401);
+            return sendError(res, 'Ungültige Anmeldedaten', 401, req);
         }
         
         const newSessionId = createSession(user.id, user.username, user.role);
         log('INFO', `Login erfolgreich: ${user.username}`);
-        
+
+        // Upgrade legacy password hashes on successful login
+        if (!user.password.startsWith('scrypt$')) {
+            user.password = hashPassword(body.password);
+            user.updated_at = new Date().toISOString();
+            dataChanged = true;
+        }
+
+        const isSecure = req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https';
+        setSecurityHeaders(res, req);
         res.writeHead(200, {
             'Content-Type': 'application/json',
-            'Set-Cookie': `session=${newSessionId}; Path=/; HttpOnly; Max-Age=86400`,
-            'Access-Control-Allow-Origin': currentRequestOrigin,
-            'Access-Control-Allow-Credentials': 'true'
+            'Set-Cookie': `session=${newSessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400${isSecure ? '; Secure' : ''}`,
+            ...(currentRequestOrigin ? { 'Access-Control-Allow-Origin': currentRequestOrigin } : {}),
+            ...(currentRequestOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {})
         });
         return res.end(JSON.stringify({
             success: true,
@@ -296,36 +419,38 @@ async function handleAPI(req, res, urlPath, method) {
     
     if (urlPath === '/api/auth/logout' && method === 'POST') {
         if (sessionId) destroySession(sessionId);
+        const isSecure = req.socket.encrypted || req.headers['x-forwarded-proto'] === 'https';
+        setSecurityHeaders(res, req);
         res.writeHead(200, {
             'Content-Type': 'application/json',
-            'Set-Cookie': 'session=; Path=/; HttpOnly; Max-Age=0',
-            'Access-Control-Allow-Origin': currentRequestOrigin,
-            'Access-Control-Allow-Credentials': 'true'
+            'Set-Cookie': `session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${isSecure ? '; Secure' : ''}`,
+            ...(currentRequestOrigin ? { 'Access-Control-Allow-Origin': currentRequestOrigin } : {}),
+            ...(currentRequestOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {})
         });
         return res.end(JSON.stringify({ success: true }));
     }
     
     if (urlPath === '/api/auth/me') {
-        if (!session) return sendJson(res, { user: null });
+        if (!session) return sendJson(res, { user: null }, 200, req);
         const user = data.users.find(u => u.id === session.userId);
-        if (!user) return sendJson(res, { user: null });
+        if (!user) return sendJson(res, { user: null }, 200, req);
         return sendJson(res, { 
             user: { id: user.id, username: user.username, role: user.role, avatar_url: user.avatar_url, created_at: user.created_at }
-        });
+        }, 200, req);
     }
     
     // CHANGE PASSWORD
     if (urlPath === '/api/auth/change-password' && method === 'POST') {
-        if (!session) return sendError(res, 'Nicht authentifiziert', 401);
+        if (!requireAuth()) return;
         const body = await parseBody(req);
         const user = data.users.find(u => u.id === session.userId);
-        if (!user) return sendError(res, 'User nicht gefunden', 404);
+        if (!user) return sendError(res, 'User nicht gefunden', 404, req);
         
         if (!verifyPassword(body.currentPassword, user.password)) {
-            return sendError(res, 'Aktuelles Passwort falsch', 401);
+            return sendError(res, 'Aktuelles Passwort falsch', 401, req);
         }
         if (!body.newPassword || body.newPassword.length < 8) {
-            return sendError(res, 'Neues Passwort muss mindestens 8 Zeichen haben', 400);
+            return sendError(res, 'Neues Passwort muss mindestens 8 Zeichen haben', 400, req);
         }
         
         user.password = hashPassword(body.newPassword);
@@ -333,7 +458,7 @@ async function handleAPI(req, res, urlPath, method) {
         dataChanged = true;
         addAuditLog(session, 'PASSWORD_CHANGED', 'user', session.userId);
         log('INFO', `Passwort geändert: ${user.username}`);
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
     }
     
     // DATA ENDPOINTS
@@ -343,10 +468,11 @@ async function handleAPI(req, res, urlPath, method) {
             slots: data.slots,
             plants: data.plants,
             settings: data.settings
-        });
+        }, 200, req);
     }
     
     if (urlPath === '/api/data' && method === 'POST') {
+        if (!requireAuth()) return;
         const body = await parseBody(req);
         if (body.zones) data.zones = body.zones;
         if (body.slots) data.slots = body.slots;
@@ -355,65 +481,70 @@ async function handleAPI(req, res, urlPath, method) {
         dataChanged = true;
         saveData(); // Sofort speichern bei explizitem Save
         log('INFO', 'Daten gespeichert');
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
     }
     
     // ZONES
     if (urlPath === '/api/zones' && method === 'GET') {
-        return sendJson(res, data.zones);
+        return sendJson(res, data.zones, 200, req);
     }
     
     if (urlPath === '/api/zones' && method === 'POST') {
+        if (!requireAuth()) return;
         const body = await parseBody(req);
         const newId = data.zones.length > 0 ? Math.max(...data.zones.map(z => z.id)) + 1 : 1;
         const zone = { id: newId, ...body, created_at: new Date().toISOString() };
         data.zones.push(zone);
         dataChanged = true;
         log('INFO', `Zone erstellt: ${zone.name}`);
-        return sendJson(res, zone);
+        return sendJson(res, zone, 200, req);
     }
     
     // PLANTS
     if (urlPath === '/api/plants' && method === 'GET') {
-        return sendJson(res, data.plants);
+        return sendJson(res, data.plants, 200, req);
     }
     
     if (urlPath === '/api/plants' && method === 'POST') {
+        if (!requireAuth()) return;
         const body = await parseBody(req);
         const newId = data.plants.length > 0 ? Math.max(...data.plants.map(p => p.id)) + 1 : 1;
         const plant = { id: newId, ...body, created_at: new Date().toISOString() };
         data.plants.push(plant);
         dataChanged = true;
         log('INFO', `Pflanze hinzugefügt: ${plant.name}`);
-        return sendJson(res, plant);
+        return sendJson(res, plant, 200, req);
     }
     
     if (urlPath.startsWith('/api/plants/') && method === 'PUT') {
+        if (!requireAuth()) return;
         const id = parseInt(urlPath.split('/')[3]);
         const body = await parseBody(req);
         const idx = data.plants.findIndex(p => p.id === id);
-        if (idx === -1) return sendError(res, 'Pflanze nicht gefunden', 404);
+        if (idx === -1) return sendError(res, 'Pflanze nicht gefunden', 404, req);
         data.plants[idx] = { ...data.plants[idx], ...body, updated_at: new Date().toISOString() };
         dataChanged = true;
-        return sendJson(res, data.plants[idx]);
+        return sendJson(res, data.plants[idx], 200, req);
     }
     
     if (urlPath.startsWith('/api/plants/') && method === 'DELETE') {
+        if (!requireAuth()) return;
         const id = parseInt(urlPath.split('/')[3]);
         const idx = data.plants.findIndex(p => p.id === id);
-        if (idx === -1) return sendError(res, 'Pflanze nicht gefunden', 404);
+        if (idx === -1) return sendError(res, 'Pflanze nicht gefunden', 404, req);
         data.plants.splice(idx, 1);
         dataChanged = true;
         log('INFO', `Pflanze gelöscht: ID ${id}`);
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
     }
     
     // SLOTS
     if (urlPath === '/api/slots' && method === 'GET') {
-        return sendJson(res, data.slots);
+        return sendJson(res, data.slots, 200, req);
     }
     
     if (urlPath === '/api/slots' && method === 'POST') {
+        if (!requireAuth()) return;
         const body = await parseBody(req);
         if (Array.isArray(body)) {
             data.slots = body;
@@ -422,20 +553,22 @@ async function handleAPI(req, res, urlPath, method) {
             data.slots.push({ id: newId, ...body });
         }
         dataChanged = true;
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
     }
     
     // LOGS
     if (urlPath === '/api/logs' && method === 'GET') {
+        if (!requireAdmin()) return;
         const url = new URL(req.url, `http://${req.headers.host}`);
         const limit = parseInt(url.searchParams.get('limit')) || 100;
         const level = url.searchParams.get('level');
         let logs = data.logs;
         if (level) logs = logs.filter(l => l.level === level);
-        return sendJson(res, logs.slice(0, limit));
+        return sendJson(res, logs.slice(0, limit), 200, req);
     }
     
     if (urlPath === '/api/logs' && method === 'POST') {
+        if (!requireAdmin()) return;
         const body = await parseBody(req);
         const entry = {
             timestamp: new Date().toISOString(),
@@ -446,29 +579,25 @@ async function handleAPI(req, res, urlPath, method) {
         data.logs.unshift(entry);
         if (data.logs.length > 500) data.logs = data.logs.slice(0, 500);
         dataChanged = true;
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
     }
     
     // USERS (Admin only)
     if (urlPath === '/api/users' && method === 'GET') {
-        if (!session || session.role !== 'ADMIN') {
-            return sendError(res, 'Keine Berechtigung', 403);
-        }
+        if (!requireAdmin()) return;
         return sendJson(res, data.users.map(u => ({
             id: u.id, username: u.username, role: u.role, created_at: u.created_at
-        })));
+        })), 200, req);
     }
     
     if (urlPath === '/api/users' && method === 'POST') {
-        if (!session || session.role !== 'ADMIN') {
-            return sendError(res, 'Keine Berechtigung', 403);
-        }
+        if (!requireAdmin()) return;
         const body = await parseBody(req);
         if (!body.username || !body.password) {
-            return sendError(res, 'Username und Passwort erforderlich');
+            return sendError(res, 'Username und Passwort erforderlich', 400, req);
         }
         if (data.users.find(u => u.username === body.username)) {
-            return sendError(res, 'Username bereits vergeben', 409);
+            return sendError(res, 'Username bereits vergeben', 409, req);
         }
         const newId = data.users.length > 0 ? Math.max(...data.users.map(u => u.id)) + 1 : 1;
         const user = {
@@ -483,18 +612,16 @@ async function handleAPI(req, res, urlPath, method) {
         dataChanged = true;
         addAuditLog(session, 'USER_CREATED', 'user', newId, { username: body.username });
         log('INFO', `User erstellt: ${user.username}`);
-        return sendJson(res, { success: true, userId: newId });
+        return sendJson(res, { success: true, userId: newId }, 200, req);
     }
     
     // USER UPDATE
     if (urlPath.match(/^\/api\/users\/\d+$/) && method === 'PUT') {
-        if (!session || session.role !== 'ADMIN') {
-            return sendError(res, 'Keine Berechtigung', 403);
-        }
+        if (!requireAdmin()) return;
         const userId = parseInt(urlPath.split('/')[3]);
         const body = await parseBody(req);
         const user = data.users.find(u => u.id === userId);
-        if (!user) return sendError(res, 'User nicht gefunden', 404);
+        if (!user) return sendError(res, 'User nicht gefunden', 404, req);
         
         if (body.username) user.username = body.username;
         if (body.email !== undefined) user.email = body.email;
@@ -502,39 +629,35 @@ async function handleAPI(req, res, urlPath, method) {
         user.updated_at = new Date().toISOString();
         dataChanged = true;
         addAuditLog(session, 'USER_UPDATED', 'user', userId);
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
     }
     
     // USER DELETE
     if (urlPath.match(/^\/api\/users\/\d+$/) && method === 'DELETE') {
-        if (!session || session.role !== 'ADMIN') {
-            return sendError(res, 'Keine Berechtigung', 403);
-        }
+        if (!requireAdmin()) return;
         const userId = parseInt(urlPath.split('/')[3]);
         if (userId === session.userId) {
-            return sendError(res, 'Eigenen Account nicht löschbar', 400);
+            return sendError(res, 'Eigenen Account nicht löschbar', 400, req);
         }
         const idx = data.users.findIndex(u => u.id === userId);
-        if (idx === -1) return sendError(res, 'User nicht gefunden', 404);
+        if (idx === -1) return sendError(res, 'User nicht gefunden', 404, req);
         data.users.splice(idx, 1);
         dataChanged = true;
         addAuditLog(session, 'USER_DELETED', 'user', userId);
         log('INFO', `User gelöscht: ID ${userId}`);
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
     }
     
     // PASSWORD RESET (Admin)
     if (urlPath.match(/^\/api\/users\/\d+\/reset-password$/) && method === 'POST') {
-        if (!session || session.role !== 'ADMIN') {
-            return sendError(res, 'Keine Berechtigung', 403);
-        }
+        if (!requireAdmin()) return;
         const userId = parseInt(urlPath.split('/')[3]);
         const body = await parseBody(req);
         const user = data.users.find(u => u.id === userId);
-        if (!user) return sendError(res, 'User nicht gefunden', 404);
+        if (!user) return sendError(res, 'User nicht gefunden', 404, req);
         
         if (!body.newPassword || body.newPassword.length < 8) {
-            return sendError(res, 'Passwort muss mindestens 8 Zeichen haben', 400);
+            return sendError(res, 'Passwort muss mindestens 8 Zeichen haben', 400, req);
         }
         
         user.password = hashPassword(body.newPassword);
@@ -542,21 +665,19 @@ async function handleAPI(req, res, urlPath, method) {
         dataChanged = true;
         addAuditLog(session, 'PASSWORD_RESET_BY_ADMIN', 'user', userId);
         log('INFO', `Passwort zurückgesetzt für User ID ${userId}`);
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
     }
     
     // AVATAR UPLOAD (simplified - just acknowledge)
     if (urlPath === '/api/users/avatar' && method === 'POST') {
-        if (!session) return sendError(res, 'Nicht authentifiziert', 401);
+        if (!requireAuth()) return;
         // Simplified: don't actually handle file upload, just return success
-        return sendJson(res, { success: true, avatar_url: '/assets/default-avatar.svg' });
+        return sendJson(res, { success: true, avatar_url: '/assets/default-avatar.svg' }, 200, req);
     }
     
     // AUDIT LOGS
     if (urlPath === '/api/audit-logs' && method === 'GET') {
-        if (!session || session.role !== 'ADMIN') {
-            return sendError(res, 'Keine Berechtigung', 403);
-        }
+        if (!requireAdmin()) return;
         const url = new URL(req.url, `http://${req.headers.host}`);
         const limit = parseInt(url.searchParams.get('limit')) || 100;
         const action = url.searchParams.get('action');
@@ -566,19 +687,46 @@ async function handleAPI(req, res, urlPath, method) {
         if (action) logs = logs.filter(l => l.action === action);
         if (actor) logs = logs.filter(l => l.actor_username && l.actor_username.includes(actor));
         
-        return sendJson(res, logs.slice(0, limit));
+        return sendJson(res, logs.slice(0, limit), 200, req);
     }
     
     // SETTINGS
     if (urlPath === '/api/settings' && method === 'GET') {
-        return sendJson(res, data.settings);
+        return sendJson(res, data.settings, 200, req);
     }
     
     if (urlPath === '/api/settings' && method === 'POST') {
+        if (!requireAdmin()) return;
         const body = await parseBody(req);
         data.settings = { ...data.settings, ...body };
         dataChanged = true;
-        return sendJson(res, { success: true });
+        return sendJson(res, { success: true }, 200, req);
+    }
+    
+    // COLOR SCHEME (public GET, admin-only POST)
+    if (urlPath === '/api/colors' && method === 'GET') {
+        return sendJson(res, data.colorScheme || getDefaultColors(), 200, req);
+    }
+    
+    if (urlPath === '/api/colors' && method === 'POST') {
+        if (!requireAdmin()) return;
+        const body = await parseBody(req);
+        data.colorScheme = { ...getDefaultColors(), ...body, updatedAt: new Date().toISOString() };
+        dataChanged = true;
+        saveData();
+        addAuditLog(session, 'COLOR_SCHEME_CHANGED', 'settings', 'colors');
+        log('INFO', `Farbschema geändert von ${session.username}`);
+        return sendJson(res, { success: true, colors: data.colorScheme }, 200, req);
+    }
+    
+    if (urlPath === '/api/colors/reset' && method === 'POST') {
+        if (!requireAdmin()) return;
+        data.colorScheme = { ...getDefaultColors(), updatedAt: new Date().toISOString() };
+        dataChanged = true;
+        saveData();
+        addAuditLog(session, 'COLOR_SCHEME_RESET', 'settings', 'colors');
+        log('INFO', `Farbschema zurückgesetzt von ${session.username}`);
+        return sendJson(res, { success: true, colors: data.colorScheme }, 200, req);
     }
     
     // HEALTH CHECK
@@ -588,10 +736,10 @@ async function handleAPI(req, res, urlPath, method) {
             uptime: process.uptime(),
             memory: process.memoryUsage().heapUsed,
             sessions: sessions.size
-        });
+        }, 200, req);
     }
     
-    return sendError(res, 'Endpoint nicht gefunden', 404);
+    return sendError(res, 'Endpoint nicht gefunden', 404, req);
 }
 
 // ============== HAUPTSERVER ==============
@@ -601,20 +749,25 @@ const server = http.createServer(async (req, res) => {
     let urlPath = req.url.split('?')[0];
     
     // Set global origin for CORS
-    currentRequestOrigin = req.headers.origin || '*';
+    const originAllowed = isAllowedOrigin(req);
+    currentRequestOrigin = originAllowed ? (req.headers.origin || '') : '';
+    if (!originAllowed && req.headers.origin) {
+        return sendError(res, 'CORS nicht erlaubt', 403, req);
+    }
     
     // Rate Limiting
     if (!checkRateLimit(ip)) {
-        return sendError(res, 'Zu viele Anfragen', 429);
+        return sendError(res, 'Zu viele Anfragen', 429, req);
     }
     
     // CORS Preflight
     if (method === 'OPTIONS') {
+        setSecurityHeaders(res, req);
         res.writeHead(204, {
-            'Access-Control-Allow-Origin': currentRequestOrigin,
+            ...(currentRequestOrigin ? { 'Access-Control-Allow-Origin': currentRequestOrigin } : {}),
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Credentials': 'true',
+            ...(currentRequestOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
             'Access-Control-Max-Age': '86400'
         });
         return res.end();
@@ -634,19 +787,19 @@ const server = http.createServer(async (req, res) => {
         
         // Sicherheit: Nur Dateien im Projektverzeichnis
         if (!safePath.startsWith(__dirname)) {
-            return sendError(res, 'Forbidden', 403);
+            return sendError(res, 'Forbidden', 403, req);
         }
         
         if (fs.existsSync(safePath) && fs.statSync(safePath).isFile()) {
-            return sendFile(res, safePath);
+            return sendFile(res, safePath, req);
         }
         
         // Fallback zu index.html für SPA
-        return sendFile(res, path.join(__dirname, 'index.html'));
+        return sendFile(res, path.join(__dirname, 'index.html'), req);
         
     } catch (e) {
         log('ERROR', `Request error: ${e.message}`);
-        return sendError(res, 'Interner Serverfehler', 500);
+        return sendError(res, 'Interner Serverfehler', 500, req);
     }
 });
 
@@ -685,6 +838,9 @@ process.on('unhandledRejection', (reason) => {
 
 // ============== SERVER STARTEN ==============
 loadData();
+if (SESSION_SECRET === 'gewachshaus-fixed-secret-key-2024') {
+    log('WARN', 'SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen');
+}
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log('');

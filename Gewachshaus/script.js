@@ -475,7 +475,7 @@ class FertilizerControlSystem {
         fertilizerControl?.classList.toggle('hidden', mode === 'admin');
         statisticsSection?.classList.toggle('hidden', mode === 'admin');
         logsPanel?.classList.toggle('hidden', mode !== 'profile' && mode !== 'admin');
-        mapViewContent?.classList.toggle('hidden', mode === 'profile');
+        mapViewContent?.classList.toggle('hidden', mode === 'profile' || mode === 'admin');
         rightSidebar?.classList.toggle('hidden', mode === 'profile');
         
         // Editor-UI aktualisieren
@@ -2233,6 +2233,7 @@ class FertilizerControlSystem {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify(logEntry)
             });
             
@@ -2248,7 +2249,9 @@ class FertilizerControlSystem {
         if (!this.serverConfig.enabled) return;
         
         try {
-            const response = await fetch(`${this.serverConfig.url}/api/data`);
+            const response = await fetch(`${this.serverConfig.url}/api/data`, {
+                credentials: 'include'
+            });
             if (response.ok) {
                 const data = await response.json();
                 this.log('INFO', 'Daten vom Server synchronisiert', { 
@@ -2307,6 +2310,7 @@ class FertilizerControlSystem {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     zones: zones,
                     slots: [], // Nicht verwendet im Hochbeet-Modell
@@ -2842,7 +2846,9 @@ class FertilizerControlSystem {
             url.searchParams.set('limit', '200');
             if (level) url.searchParams.set('level', level);
 
-            const response = await fetch(url.toString());
+            const response = await fetch(url.toString(), {
+                credentials: 'include'
+            });
             if (!response.ok) return null;
             const rows = await response.json();
 

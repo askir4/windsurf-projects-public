@@ -4925,3 +4925,203 @@ body.dark-mode .export-option:hover {
         width: 100%;
     }
 }
+
+/* ============== COLOR SETTINGS ============== */
+.color-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.color-group {
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    border: 1px solid var(--border);
+}
+
+.color-group h4 {
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.color-group h4 i {
+    color: var(--primary);
+}
+
+.color-input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.color-input-row:last-child {
+    margin-bottom: 0;
+}
+
+.color-input-row label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    flex: 1;
+}
+
+.color-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.color-input-wrapper input[type="color"] {
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 2px;
+    background: white;
+}
+
+.color-input-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-input-wrapper input[type="color"]::-webkit-color-swatch {
+    border-radius: 4px;
+    border: none;
+}
+
+.hex-input {
+    width: 70px;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-family: monospace;
+    text-transform: uppercase;
+}
+
+.hex-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Color Preview */
+.color-preview-section {
+    margin-bottom: 16px;
+}
+
+.color-preview-section h4 {
+    font-size: 0.85rem;
+    color: var(--text);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.color-preview-section h4 i {
+    color: var(--primary);
+}
+
+.color-preview-box {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.preview-header {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.preview-content {
+    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.preview-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.preview-btn:hover {
+    opacity: 0.85;
+}
+
+.preview-btn.primary {
+    color: white;
+}
+
+.preview-btn.secondary {
+    color: white;
+}
+
+.preview-btn.success {
+    color: white;
+}
+
+.preview-btn.warning {
+    color: white;
+}
+
+.preview-btn.danger {
+    color: white;
+}
+
+.preview-text {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.preview-muted {
+    padding: 0 14px 10px;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.color-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.color-actions .btn {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Dark Mode Color Settings */
+body.dark-mode .color-group {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .hex-input {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #e2e8f0;
+}
+
+body.dark-mode .color-input-wrapper input[type="color"] {
+    background: #2d3748;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .color-preview-box {
+    border-color: rgba(255, 255, 255, 0.1);
+}
