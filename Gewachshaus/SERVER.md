@@ -1,103 +1,292 @@
-# Server-Installation und Konfiguration
+<div align="center">
 
-## Inhalt
-- Voraussetzungen
-- Installation und Start
-- Datenhaltung
-- API Endpunkte (Auszug)
-- SMTP und E-Mail
-- Sicherheit
+# 🖥️ Server-Installation und Konfiguration
+
+**Vollständige Anleitung für das Backend-Setup**
+
+</div>
 
 ---
 
-## Voraussetzungen
-- Node.js 14+
-- npm
+## 📋 Inhaltsverzeichnis
+
+- [📦 Voraussetzungen](#-voraussetzungen)
+- [🚀 Installation & Start](#-installation--start)
+- [💾 Datenhaltung](#-datenhaltung)
+- [🔌 API-Endpunkte](#-api-endpunkte)
+- [📧 E-Mail & SMTP](#-e-mail--smtp)
+- [🔒 Sicherheit](#-sicherheit)
 
 ---
 
-## Installation und Start
+## 📦 Voraussetzungen
+
+| Komponente | Version | Beschreibung |
+|------------|---------|--------------|
+| **Node.js** | 18+ | JavaScript Runtime |
+| **npm** | 9+ | Paketmanager (mit Node.js) |
+
+### Optionale Komponenten
+
+| Komponente | Zweck |
+|------------|-------|
+| **Node-RED** | Sensor-Integration über WebSocket |
+| **SMTP-Server** | E-Mail-Versand für Alarme |
+
+---
+
+## 🚀 Installation & Start
+
+### Schnellstart
 
 ```bash
+# Abhängigkeiten installieren
 npm install
+
+# Server starten
 npm start
 ```
 
-Optional (Raspberry Pi Startskript):
-```bash
-npm run start:daemon
-npm run start:status
-npm run start:logs
+### Startoptionen
+
+| Befehl | Beschreibung |
+|--------|-------------|
+| `npm start` | Normaler Start |
+| `npm run dev` | Entwicklungsmodus |
+| `npm run start:daemon` | Als Hintergrundprozess (Raspberry Pi) |
+| `npm run start:status` | Status des Daemon prüfen |
+| `npm run start:logs` | Logs des Daemon anzeigen |
+| `npm run start:stop` | Daemon stoppen |
+
+### Zugriff
+
+```
+🌐 Weboberfläche:  http://localhost:3001
+❤️ Health-Check:   http://localhost:3001/api/health
 ```
 
-Standard URL: http://localhost:3001
+---
+
+## 💾 Datenhaltung
+
+### Übersicht
+
+Der Server verwendet eine einfache JSON-Datei als Datenbank.
+
+```
+📁 data.json
+├── 👥 users          # Benutzerkonten
+├── 🌱 zones          # Hochbeete/Zonen
+├── 🌿 plants         # Pflanzen
+├── 💬 forumPosts     # Forum-Beiträge
+├── ⚙️ settings       # Allgemeine Einstellungen
+├── 🎨 colorScheme    # Farbschema
+├── 📧 emailConfig    # E-Mail-Konfiguration
+├── 📋 emailLogs      # Versandprotokoll
+├── 📝 logs           # System-Logs
+└── 🔍 auditLogs      # Audit-Logs
+```
+
+### Sicherheitsmerkmale
+
+| Feature | Beschreibung |
+|---------|-------------|
+| **Atomisches Schreiben** | Schreiben in temporäre Datei, dann Umbenennen |
+| **Backup bei Fehlern** | Automatische Sicherung vor Überschreiben |
+| **Debounced Saving** | Verzögertes Speichern zur Lastreduzierung |
 
 ---
 
-## Datenhaltung
+## 🔌 API-Endpunkte
 
-- Alle Daten in `data.json`
-- Atomisches Speichern (tmp + rename)
-- Backup bei Fehlern
+### 🔐 Authentifizierung
 
-Wichtige Bereiche:
-- forumPosts
-- settings
-- emailConfig (SMTP, Templates, Default, Empfaenger)
-- emailLogs
+| Methode | Endpunkt | Beschreibung | Auth |
+|---------|----------|--------------|------|
+| `POST` | `/api/auth/login` | Benutzer anmelden | ❌ |
+| `POST` | `/api/auth/logout` | Benutzer abmelden | ✅ |
+| `GET` | `/api/auth/me` | Aktueller Benutzer | ✅ |
+| `POST` | `/api/auth/change-password` | Passwort ändern | ✅ |
+
+### 📊 Daten
+
+| Methode | Endpunkt | Beschreibung | Auth |
+|---------|----------|--------------|------|
+| `GET` | `/api/data` | Alle Daten abrufen | ❌ |
+| `POST` | `/api/data` | Daten speichern | ✅ |
+
+### 🌱 Zonen & Pflanzen
+
+| Methode | Endpunkt | Beschreibung | Auth |
+|---------|----------|--------------|------|
+| `GET` | `/api/zones` | Alle Zonen | ❌ |
+| `POST` | `/api/zones` | Zone erstellen | ✅ |
+| `GET` | `/api/plants` | Alle Pflanzen | ❌ |
+| `POST` | `/api/plants` | Pflanze hinzufügen | ✅ |
+| `PUT` | `/api/plants/:id` | Pflanze aktualisieren | ✅ |
+| `DELETE` | `/api/plants/:id` | Pflanze löschen | ✅ |
+
+### 💬 Forum
+
+| Methode | Endpunkt | Beschreibung | Auth |
+|---------|----------|--------------|------|
+| `GET` | `/api/forum/posts` | Alle Beiträge | ❌ |
+| `POST` | `/api/forum/posts` | Beitrag erstellen | ❌* |
+| `POST` | `/api/forum/posts/:id/comments` | Kommentar hinzufügen | ❌* |
+
+> *Gäste können posten, aber der Autor wird als "Gast" angezeigt.
+
+### 👥 Benutzerverwaltung (Admin)
+
+| Methode | Endpunkt | Beschreibung | Auth |
+|---------|----------|--------------|------|
+| `GET` | `/api/users` | Alle Benutzer | 🔐 Admin |
+| `POST` | `/api/users` | Benutzer erstellen | 🔐 Admin |
+| `PUT` | `/api/users/:id` | Benutzer bearbeiten | 🔐 Admin |
+| `DELETE` | `/api/users/:id` | Benutzer löschen | 🔐 Admin |
+| `POST` | `/api/users/:id/reset-password` | Passwort zurücksetzen | 🔐 Admin |
+
+### 📧 E-Mail-Konfiguration (Admin)
+
+| Methode | Endpunkt | Beschreibung |
+|---------|----------|--------------|
+| `GET` | `/api/email/smtp` | SMTP-Einstellungen abrufen |
+| `POST` | `/api/email/smtp` | SMTP-Einstellungen speichern |
+| `POST` | `/api/email/test` | Test-E-Mail senden |
+| `GET` | `/api/email/templates` | Alle Templates |
+| `POST` | `/api/email/templates` | Template erstellen |
+| `PUT` | `/api/email/templates/:id` | Template bearbeiten |
+| `DELETE` | `/api/email/templates/:id` | Template löschen |
+| `GET` | `/api/email/config` | E-Mail-Konfiguration |
+| `POST` | `/api/email/config` | E-Mail-Konfiguration speichern |
+| `GET` | `/api/email/logs` | Versandprotokoll |
+
+### 🎨 Farbschema
+
+| Methode | Endpunkt | Beschreibung | Auth |
+|---------|----------|--------------|------|
+| `GET` | `/api/colors` | Aktuelles Farbschema | ❌ |
+| `POST` | `/api/colors` | Farbschema speichern | 🔐 Admin |
+| `POST` | `/api/colors/reset` | Auf Standard zurücksetzen | 🔐 Admin |
+
+### ❤️ System
+
+| Methode | Endpunkt | Beschreibung |
+|---------|----------|--------------|
+| `GET` | `/api/health` | Health-Check |
+| `GET` | `/api/logs` | System-Logs (Admin) |
+| `GET` | `/api/audit-logs` | Audit-Logs (Admin) |
 
 ---
 
-## API Endpunkte (Auszug)
+## 📧 E-Mail & SMTP
 
-### Daten
-- GET /api/data
-- POST /api/data
+### SMTP-Konfiguration
 
-### Forum
-- GET /api/forum/posts
-- POST /api/forum/posts
-- POST /api/forum/posts/:id/comments
+Die SMTP-Einstellungen werden im Admin Panel unter **E-Mail → SMTP-Einstellungen** konfiguriert.
 
-### SMTP und E-Mail (Admin)
-- GET /api/email/smtp
-- POST /api/email/smtp
-- POST /api/email/test
+| Feld | Beschreibung | Beispiel |
+|------|-------------|----------|
+| **Host** | SMTP-Server | `smtp.gmail.com` |
+| **Port** | SMTP-Port | `587` (TLS) oder `465` (SSL) |
+| **Benutzer** | E-Mail-Adresse | `alarm@example.com` |
+| **Passwort** | App-Passwort | `xxxx xxxx xxxx xxxx` |
+| **Verschlüsselung** | TLS oder SSL | TLS (empfohlen) |
+| **Absender** | Von-Adresse | `Gewächshaus <alarm@example.com>` |
 
-### Templates (Admin)
-- GET /api/email/templates
-- POST /api/email/templates
-- PUT /api/email/templates/:id
-- DELETE /api/email/templates/:id
+### Beispiel-Konfigurationen
 
-### E-Mail Konfiguration (Admin)
-- GET /api/email/config
-- POST /api/email/config
+#### Gmail
 
-### E-Mail Logs (Admin)
-- GET /api/email/logs?limit=100
+```
+Host:     smtp.gmail.com
+Port:     587
+TLS:      Ja
+Benutzer: deine-email@gmail.com
+Passwort: App-Passwort (16 Zeichen)
+```
 
-### Alarm Versand (intern)
-- POST /api/email/alarms/send
+> ⚠️ Bei Gmail: 2-Faktor-Authentifizierung aktivieren und [App-Passwort](https://myaccount.google.com/apppasswords) erstellen.
+
+#### Eigener Server
+
+```
+Host:     mail.example.com
+Port:     587
+TLS:      Ja
+Benutzer: alarm@example.com
+Passwort: Dein Passwort
+```
+
+### Template-Platzhalter
+
+E-Mail-Templates unterstützen folgende Platzhalter:
+
+| Platzhalter | Beschreibung | Beispiel |
+|-------------|-------------|----------|
+| `{sensor_name}` | Name des Sensors | `Temperatur` |
+| `{sensor_value}` | Aktueller Wert | `35.2` |
+| `{timestamp}` | Zeitstempel | `2026-01-19 14:30:00` |
+| `{threshold}` | Schwellwert | `30` |
+| `{alarm_type}` | Art des Alarms | `Überschreitung Maximum` |
+| `{details}` | Zusätzliche Details | `Zone: Hochbeet 1` |
+
+### Beispiel-Template
+
+```html
+<h2>⚠️ Alarm: {sensor_name}</h2>
+
+<p>Der Sensor <strong>{sensor_name}</strong> hat einen kritischen Wert erreicht.</p>
+
+<table>
+  <tr><td>Aktueller Wert:</td><td><strong>{sensor_value}</strong></td></tr>
+  <tr><td>Schwellwert:</td><td>{threshold}</td></tr>
+  <tr><td>Zeitpunkt:</td><td>{timestamp}</td></tr>
+</table>
+
+<p>{details}</p>
+```
 
 ---
 
-## SMTP und Platzhalter
+## 🔒 Sicherheit
 
-Verfuegbare Platzhalter in Templates:
-- {sensor_name}
-- {sensor_value}
-- {timestamp}
-- {threshold}
-- {alarm_type}
-- {details}
+### Implementierte Maßnahmen
+
+| Feature | Beschreibung |
+|---------|-------------|
+| **Rate Limiting** | Max. 100 Requests/Minute pro IP |
+| **Auth Rate Limiting** | Max. 10 Login-Versuche / 10 Min |
+| **Security Headers** | X-Content-Type-Options, X-Frame-Options, etc. |
+| **Body Limit** | Maximale Request-Größe: 1 MB |
+| **Session Cookies** | HttpOnly, SameSite=Lax, Secure (HTTPS) |
+| **Password Hashing** | scrypt mit Salt |
+| **CORS** | Konfigurierbare Origins |
+
+### Security Headers
+
+```
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+Strict-Transport-Security: max-age=15552000 (nur HTTPS)
+```
+
+### Empfehlungen für Produktion
+
+| Empfehlung | Beschreibung |
+|------------|-------------|
+| ✅ **HTTPS aktivieren** | Nginx/Caddy als Reverse Proxy |
+| ✅ **SESSION_SECRET setzen** | Eigener geheimer Schlüssel |
+| ✅ **Admin-Passwort ändern** | Kein Standard-Passwort verwenden |
+| ✅ **Firewall konfigurieren** | Nur Port 80/443 öffentlich |
+| ⚠️ **Backup erstellen** | Regelmäßiges Backup von `data.json` |
 
 ---
 
-## Sicherheit
+<div align="center">
 
-- Rate Limiting (In-Memory)
-- Security Headers
-- Body Limit (1MB)
+**[← Zurück zur README](README.md)**
 
-Hinweis: SMTP Zugangsdaten werden in `data.json` gespeichert. Die UI zeigt Passwoerter nicht an und sendet sie nur bei Aenderung.
+</div>
