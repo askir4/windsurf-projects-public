@@ -28,6 +28,7 @@ let data = {
     users: [],
     logs: [],
     auditLogs: [],
+    forumPosts: [],
     settings: {}
 };
 
@@ -36,6 +37,7 @@ function loadData() {
         if (fs.existsSync(DB_FILE)) {
             const raw = fs.readFileSync(DB_FILE, 'utf8');
             data = JSON.parse(raw);
+            if (!data.forumPosts) data.forumPosts = [];
             log('INFO', 'Daten geladen');
         } else {
             // Default Admin erstellen
@@ -701,6 +703,68 @@ async function handleAPI(req, res, urlPath, method) {
         data.settings = { ...data.settings, ...body };
         dataChanged = true;
         return sendJson(res, { success: true }, 200, req);
+    }
+
+    // FORUM (public GET, public POST)
+    if (urlPath === '/api/forum/posts' && method === 'GET') {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const limit = Math.min(parseInt(url.searchParams.get('limit')) || 50, 200);
+        const posts = (data.forumPosts || []).slice(0, limit);
+        return sendJson(res, posts, 200, req);
+    }
+    
+    if (urlPath === '/api/forum/posts' && method === 'POST') {
+        const body = await parseBody(req);
+        const content = (body.content || '').trim();
+        if (!content) return sendError(res, 'Inhalt erforderlich', 400, req);
+        if (content.length > 2000) return sendError(res, 'Inhalt zu lang', 400, req);
+        const authorName = session?.username || 'Gast';
+
+        const newId = data.forumPosts.length > 0
+            ? Math.max(...data.forumPosts.map(p => p.id)) + 1
+            : 1;
+        const post = {
+            id: newId,
+            author_user_id: session?.userId || null,
+            author_username: authorName,
+            content,
+            created_at: new Date().toISOString(),
+            comments: []
+        };
+        data.forumPosts.unshift(post);
+        dataChanged = true;
+        if (session) {
+            addAuditLog(session, 'FORUM_POST_CREATED', 'forum_post', newId);
+        }
+        return sendJson(res, { success: true, post }, 200, req);
+    }
+
+    if (urlPath.match(/^\/api\/forum\/posts\/\d+\/comments$/) && method === 'POST') {
+        const postId = parseInt(urlPath.split('/')[4]);
+        const body = await parseBody(req);
+        const content = (body.content || '').trim();
+        if (!content) return sendError(res, 'Inhalt erforderlich', 400, req);
+        if (content.length > 1000) return sendError(res, 'Inhalt zu lang', 400, req);
+        const authorName = session?.username || 'Gast';
+
+        const post = data.forumPosts.find(p => p.id === postId);
+        if (!post) return sendError(res, 'Beitrag nicht gefunden', 404, req);
+        const newCommentId = post.comments.length > 0
+            ? Math.max(...post.comments.map(c => c.id)) + 1
+            : 1;
+        const comment = {
+            id: newCommentId,
+            author_user_id: session?.userId || null,
+            author_username: authorName,
+            content,
+            created_at: new Date().toISOString()
+        };
+        post.comments.push(comment);
+        dataChanged = true;
+        if (session) {
+            addAuditLog(session, 'FORUM_COMMENT_CREATED', 'forum_post', postId, { commentId: newCommentId });
+        }
+        return sendJson(res, { success: true, comment }, 200, req);
     }
     
     // COLOR SCHEME (public GET, admin-only POST)

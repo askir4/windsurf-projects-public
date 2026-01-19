@@ -88,6 +88,10 @@ class FertilizerControlSystem {
                 waterTank: 'sensors/water_tank',
                 waterLevel: 'sensors/water_level',
                 waterTemperature: 'sensors/water_temperature'
+            },
+            actuators: {
+                valve: 'actuators/valve',
+                pump: 'actuators/pump'
             }
         };
         
@@ -157,6 +161,9 @@ class FertilizerControlSystem {
         // Performance: Debounced save
         this._saveDebounceTimer = null;
         this._debouncedSave = this.debounce(() => this._saveToLocalStorageImmediate(), 500);
+        
+        // Forum
+        this.forumPosts = [];
         
         this.init();
     }
@@ -239,6 +246,7 @@ class FertilizerControlSystem {
         document.getElementById('viewMode').addEventListener('click', () => this.setMode('view'));
         document.getElementById('editMode').addEventListener('click', () => this.setMode('edit'));
         document.getElementById('profileMode')?.addEventListener('click', () => this.setMode('profile'));
+        document.getElementById('forumMode')?.addEventListener('click', () => this.setMode('forum'));
         
         // Pflanzenformular
         document.getElementById('plantForm').addEventListener('submit', (e) => {
@@ -433,10 +441,16 @@ class FertilizerControlSystem {
                 // Live-Update deaktiviert - nur bei "Anwenden" speichern
             });
         });
+
+        // Forum
+        document.getElementById('forumPostForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.createForumPost();
+        });
     }
     
     setMode(mode) {
-        if (typeof authManager !== 'undefined' && authManager && !authManager.isAuthenticated() && mode !== 'view') {
+        if (typeof authManager !== 'undefined' && authManager && !authManager.isAuthenticated() && mode !== 'view' && mode !== 'forum') {
             this.showToast('Bitte anmelden, um diesen Modus zu verwenden', 'error');
             return;
         }
@@ -448,12 +462,14 @@ class FertilizerControlSystem {
         document.getElementById('editMode').classList.toggle('active', mode === 'edit');
         document.getElementById('adminMode')?.classList.toggle('active', mode === 'admin');
         document.getElementById('profileMode')?.classList.toggle('active', mode === 'profile');
+        document.getElementById('forumMode')?.classList.toggle('active', mode === 'forum');
         
         // Panels anzeigen/verstecken
         document.getElementById('plantManagement')?.classList.toggle('hidden', mode !== 'view');
         document.getElementById('mapEditor')?.classList.toggle('hidden', mode !== 'edit');
         document.getElementById('adminPanel')?.classList.toggle('hidden', mode !== 'admin');
         document.getElementById('profilePanel')?.classList.toggle('hidden', mode !== 'profile');
+        document.getElementById('forumPanel')?.classList.toggle('hidden', mode !== 'forum');
         
         // Map und rechte Sidebar nur in view/edit zeigen
         const mapContainer = document.querySelector('.map-container');
@@ -475,7 +491,7 @@ class FertilizerControlSystem {
         fertilizerControl?.classList.toggle('hidden', mode === 'admin');
         statisticsSection?.classList.toggle('hidden', mode === 'admin');
         logsPanel?.classList.toggle('hidden', mode !== 'profile' && mode !== 'admin');
-        mapViewContent?.classList.toggle('hidden', mode === 'profile' || mode === 'admin');
+        mapViewContent?.classList.toggle('hidden', mode === 'profile' || mode === 'admin' || mode === 'forum');
         rightSidebar?.classList.toggle('hidden', mode === 'profile');
         
         // Editor-UI aktualisieren
@@ -486,6 +502,10 @@ class FertilizerControlSystem {
         // Profil-Daten laden
         if (mode === 'profile' && typeof authManager !== 'undefined') {
             authManager.loadProfileData();
+        }
+
+        if (mode === 'forum') {
+            this.loadForumPosts();
         }
         
         this.render();
@@ -1719,8 +1739,37 @@ class FertilizerControlSystem {
         this.updateBedSelectionUI();
         this.saveToLocalStorage();
         this.render();
+        this.sendFertilizerCommandToNodeRed(nitrogen, phosphorus, potassium);
         
         this.showToast(`Dünger erfolgreich auf ${this.selectedBeds.length} Hochbeet(e) angewendet`, 'success');
+    }
+
+    sendFertilizerCommandToNodeRed(nitrogen, phosphorus, potassium) {
+        if (!this.nodeRed?.enabled || !this.nodeRedSocket || this.nodeRedSocket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+        
+        const beds = this.selectedBeds.map(b => ({
+            id: b.id,
+            name: b.name,
+            fertilizer: { nitrogen, phosphorus, potassium }
+        }));
+        
+        const payload = {
+            beds,
+            totalBeds: beds.length,
+            fertilizer: { nitrogen, phosphorus, potassium },
+            timestamp: new Date().toISOString()
+        };
+        
+        const commands = [
+            { topic: this.nodeRed.actuators.valve, payload },
+            { topic: this.nodeRed.actuators.pump, payload }
+        ];
+        
+        commands.forEach(cmd => {
+            this.nodeRedSocket.send(JSON.stringify(cmd));
+        });
     }
     
     // ========== DATEN-MANAGEMENT ==========
@@ -3223,6 +3272,112 @@ class FertilizerControlSystem {
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.toggle('active', content.id === `inline-${tabName}-tab`);
         });
+    }
+
+    // ========== FORUM ==========
+    async loadForumPosts() {
+        const container = document.getElementById('forumPosts');
+        if (!container) return;
+        container.innerHTML = '<div class="forum-loading">Lade Beiträge...</div>';
+        
+        try {
+            const res = await fetch('/api/forum/posts?limit=100', { credentials: 'include' });
+            if (!res.ok) throw new Error('Forum nicht erreichbar');
+            this.forumPosts = await res.json();
+            this.renderForumPosts();
+        } catch (e) {
+            container.innerHTML = '<div class="forum-empty">Forum konnte nicht geladen werden.</div>';
+        }
+    }
+
+    renderForumPosts() {
+        const container = document.getElementById('forumPosts');
+        if (!container) return;
+        if (!this.forumPosts || this.forumPosts.length === 0) {
+            container.innerHTML = '<div class="forum-empty">Noch keine Beiträge.</div>';
+            return;
+        }
+        
+        container.innerHTML = this.forumPosts.map(post => {
+            const comments = post.comments || [];
+            const created = post.created_at ? new Date(post.created_at).toLocaleString('de-DE') : '';
+            return `
+                <div class="forum-post" data-post-id="${post.id}">
+                    <div class="forum-post-header">
+                        <span class="forum-author">${this.escapeHtml(post.author_username || 'Unbekannt')}</span>
+                        <span class="forum-date">${this.escapeHtml(created)}</span>
+                    </div>
+                    <div class="forum-post-content">${this.escapeHtml(post.content || '')}</div>
+                    <div class="forum-comments">
+                        <div class="forum-comments-title">Kommentare (${comments.length})</div>
+                        ${comments.map(c => {
+                            const cDate = c.created_at ? new Date(c.created_at).toLocaleString('de-DE') : '';
+                            return `
+                                <div class="forum-comment">
+                                    <div class="forum-comment-header">
+                                        <span class="forum-author">${this.escapeHtml(c.author_username || 'Unbekannt')}</span>
+                                        <span class="forum-date">${this.escapeHtml(cDate)}</span>
+                                    </div>
+                                    <div class="forum-comment-content">${this.escapeHtml(c.content || '')}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                        <form class="forum-comment-form" data-post-id="${post.id}">
+                            <input type="text" maxlength="1000" placeholder="Kommentar schreiben...">
+                            <button type="submit" class="btn btn-secondary btn-sm">Kommentieren</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        container.querySelectorAll('.forum-comment-form').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const postId = parseInt(form.dataset.postId);
+                const input = form.querySelector('input');
+                const content = input?.value.trim();
+                if (!content) return;
+                this.addForumComment(postId, content, input);
+            });
+        });
+    }
+
+    async createForumPost() {
+        const input = document.getElementById('forumPostContent');
+        if (!input) return;
+        const content = input.value.trim();
+        if (!content) return;
+        
+        try {
+            const res = await fetch('/api/forum/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ content })
+            });
+            if (!res.ok) throw new Error('Fehler beim Posten');
+            input.value = '';
+            await this.loadForumPosts();
+        } catch {
+            this.showToast('Beitrag konnte nicht erstellt werden', 'error');
+        }
+    }
+
+    async addForumComment(postId, content, inputEl) {
+        try {
+            const res = await fetch(`/api/forum/posts/${postId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ content })
+            });
+            if (!res.ok) throw new Error('Kommentar fehlgeschlagen');
+            if (inputEl) inputEl.value = '';
+            await this.loadForumPosts();
+        } catch {
+            this.showToast('Kommentar konnte nicht erstellt werden', 'error');
+        }
     }
 }
 

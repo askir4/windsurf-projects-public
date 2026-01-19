@@ -43,6 +43,8 @@ Erstelle in Node-RED einen **WebSocket out** Node:
 | `sensors/water_tank` | Wassertank (Level + Temperatur) | Objekt |
 | `sensors/water_level` | Wassertank-Fuellstand | Zahl (Liter) |
 | `sensors/water_temperature` | Wassertank-Temperatur | Zahl in °C |
+| `actuators/valve` | Magnetventil (Duenger) | Objekt |
+| `actuators/pump` | Pumpe (Duenger) | Objekt |
 
 ### Payload-Varianten
 
@@ -79,6 +81,84 @@ Die Webapp akzeptiert zwei Varianten:
 }
 ```
 
+### Beispiel fuer Duenger-Aktor (Ventil/Pumpe)
+
+Wenn in der UI auf **"Dünger anwenden"** geklickt wird, sendet die Webapp zwei Nachrichten:
+
+- `actuators/valve`
+- `actuators/pump`
+
+Payload-Format:
+
+```json
+{
+  "beds": [
+    {
+      "id": 1,
+      "name": "Hochbeet 1",
+      "fertilizer": { "nitrogen": 5, "phosphorus": 2, "potassium": 3 }
+    }
+  ],
+  "totalBeds": 1,
+  "fertilizer": { "nitrogen": 5, "phosphorus": 2, "potassium": 3 },
+  "timestamp": "2026-01-16T12:00:00.000Z"
+}
+```
+
+## 4) Node-RED: Magnetventil
+
+1. **WebSocket in** Node (`/ws`, Listen on)
+2. **Switch** Node:
+   - Property: `msg.topic`
+   - Case: `actuators/valve`
+3. **Function** Node (dauer in ms berechnen)
+
+Beispiel-Function:
+
+```javascript
+const fert = msg.payload.fertilizer || {};
+const total = (fert.nitrogen || 0) + (fert.phosphorus || 0) + (fert.potassium || 0);
+const durationMs = Math.max(1000, Math.round(total * 1000));
+
+return {
+  payload: {
+    open: true,
+    durationMs,
+    beds: msg.payload.beds || []
+  }
+};
+```
+
+4. **GPIO out** (Ventil)
+5. Optional: **Delay** und dann GPIO `off`
+
+## 5) Node-RED: Pumpe
+
+1. **WebSocket in** Node (`/ws`, Listen on)
+2. **Switch** Node:
+   - Property: `msg.topic`
+   - Case: `actuators/pump`
+3. **Function** Node
+
+Beispiel-Function:
+
+```javascript
+const fert = msg.payload.fertilizer || {};
+const total = (fert.nitrogen || 0) + (fert.phosphorus || 0) + (fert.potassium || 0);
+const durationMs = Math.max(1000, Math.round(total * 1200));
+
+return {
+  payload: {
+    on: true,
+    durationMs,
+    beds: msg.payload.beds || []
+  }
+};
+```
+
+4. **GPIO out** (Pumpe)
+5. Optional: **Delay** und dann GPIO `off`
+
 ## 4) Beispiel-Flow (Function + WebSocket)
 
 Minimaler Flow:
@@ -111,4 +191,3 @@ In der Webapp:
 - **Keine Daten:** WebSocket-URL pruefen, `nodeRed.enabled` aktiv?
 - **Keine Werte im UI:** Topics exakt wie oben verwenden.
 - **Falsche Einheiten:** Die UI erwartet °C und % als reine Zahlen.
-

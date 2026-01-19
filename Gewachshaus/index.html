@@ -248,6 +248,9 @@
                         <button id="profileMode" class="btn btn-secondary mode-btn">
                             <i class="fas fa-user-circle"></i> Profil
                         </button>
+                        <button id="forumMode" class="btn btn-secondary mode-btn">
+                            <i class="fas fa-comments"></i> Forum
+                        </button>
                     </div>
                 </section>
 
@@ -874,6 +877,22 @@
                         <span class="log-count" id="logCount">0 Einträge</span>
                         <span class="log-last-update" id="logLastUpdate">Zuletzt aktualisiert: --</span>
                     </div>
+                </section>
+
+                <!-- Forum -->
+                <section class="forum-panel hidden" id="forumPanel">
+                    <div class="forum-header">
+                        <h2><i class="fas fa-comments"></i> Forum</h2>
+                        <p class="forum-subtitle">Austausch, Hinweise und Fragen rund ums Gewächshaus.</p>
+                    </div>
+                    <form id="forumPostForm" class="forum-post-form">
+                        <label for="forumPostContent">Neuer Beitrag</label>
+                        <textarea id="forumPostContent" rows="4" maxlength="2000" placeholder="Schreibe einen Beitrag..."></textarea>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Beitrag posten
+                        </button>
+                    </form>
+                    <div id="forumPosts" class="forum-posts"></div>
                 </section>
             </section>
 
