@@ -1,64 +1,31 @@
-# Implementation Notes
+# Implementation Notes (Current)
 
-## ✅ Implementierung abgeschlossen
+## Architektur
+- Server: `server-simple.js` (HTTP, keine Express Abhaengigkeiten)
+- Datenhaltung: `data.json` (atomisches Schreiben, Backups bei Fehlern)
+- Sessions: In-Memory Map (Cookie `session`)
 
-**Datum**: 2026-01-16
+## Rollen
+- ADMIN: Admin Panel, E-Mail Konfiguration, Templates, Logs
+- NORMAL_USER/Gast: Forum, Pflanzen, Sensoren (je nach UI Modus)
 
-## Annahmen und Entscheidungen
+## Forum
+- Tags, Suche (User + Inhalt)
+- Highlighting der Treffer
+- Kommentare pro Beitrag einklappbar
 
-### Authentifizierung
-- **Session-basiert**: Verwendung von `express-session` mit SQLite-Store für persistente Sessions
-- **Password Hashing**: bcryptjs mit cost factor 12 (Pure JS, keine native Compilation nötig)
-- **Default Admin**: Beim ersten Start wird ein Admin-User erstellt (Credentials aus ENV oder Default)
+## Sensoren und Alarme
+- Schwellwerte (Temperatur Min/Max, Luftfeuchte Min/Max, Bodenfeuchte Min/Max)
+- Wassertank Warnung
+- Alarm E-Mail wird nur bei Zustandswechsel (OK -> Alarm) gesendet
 
-### Rollen (RBAC)
-- `ADMIN`: Vollzugriff (User-Verwaltung, Logs, alle Daten)
-- `NORMAL_USER`: Pflanzen hinzufügen/bearbeiten, düngen, eigene Notizen
+## SMTP / E-Mail
+- SMTP Settings im Admin Panel
+- Templates mit Platzhaltern: {sensor_name}, {sensor_value}, {timestamp}, {threshold}, {alarm_type}, {details}
+- Logs fuer Test- und Alarm-Mails
 
-### Datenmodell-Erweiterungen
-- `users`: id, username, email, password_hash, role, avatar_url, created_at, updated_at
-- `audit_logs`: id, actor_user_id, actor_username, action, entity_type, entity_id, metadata_json, ip, user_agent, created_at
-- `notes`: Erweitert um author_user_id (Migration für bestehende Daten)
+## Sicherheit
+- Rate Limiting (In-Memory)
+- Security Headers
+- CORS Restrictions
 
-### Avatar-Upload
-- Speicherort: `/uploads/avatars/`
-- Erlaubte Formate: PNG, JPG, WEBP
-- Max. Größe: 2MB
-- Dateiname: `{user_id}_{timestamp}.{ext}`
-
-### Security
-- Sessions invalidieren nach Passwort-Änderung
-- Rate-Limiting auf Auth-Endpoints (5 Versuche/Minute)
-- Password Policy: Min. 8 Zeichen
-- Keine Passwörter in Logs oder API-Responses
-
-### Environment Variables
-```
-SESSION_SECRET=<random-string-min-32-chars>
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=<initial-admin-password>
-ADMIN_EMAIL=admin@example.com
-```
-
-## Änderungs-Log
-
-### Phase 1: Backend Auth
-- [x] Dependencies hinzugefügt (bcrypt, express-session, better-sqlite3-session-store, multer)
-- [x] Users-Tabelle erstellt
-- [x] AuditLog-Tabelle erstellt
-- [x] Auth-Middleware implementiert
-- [x] RBAC Guards implementiert
-- [x] Login/Logout Endpoints
-- [x] User CRUD (Admin only)
-
-### Phase 2: Frontend Auth
-- [x] Login-Seite
-- [x] User-Menü
-- [x] Admin-Bereich
-- [x] Role-based Navigation
-
-### Phase 3: Features
-- [x] Avatar Upload
-- [x] Notizen mit Author
-- [x] Audit-Log UI
-- [x] "Used by" Section mit Logo

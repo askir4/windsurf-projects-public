@@ -8,6 +8,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 
 // ============== KONFIGURATION ==============
 const PORT = process.env.PORT || 3001;
@@ -30,7 +31,21 @@ function createEmptyData() {
         logs: [],
         auditLogs: [],
         forumPosts: [],
-        settings: {}
+        settings: {},
+        emailConfig: {
+            smtp: {
+                host: '',
+                port: 587,
+                user: '',
+                pass: '',
+                from: '',
+                encryption: 'starttls' // none | ssl | starttls
+            },
+            templates: [],
+            defaultTemplateId: null,
+            recipients: []
+        },
+        emailLogs: []
     };
 }
 
@@ -47,7 +62,39 @@ function normalizeData(loaded) {
         logs: Array.isArray(merged.logs) ? merged.logs : base.logs,
         auditLogs: Array.isArray(merged.auditLogs) ? merged.auditLogs : base.auditLogs,
         forumPosts: Array.isArray(merged.forumPosts) ? merged.forumPosts : base.forumPosts,
-        settings: merged.settings && typeof merged.settings === 'object' ? merged.settings : base.settings
+        settings: merged.settings && typeof merged.settings === 'object' ? merged.settings : base.settings,
+        emailConfig: normalizeEmailConfig(merged.emailConfig),
+        emailLogs: Array.isArray(merged.emailLogs) ? merged.emailLogs : base.emailLogs
+    };
+}
+
+function normalizeEmailConfig(cfg) {
+    const base = {
+        smtp: {
+            host: '',
+            port: 587,
+            user: '',
+            pass: '',
+            from: '',
+            encryption: 'starttls'
+        },
+        templates: [],
+        defaultTemplateId: null,
+        recipients: []
+    };
+    const data = cfg && typeof cfg === 'object' ? cfg : {};
+    return {
+        smtp: {
+            host: typeof data.smtp?.host === 'string' ? data.smtp.host : base.smtp.host,
+            port: Number.isFinite(parseInt(data.smtp?.port, 10)) ? parseInt(data.smtp.port, 10) : base.smtp.port,
+            user: typeof data.smtp?.user === 'string' ? data.smtp.user : base.smtp.user,
+            pass: typeof data.smtp?.pass === 'string' ? data.smtp.pass : base.smtp.pass,
+            from: typeof data.smtp?.from === 'string' ? data.smtp.from : base.smtp.from,
+            encryption: ['none', 'ssl', 'starttls'].includes(data.smtp?.encryption) ? data.smtp.encryption : base.smtp.encryption
+        },
+        templates: Array.isArray(data.templates) ? data.templates : base.templates,
+        defaultTemplateId: data.defaultTemplateId || null,
+        recipients: Array.isArray(data.recipients) ? data.recipients.filter(r => typeof r === 'string') : base.recipients
     };
 }
 
@@ -234,6 +281,90 @@ function addAuditLog(session, action, entityType = null, entityId = null, metada
     if (data.auditLogs.length > 500) {
         data.auditLogs = data.auditLogs.slice(0, 500);
     }
+    dataChanged = true;
+}
+
+function sanitizeEmailList(recipients) {
+    if (!Array.isArray(recipients)) return [];
+    return recipients
+        .map(r => typeof r === 'string' ? r.trim() : '')
+        .filter(r => r.includes('@'));
+}
+
+function getEmailConfigSafe(includePassword = false) {
+    const cfg = data.emailConfig || normalizeEmailConfig();
+    return {
+        smtp: {
+            host: cfg.smtp.host,
+            port: cfg.smtp.port,
+            user: cfg.smtp.user,
+            from: cfg.smtp.from,
+            encryption: cfg.smtp.encryption,
+            ...(includePassword ? { pass: cfg.smtp.pass } : {})
+        },
+        templates: cfg.templates || [],
+        defaultTemplateId: cfg.defaultTemplateId || null,
+        recipients: cfg.recipients || []
+    };
+}
+
+function createSmtpTransport() {
+    const cfg = getEmailConfigSafe(true).smtp;
+    if (!cfg.host || !cfg.port || !cfg.from) {
+        throw new Error('SMTP unvollständig konfiguriert');
+    }
+    const isSecure = cfg.encryption === 'ssl';
+    const transportOptions = {
+        host: cfg.host,
+        port: cfg.port,
+        secure: isSecure,
+        auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined
+    };
+    if (cfg.encryption === 'starttls') {
+        transportOptions.requireTLS = true;
+    }
+    return nodemailer.createTransport(transportOptions);
+}
+
+function renderTemplateString(str, context) {
+    if (!str) return '';
+    return str.replace(/\{(\w+)\}/g, (_, key) => {
+        const val = context && Object.prototype.hasOwnProperty.call(context, key) ? context[key] : '';
+        return val !== undefined && val !== null ? String(val) : '';
+    });
+}
+
+async function sendEmail({ templateId, subject, body, recipients, context }) {
+    const cfg = getEmailConfigSafe(true);
+    const transport = createSmtpTransport();
+    let usedSubject = subject;
+    let usedBody = body;
+    if (templateId) {
+        const tpl = (cfg.templates || []).find(t => t.id === templateId);
+        if (!tpl) throw new Error('Vorlage nicht gefunden');
+        usedSubject = tpl.subject;
+        usedBody = tpl.body;
+    }
+    const finalSubject = renderTemplateString(usedSubject || '', context);
+    const finalBody = renderTemplateString(usedBody || '', context);
+    const info = await transport.sendMail({
+        from: cfg.smtp.from,
+        to: recipients.join(','),
+        subject: finalSubject,
+        html: finalBody,
+        text: finalBody
+    });
+    return info;
+}
+
+function addEmailLog(entry) {
+    if (!data.emailLogs) data.emailLogs = [];
+    data.emailLogs.unshift({
+        id: data.emailLogs.length ? Math.max(...data.emailLogs.map(l => l.id || 0)) + 1 : 1,
+        ...entry,
+        timestamp: new Date().toISOString()
+    });
+    data.emailLogs = data.emailLogs.slice(0, 200);
     dataChanged = true;
 }
 
@@ -741,6 +872,159 @@ async function handleAPI(req, res, urlPath, method) {
         return sendJson(res, { success: true }, 200, req);
     }
 
+    // EMAIL CONFIG
+    if (urlPath === '/api/email/config' && method === 'GET') {
+        if (!requireAdmin()) return;
+        const cfg = getEmailConfigSafe(false);
+        return sendJson(res, cfg, 200, req);
+    }
+
+    if (urlPath === '/api/email/config' && method === 'POST') {
+        if (!requireAdmin()) return;
+        const body = await parseBody(req);
+        const cfg = data.emailConfig || normalizeEmailConfig();
+        if (body.recipients) {
+            cfg.recipients = sanitizeEmailList(body.recipients);
+        }
+        if (body.defaultTemplateId !== undefined) {
+            cfg.defaultTemplateId = body.defaultTemplateId || null;
+        }
+        data.emailConfig = normalizeEmailConfig(cfg);
+        dataChanged = true;
+        return sendJson(res, { success: true }, 200, req);
+    }
+
+    if (urlPath === '/api/email/smtp' && method === 'GET') {
+        if (!requireAdmin()) return;
+        const cfg = getEmailConfigSafe(false);
+        return sendJson(res, { ...cfg, smtp: { ...cfg.smtp, hasPassword: Boolean(data.emailConfig?.smtp?.pass) } }, 200, req);
+    }
+
+    if (urlPath === '/api/email/smtp' && method === 'POST') {
+        if (!requireAdmin()) return;
+        const body = await parseBody(req);
+        const cfg = data.emailConfig || normalizeEmailConfig();
+        cfg.smtp.host = typeof body.host === 'string' ? body.host.trim() : cfg.smtp.host;
+        cfg.smtp.port = Number.isFinite(parseInt(body.port, 10)) ? parseInt(body.port, 10) : cfg.smtp.port;
+        cfg.smtp.user = typeof body.user === 'string' ? body.user.trim() : cfg.smtp.user;
+        cfg.smtp.from = typeof body.from === 'string' ? body.from.trim() : cfg.smtp.from;
+        cfg.smtp.encryption = ['none', 'ssl', 'starttls'].includes(body.encryption) ? body.encryption : cfg.smtp.encryption;
+        if (typeof body.pass === 'string' && body.pass.trim() !== '') {
+            cfg.smtp.pass = body.pass;
+        }
+        data.emailConfig = normalizeEmailConfig(cfg);
+        dataChanged = true;
+        return sendJson(res, { success: true }, 200, req);
+    }
+
+    if (urlPath === '/api/email/test' && method === 'POST') {
+        if (!requireAdmin()) return;
+        const body = await parseBody(req);
+        const recipients = sanitizeEmailList(body.recipients || []);
+        if (recipients.length === 0) return sendError(res, 'Empfänger erforderlich', 400, req);
+        try {
+            const info = await sendEmail({
+                subject: body.subject || 'Test E-Mail',
+                body: body.body || 'Dies ist eine Test-E-Mail.',
+                recipients,
+                context: { timestamp: new Date().toISOString(), sensor_name: 'Test' }
+            });
+            addEmailLog({ type: 'test', recipients, success: true, info: info.messageId });
+            return sendJson(res, { success: true }, 200, req);
+        } catch (e) {
+            addEmailLog({ type: 'test', recipients, success: false, error: e.message });
+            return sendError(res, e.message, 500, req);
+        }
+    }
+
+    if (urlPath === '/api/email/templates' && method === 'GET') {
+        if (!requireAdmin()) return;
+        const cfg = getEmailConfigSafe(false);
+        return sendJson(res, cfg.templates || [], 200, req);
+    }
+
+    if (urlPath === '/api/email/templates' && method === 'POST') {
+        if (!requireAdmin()) return;
+        const body = await parseBody(req);
+        if (!body.name || !body.subject || !body.body) return sendError(res, 'Name, Subject und Body erforderlich', 400, req);
+        const cfg = data.emailConfig || normalizeEmailConfig();
+        const newId = cfg.templates.length ? Math.max(...cfg.templates.map(t => t.id || 0)) + 1 : 1;
+        const tpl = {
+            id: newId,
+            name: body.name,
+            subject: body.subject,
+            body: body.body,
+            created_at: new Date().toISOString()
+        };
+        cfg.templates.unshift(tpl);
+        data.emailConfig = normalizeEmailConfig(cfg);
+        dataChanged = true;
+        return sendJson(res, tpl, 200, req);
+    }
+
+    if (urlPath.match(/^\/api\/email\/templates\/\d+$/) && method === 'PUT') {
+        if (!requireAdmin()) return;
+        const id = parseInt(urlPath.split('/')[4]);
+        const body = await parseBody(req);
+        const cfg = data.emailConfig || normalizeEmailConfig();
+        const tpl = cfg.templates.find(t => t.id === id);
+        if (!tpl) return sendError(res, 'Template nicht gefunden', 404, req);
+        if (body.name) tpl.name = body.name;
+        if (body.subject) tpl.subject = body.subject;
+        if (body.body) tpl.body = body.body;
+        tpl.updated_at = new Date().toISOString();
+        data.emailConfig = normalizeEmailConfig(cfg);
+        dataChanged = true;
+        return sendJson(res, tpl, 200, req);
+    }
+
+    if (urlPath.match(/^\/api\/email\/templates\/\d+$/) && method === 'DELETE') {
+        if (!requireAdmin()) return;
+        const id = parseInt(urlPath.split('/')[4]);
+        const cfg = data.emailConfig || normalizeEmailConfig();
+        cfg.templates = cfg.templates.filter(t => t.id !== id);
+        if (cfg.defaultTemplateId === id) cfg.defaultTemplateId = null;
+        data.emailConfig = normalizeEmailConfig(cfg);
+        dataChanged = true;
+        return sendJson(res, { success: true }, 200, req);
+    }
+
+    if (urlPath === '/api/email/logs' && method === 'GET') {
+        if (!requireAdmin()) return;
+        const limit = Math.min(parseInt(new URL(req.url, `http://${req.headers.host}`).searchParams.get('limit')) || 50, 200);
+        return sendJson(res, (data.emailLogs || []).slice(0, limit), 200, req);
+    }
+
+    if (urlPath === '/api/email/alarms/send' && method === 'POST') {
+        if (!requireAuth()) return;
+        const body = await parseBody(req);
+        const recipients = sanitizeEmailList(body.recipients || data.emailConfig?.recipients || []);
+        if (recipients.length === 0) return sendError(res, 'Keine Empfänger konfiguriert', 400, req);
+        const tplId = body.templateId || data.emailConfig?.defaultTemplateId || null;
+        const context = {
+            sensor_name: body.sensor_name || 'Sensor',
+            sensor_value: body.sensor_value,
+            threshold: body.threshold,
+            alarm_type: body.alarm_type || 'Alarm',
+            timestamp: body.timestamp || new Date().toISOString(),
+            details: body.details || ''
+        };
+        try {
+            const info = await sendEmail({
+                templateId: tplId,
+                subject: body.subject,
+                body: body.body,
+                recipients,
+                context
+            });
+            addEmailLog({ type: 'alarm', recipients, success: true, info: info.messageId, context });
+            return sendJson(res, { success: true }, 200, req);
+        } catch (e) {
+            addEmailLog({ type: 'alarm', recipients, success: false, error: e.message, context });
+            return sendError(res, e.message, 500, req);
+        }
+    }
+
     // FORUM (public GET, public POST)
     if (urlPath === '/api/forum/posts' && method === 'GET') {
         const url = new URL(req.url, `http://${req.headers.host}`);
@@ -754,6 +1038,8 @@ async function handleAPI(req, res, urlPath, method) {
         const content = (body.content || '').trim();
         if (!content) return sendError(res, 'Inhalt erforderlich', 400, req);
         if (content.length > 2000) return sendError(res, 'Inhalt zu lang', 400, req);
+        let tag = (body.tag || '').trim().toLowerCase();
+        if (!/^[a-z0-9_-]{1,40}$/.test(tag)) tag = 'allgemein';
         const authorName = session?.username || 'Gast';
 
         const newId = data.forumPosts.length > 0
@@ -764,6 +1050,7 @@ async function handleAPI(req, res, urlPath, method) {
             author_user_id: session?.userId || null,
             author_username: authorName,
             content,
+            tag,
             created_at: new Date().toISOString(),
             comments: []
         };

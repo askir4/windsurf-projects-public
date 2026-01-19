@@ -13,6 +13,9 @@
     "start:restart": "bash ./start.sh restart",
     "start:logs": "bash ./start.sh logs"
   },
+  "dependencies": {
+    "nodemailer": "^6.9.9"
+  },
   "keywords": [
     "greenhouse",
     "raspberry-pi",

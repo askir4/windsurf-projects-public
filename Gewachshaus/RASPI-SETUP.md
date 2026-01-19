@@ -1,170 +1,73 @@
-# 🌱 Gewächshaus - Raspberry Pi Setup
+# Gewachshaus - Raspberry Pi Setup
 
-Optimierte Version für Raspberry Pi und ressourcenbeschränkte Systeme.
-
-## Vorteile der vereinfachten Version
-
-| Feature | Alt | Neu |
-|---------|-----|-----|
-| Abhängigkeiten | 8 npm Pakete | **0 npm Pakete** |
-| Servercode | 1251 Zeilen | **~400 Zeilen** |
-| RAM-Verbrauch | ~150MB | **~30MB** |
-| Startzeit | 3-5 Sekunden | **<1 Sekunde** |
-| Native Kompilierung | sqlite3, bcrypt | **Keine** |
+Optimierte Version fuer Raspberry Pi und ressourcenbeschraenkte Systeme.
 
 ## Schnellstart
 
-### 1. Dateien kopieren
-
 ```bash
-# Auf dem Raspberry Pi
-mkdir -p ~/gewachshaus
-cd ~/gewachshaus
+sudo apt update && sudo apt upgrade -y
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
 
-# Nur diese Dateien werden benötigt:
-# - server-simple.js
-# - index.html
-# - start.sh
-# - assets/ (optional)
+cd ~/gewachshaus
+npm install
+node server-simple.js
 ```
 
-### 2. Server starten
+Zugriff: http://raspberry-pi-ip:3001
+Login: admin / admin123
+
+---
+
+## Startskript
 
 ```bash
-# Direkt starten
-node server-simple.js
-
-# Oder mit Startskript
 chmod +x start.sh
 ./start.sh start
+./start.sh status
+./start.sh logs
 ```
 
-### 3. Zugriff
-
-- **URL:** http://raspberry-pi-ip:3001
-- **Login:** admin / admin123
+---
 
 ## Systemd Service (Autostart)
 
 ```bash
-# Service-Datei kopieren
 sudo cp gewachshaus.service /etc/systemd/system/
-
-# Pfade anpassen (falls nicht /home/pi/gewachshaus)
-sudo nano /etc/systemd/system/gewachshaus.service
-
-# Service aktivieren
 sudo systemctl daemon-reload
 sudo systemctl enable gewachshaus
 sudo systemctl start gewachshaus
-
-# Status prüfen
-sudo systemctl status gewachshaus
 ```
 
-## Startskript Befehle
+---
+
+## Konfiguration (optional)
 
 ```bash
-./start.sh start    # Server starten
-./start.sh stop     # Server stoppen
-./start.sh restart  # Neustart
-./start.sh status   # Status anzeigen
-./start.sh daemon   # Mit Auto-Restart laufen
-./start.sh logs     # Logs anzeigen
+export PORT=3001
+export ADMIN_USER=admin
+export ADMIN_PASS=admin123
+export SESSION_SECRET=xxx
 ```
 
-## Konfiguration
+SMTP und E-Mail Templates werden im Admin Panel konfiguriert.
 
-Umgebungsvariablen (optional):
+---
 
-```bash
-export PORT=3001              # Server-Port
-export ADMIN_USER=admin       # Admin-Benutzername
-export ADMIN_PASS=admin123    # Admin-Passwort
-export SESSION_SECRET=xxx     # Session-Geheimnis
-```
+## Daten
 
-## Datenbank
-
-Die Daten werden in `data.json` gespeichert:
-- Automatische Speicherung alle 30 Sekunden
-- Backup bei Korruption
-- Einfach zu sichern/wiederherstellen
-
-### Backup
-
+`data.json` wird automatisch erstellt und gespeichert.
+Backup:
 ```bash
 cp data.json data.backup.json
 ```
 
-### Wiederherstellen
-
-```bash
-cp data.backup.json data.json
-./start.sh restart
-```
+---
 
 ## Troubleshooting
 
-### Server startet nicht
-
 ```bash
-# Prüfen ob Port frei ist
-sudo lsof -i :3001
-
-# Node.js Version prüfen (mindestens v14)
 node --version
-
-# Logs prüfen
+./start.sh status
 cat server.log
 ```
-
-### Hoher Speicherverbrauch
-
-```bash
-# Speicher prüfen
-./start.sh status
-
-# Garbage Collection manuell auslösen
-node --expose-gc server-simple.js
-```
-
-### Verbindungsprobleme
-
-```bash
-# Firewall prüfen
-sudo ufw allow 3001
-
-# Von anderem Gerät testen
-curl http://raspberry-pi-ip:3001/api/health
-```
-
-## Minimal-Installation
-
-Für absolute Minimalinstallation nur diese Dateien:
-
-```
-gewachshaus/
-├── server-simple.js    # Server
-├── index.html          # Web UI
-└── data.json           # (wird automatisch erstellt)
-```
-
-Das ist alles! Keine npm install nötig.
-
-## Upgrade von alter Version
-
-```bash
-# Alte Daten sichern
-cp fertilizer.db fertilizer.db.backup
-
-# Neue Dateien kopieren
-cp server-simple.js ~/gewachshaus/
-cp index.html ~/gewachshaus/
-
-# Starten
-./start.sh restart
-```
-
-Die alte SQLite-Datenbank wird nicht automatisch migriert. 
-Bei Bedarf können die Daten manuell in data.json übertragen werden.

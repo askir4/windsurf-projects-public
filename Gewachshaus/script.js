@@ -122,6 +122,35 @@ class FertilizerControlSystem {
             humidity: [],
             soilMoisture: []
         };
+
+        this.sensorThresholds = {
+            temperature: { min: null, max: null },
+            humidity: { min: null, max: null },
+            soilMoisture: { min: null, max: null }
+        };
+        this.sensorAlarmState = {
+            temperature: false,
+            humidity: false,
+            soilMoisture: false,
+            tank: false
+        };
+
+        this.emailConfig = {
+            templates: [],
+            defaultTemplateId: null,
+            recipients: []
+        };
+        this.emailLogs = [];
+        this.currentEmailTemplateId = null;
+
+        this.smtpSettings = {
+            host: '',
+            port: '',
+            user: '',
+            password: '',
+            from: '',
+            encryption: 'starttls'
+        };
         
         // Graph-Konfiguration
         this.graphConfig = {
@@ -165,6 +194,19 @@ class FertilizerControlSystem {
         // Forum
         this.forumPosts = [];
         this.forumSearchQuery = '';
+        this.forumTagFilter = '';
+        this.forumTags = [
+            { value: 'allgemein', label: 'Allgemein' },
+            { value: 'anbau', label: 'Anbau' },
+            { value: 'pflege', label: 'Pflege' },
+            { value: 'bewaesserung', label: 'Bewässerung' },
+            { value: 'schaedlinge', label: 'Schädlinge' },
+            { value: 'ernaehrung', label: 'Düngung' },
+            { value: 'ernte', label: 'Ernte' },
+            { value: 'technik', label: 'Technik' },
+            { value: 'organisation', label: 'Organisation' },
+            { value: 'sonstiges', label: 'Sonstiges' }
+        ];
         
         this.init();
     }
@@ -207,10 +249,161 @@ class FertilizerControlSystem {
         result += this.escapeHtml(raw.slice(lastIndex));
         return result;
     }
+
+    toNumberOrNull(value) {
+        const num = parseFloat(value);
+        return Number.isFinite(num) ? num : null;
+    }
+
+    parseRecipients(input) {
+        if (!input) return [];
+        return input.split(',')
+            .map(r => r.trim())
+            .filter(r => r.includes('@'));
+    }
+
+    renderTemplateString(str, context) {
+        if (!str) return '';
+        return str.replace(/\{(\w+)\}/g, (_, key) => {
+            const val = context && Object.prototype.hasOwnProperty.call(context, key) ? context[key] : '';
+            return val !== undefined && val !== null ? String(val) : '';
+        });
+    }
+
+    normalizeSensorThresholds(loaded) {
+        const base = {
+            temperature: { min: null, max: null },
+            humidity: { min: null, max: null },
+            soilMoisture: { min: null, max: null }
+        };
+        const data = loaded && typeof loaded === 'object' ? loaded : {};
+        return {
+            temperature: {
+                min: this.toNumberOrNull(data.temperature?.min),
+                max: this.toNumberOrNull(data.temperature?.max)
+            },
+            humidity: {
+                min: this.toNumberOrNull(data.humidity?.min),
+                max: this.toNumberOrNull(data.humidity?.max)
+            },
+            soilMoisture: {
+                min: this.toNumberOrNull(data.soilMoisture?.min),
+                max: this.toNumberOrNull(data.soilMoisture?.max)
+            }
+        };
+    }
+
+    normalizeSmtpSettings(loaded) {
+        const data = loaded && typeof loaded === 'object' ? loaded : {};
+        return {
+            host: typeof data.host === 'string' ? data.host : '',
+            port: data.port !== undefined ? String(data.port) : '',
+            user: typeof data.user === 'string' ? data.user : '',
+            password: typeof data.password === 'string' ? data.password : '',
+            from: typeof data.from === 'string' ? data.from : '',
+            encryption: ['none', 'ssl', 'starttls'].includes(data.encryption) ? data.encryption : 'starttls'
+        };
+    }
+
+    syncSensorThresholdInputs() {
+        const tempMin = document.getElementById('tempThresholdMin');
+        const tempMax = document.getElementById('tempThresholdMax');
+        const humidityMin = document.getElementById('humidityThresholdMin');
+        const humidityMax = document.getElementById('humidityThresholdMax');
+        const soilMin = document.getElementById('soilThresholdMin');
+        const soilMax = document.getElementById('soilThresholdMax');
+        if (tempMin) tempMin.value = this.sensorThresholds.temperature.min ?? '';
+        if (tempMax) tempMax.value = this.sensorThresholds.temperature.max ?? '';
+        if (humidityMin) humidityMin.value = this.sensorThresholds.humidity.min ?? '';
+        if (humidityMax) humidityMax.value = this.sensorThresholds.humidity.max ?? '';
+        if (soilMin) soilMin.value = this.sensorThresholds.soilMoisture.min ?? '';
+        if (soilMax) soilMax.value = this.sensorThresholds.soilMoisture.max ?? '';
+        this.updateAllSensorAlarms();
+    }
+
+    syncSmtpInputs() {
+        const host = document.getElementById('smtpHost');
+        const port = document.getElementById('smtpPort');
+        const user = document.getElementById('smtpUser');
+        const password = document.getElementById('smtpPassword');
+        const from = document.getElementById('smtpFrom');
+        const encryption = document.getElementById('smtpEncryption');
+        if (host) host.value = this.smtpSettings.host || '';
+        if (port) port.value = this.smtpSettings.port || '';
+        if (user) user.value = this.smtpSettings.user || '';
+        if (password) password.value = '';
+        if (from) from.value = this.smtpSettings.from || '';
+        if (encryption) encryption.value = this.smtpSettings.encryption || 'starttls';
+    }
+
+    readSmtpInputs() {
+        const host = document.getElementById('smtpHost')?.value.trim() || '';
+        const port = document.getElementById('smtpPort')?.value.trim() || '';
+        const user = document.getElementById('smtpUser')?.value.trim() || '';
+        const password = document.getElementById('smtpPassword')?.value || '';
+        const from = document.getElementById('smtpFrom')?.value.trim() || '';
+        const encryption = document.getElementById('smtpEncryption')?.value || 'starttls';
+        this.smtpSettings = this.normalizeSmtpSettings({ host, port, user, password, from, encryption });
+    }
+
+    async saveSmtpToServer() {
+        this.readSmtpInputs();
+        try {
+            const res = await fetch('/api/email/smtp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    host: this.smtpSettings.host,
+                    port: this.smtpSettings.port,
+                    user: this.smtpSettings.user,
+                    pass: this.smtpSettings.password,
+                    from: this.smtpSettings.from,
+                    encryption: this.smtpSettings.encryption
+                })
+            });
+            if (!res.ok) throw new Error('SMTP konnte nicht gespeichert werden');
+            this.showToast('SMTP-Einstellungen gespeichert', 'success');
+        } catch (err) {
+            this.showToast('SMTP Speichern fehlgeschlagen', 'error');
+            console.error(err);
+        }
+    }
+
+    async sendSmtpTest() {
+        const testRecipient = document.getElementById('smtpTestRecipient')?.value.trim();
+        if (!testRecipient) {
+            this.showToast('Bitte Test-Empfänger angeben', 'error');
+            return;
+        }
+        this.readSmtpInputs();
+        await this.saveSmtpToServer();
+        try {
+            const res = await fetch('/api/email/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    recipients: [testRecipient],
+                    subject: 'SMTP Test',
+                    body: 'Dies ist eine Test-E-Mail vom Gewächshaus-System.'
+                })
+            });
+            if (!res.ok) throw new Error(await res.text());
+            this.showToast('Test-E-Mail gesendet', 'success');
+            this.loadEmailLogs();
+        } catch (err) {
+            this.showToast('Test-E-Mail fehlgeschlagen', 'error');
+            console.error(err);
+        }
+    }
     
     init() {
         this.setupEventListeners();
+        this.populateForumTagSelectors();
         this.loadFromLocalStorage();
+        this.syncSensorThresholdInputs();
+        this.syncSmtpInputs();
         this.createDefaultMap();
         this.applyDarkMode();
         this.render();
@@ -229,6 +422,9 @@ class FertilizerControlSystem {
         
         // Graphen initialisieren
         this.initializeGraphs();
+
+        // Email-Konfiguration laden (best effort, nur für Admins verfügbar)
+        this.loadEmailConfig();
         
         this.log('INFO', 'Anwendung initialisiert', { 
             mode: this.mode, 
@@ -474,6 +670,64 @@ class FertilizerControlSystem {
             this.forumSearchQuery = e.target.value;
             this.renderForumPosts();
         });
+        document.getElementById('forumTagFilter')?.addEventListener('change', (e) => {
+            this.forumTagFilter = e.target.value;
+            this.renderForumPosts();
+        });
+
+        const bindThresholdInput = (id, sensorType, key) => {
+            const input = document.getElementById(id);
+            if (!input) return;
+            input.addEventListener('input', () => {
+                const value = input.value.trim();
+                const numeric = value === '' ? null : this.toNumberOrNull(value);
+                if (!this.sensorThresholds[sensorType]) return;
+                this.sensorThresholds[sensorType][key] = numeric;
+                this.updateAllSensorAlarms();
+                this.saveToLocalStorage();
+            });
+        };
+
+        bindThresholdInput('tempThresholdMin', 'temperature', 'min');
+        bindThresholdInput('tempThresholdMax', 'temperature', 'max');
+        bindThresholdInput('humidityThresholdMin', 'humidity', 'min');
+        bindThresholdInput('humidityThresholdMax', 'humidity', 'max');
+        bindThresholdInput('soilThresholdMin', 'soilMoisture', 'min');
+        bindThresholdInput('soilThresholdMax', 'soilMoisture', 'max');
+
+        document.getElementById('saveSmtpSettings')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.saveSmtpToServer();
+        });
+        document.getElementById('sendSmtpTest')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.sendSmtpTest();
+        });
+        const openModalById = (id) => {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('hidden');
+        };
+
+        document.getElementById('openSensorThresholdsModal')?.addEventListener('click', () => {
+            this.syncSensorThresholdInputs();
+            openModalById('sensorThresholdsModal');
+        });
+        document.getElementById('openSmtpModal')?.addEventListener('click', () => {
+            this.loadEmailConfig();
+            openModalById('smtpModal');
+        });
+        document.getElementById('openEmailTemplatesModal')?.addEventListener('click', () => {
+            this.loadEmailConfig();
+            this.loadEmailLogs();
+            openModalById('emailTemplatesModal');
+        });
+        document.getElementById('newEmailTemplate')?.addEventListener('click', () => this.newEmailTemplate());
+        document.getElementById('saveEmailTemplate')?.addEventListener('click', () => this.saveEmailTemplate());
+        document.getElementById('deleteEmailTemplate')?.addEventListener('click', () => this.deleteEmailTemplate());
+        document.getElementById('previewEmailTemplate')?.addEventListener('click', () => this.previewEmailTemplate());
+        document.getElementById('emailTemplateSelect')?.addEventListener('change', (e) => this.selectEmailTemplate(parseInt(e.target.value)));
+        document.getElementById('saveEmailConfig')?.addEventListener('click', () => this.saveEmailConfigSettings());
+        document.getElementById('refreshEmailLogs')?.addEventListener('click', () => this.loadEmailLogs());
     }
     
     setMode(mode) {
@@ -536,6 +790,10 @@ class FertilizerControlSystem {
             const searchInput = document.getElementById('forumSearchInput');
             if (searchInput) {
                 searchInput.value = this.forumSearchQuery;
+            }
+            const filterSelect = document.getElementById('forumTagFilter');
+            if (filterSelect) {
+                filterSelect.value = this.forumTagFilter || '';
             }
             this.loadForumPosts();
         }
@@ -2519,6 +2777,7 @@ class FertilizerControlSystem {
             localStorage.setItem('darkMode', this.darkMode.toString());
             localStorage.setItem('waterTank', JSON.stringify(this.waterTank));
             localStorage.setItem('sensors', JSON.stringify(this.sensors));
+            localStorage.setItem('sensorThresholds', JSON.stringify(this.sensorThresholds));
             localStorage.setItem('nodeRed', JSON.stringify(this.nodeRed));
             localStorage.setItem('serverConfig', JSON.stringify(this.serverConfig));
             
@@ -2581,12 +2840,18 @@ class FertilizerControlSystem {
             
             // Sensordaten laden
             const savedSensors = localStorage.getItem('sensors');
+            const savedSensorThresholds = localStorage.getItem('sensorThresholds');
             const savedNodeRed = localStorage.getItem('nodeRed');
             const savedWaterTank = localStorage.getItem('waterTank');
             
             if (savedSensors) this.sensors = JSON.parse(savedSensors);
+            if (savedSensorThresholds) {
+                this.sensorThresholds = this.normalizeSensorThresholds(JSON.parse(savedSensorThresholds));
+            }
             if (savedNodeRed) this.nodeRed = JSON.parse(savedNodeRed);
             if (savedWaterTank) this.waterTank = JSON.parse(savedWaterTank);
+
+            this.sensorThresholds = this.normalizeSensorThresholds(this.sensorThresholds);
             
             const totalPlants = this.beds.reduce((sum, bed) => sum + bed.plants.length, 0);
             this.log('INFO', 'Daten aus LocalStorage geladen', { 
@@ -2642,6 +2907,26 @@ class FertilizerControlSystem {
             if (statusIndicator) statusIndicator.className = 'status-indicator';
             if (warningIcon) warningIcon.className = 'fas fa-check-circle';
             if (warningText) warningText.textContent = 'Normal';
+        }
+
+        const tankAlert = document.getElementById('tankAlert');
+        const tankAlertActive = percentage <= this.waterTank.warningLevel;
+        if (tankAlert) {
+            tankAlert.classList.toggle('active', tankAlertActive);
+            const text = tankAlert.querySelector('span');
+            if (text) text.textContent = tankAlertActive ? 'Niedriger Füllstand' : 'Alarm';
+        }
+
+        const prev = this.sensorAlarmState.tank;
+        this.sensorAlarmState.tank = tankAlertActive;
+        if (tankAlertActive && !prev) {
+            this.triggerAlarmEmail({
+                sensorType: 'tank',
+                sensorValue: percentage.toFixed(1),
+                alarmType: 'LOW',
+                threshold: this.waterTank.warningLevel,
+                details: `Füllstand ${percentage.toFixed(1)}%`
+            });
         }
     }
     
@@ -2788,6 +3073,92 @@ class FertilizerControlSystem {
             const diffMinutes = Math.floor((now - sensor.lastUpdate) / 60000);
             timeElement.textContent = `vor ${diffMinutes} Min.`;
         }
+
+        this.updateSensorAlarm(sensorType);
+    }
+
+    getSensorAlarmState(sensorType) {
+        const sensor = this.sensors[sensorType];
+        const thresholds = this.sensorThresholds[sensorType] || {};
+        let active = false;
+        let message = '';
+        let alarmType = null;
+        let thresholdValue = null;
+        if (thresholds.min !== null && thresholds.min !== undefined && sensor.value < thresholds.min) {
+            active = true;
+            message = 'Unter Minimum';
+            alarmType = 'LOW';
+            thresholdValue = thresholds.min;
+        }
+        if (thresholds.max !== null && thresholds.max !== undefined && sensor.value > thresholds.max) {
+            active = true;
+            message = 'Über Maximum';
+            alarmType = 'HIGH';
+            thresholdValue = thresholds.max;
+        }
+        if (active && !message) {
+            message = 'Alarm';
+        }
+        return { active, message, alarmType, thresholdValue };
+    }
+
+    updateSensorAlarm(sensorType) {
+        const idPrefix = sensorType === 'temperature' ? 'temp' : sensorType;
+        const card = document.getElementById(`${idPrefix}Card`);
+        const alertEl = document.getElementById(`${idPrefix}Alert`);
+        if (!card && !alertEl) return;
+        const prev = this.sensorAlarmState[sensorType];
+        const { active, message, alarmType, thresholdValue } = this.getSensorAlarmState(sensorType);
+        if (card) card.classList.toggle('sensor-alarm', active);
+        if (alertEl) {
+            alertEl.classList.toggle('active', active);
+            alertEl.title = active ? message : '';
+            const text = alertEl.querySelector('span');
+            if (text) text.textContent = active ? message : 'Alarm';
+        }
+        this.sensorAlarmState[sensorType] = active;
+        if (active && !prev) {
+            this.triggerAlarmEmail({
+                sensorType,
+                sensorValue: this.sensors[sensorType].value,
+                alarmType,
+                threshold: thresholdValue
+            });
+        }
+    }
+
+    updateAllSensorAlarms() {
+        Object.keys(this.sensors).forEach(sensorType => {
+            this.updateSensorAlarm(sensorType);
+        });
+    }
+
+    triggerAlarmEmail(context) {
+        const payload = {
+            sensor_name: this.getSensorDisplayName(context.sensorType),
+            sensor_value: context.sensorValue,
+            threshold: context.threshold,
+            alarm_type: context.alarmType || 'Alarm',
+            timestamp: new Date().toISOString(),
+            details: context.details || '',
+            templateId: this.emailConfig?.defaultTemplateId || null
+        };
+        fetch('/api/email/alarms/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+        }).catch(() => {});
+    }
+
+    getSensorDisplayName(sensorType) {
+        const map = {
+            temperature: 'Temperatur',
+            humidity: 'Luftfeuchte',
+            soilMoisture: 'Bodenfeuchte',
+            tank: 'Wassertank'
+        };
+        return map[sensorType] || sensorType;
     }
     
     updateSensorTrend(sensorType, oldValue, newValue) {
@@ -2874,6 +3245,7 @@ class FertilizerControlSystem {
             this.updateSensorUI(sensorType);
             this.updateSensorTrend(sensorType, 0, this.sensors[sensorType].value);
         });
+        this.updateAllSensorAlarms();
     }
     
     startSensorSimulation() {
@@ -3306,7 +3678,233 @@ class FertilizerControlSystem {
         });
     }
 
+    // ========== EMAIL & SMTP ==========
+    async loadEmailConfig() {
+        try {
+            const cfgRes = await fetch('/api/email/config', { credentials: 'include' });
+            if (cfgRes.ok) {
+                this.emailConfig = await cfgRes.json();
+                this.renderEmailTemplateSelectors();
+                const recipientsInput = document.getElementById('alarmRecipients');
+                if (recipientsInput) recipientsInput.value = (this.emailConfig.recipients || []).join(', ');
+            }
+        } catch (e) {
+            // vermutlich kein Admin oder nicht eingeloggt
+        }
+        try {
+            const smtpRes = await fetch('/api/email/smtp', { credentials: 'include' });
+            if (smtpRes.ok) {
+                const data = await smtpRes.json();
+                this.smtpSettings = this.normalizeSmtpSettings(data.smtp || {});
+                this.syncSmtpInputs();
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    renderEmailTemplateSelectors() {
+        const select = document.getElementById('emailTemplateSelect');
+        const defaultSelect = document.getElementById('defaultEmailTemplate');
+        const templates = this.emailConfig?.templates || [];
+        if (select) {
+            select.innerHTML = templates.map(t => `<option value="${t.id}">${this.escapeHtml(t.name)}</option>`).join('');
+            select.value = this.currentEmailTemplateId || (templates[0]?.id || '');
+        }
+        if (defaultSelect) {
+            defaultSelect.innerHTML = `<option value="">Keine</option>` + templates.map(t => `<option value="${t.id}">${this.escapeHtml(t.name)}</option>`).join('');
+            defaultSelect.value = this.emailConfig?.defaultTemplateId || '';
+        }
+        if (select) {
+            const currentId = parseInt(select.value);
+            if (currentId) this.selectEmailTemplate(currentId);
+        }
+    }
+
+    selectEmailTemplate(id) {
+        if (!id) {
+            this.newEmailTemplate();
+            return;
+        }
+        this.currentEmailTemplateId = id || null;
+        const tpl = (this.emailConfig?.templates || []).find(t => t.id === id);
+        const name = document.getElementById('emailTemplateName');
+        const subject = document.getElementById('emailTemplateSubject');
+        const body = document.getElementById('emailTemplateBody');
+        if (name) name.value = tpl?.name || '';
+        if (subject) subject.value = tpl?.subject || '';
+        if (body) body.value = tpl?.body || '';
+        this.previewEmailTemplate();
+        const select = document.getElementById('emailTemplateSelect');
+        if (select && id) select.value = id;
+    }
+
+    newEmailTemplate() {
+        this.currentEmailTemplateId = null;
+        const name = document.getElementById('emailTemplateName');
+        const subject = document.getElementById('emailTemplateSubject');
+        const body = document.getElementById('emailTemplateBody');
+        if (name) name.value = '';
+        if (subject) subject.value = '';
+        if (body) body.value = '';
+        const select = document.getElementById('emailTemplateSelect');
+        if (select) select.value = '';
+        this.previewEmailTemplate();
+    }
+
+    async saveEmailTemplate() {
+        const name = document.getElementById('emailTemplateName')?.value.trim();
+        const subject = document.getElementById('emailTemplateSubject')?.value.trim();
+        const body = document.getElementById('emailTemplateBody')?.value;
+        if (!name || !subject || !body) {
+            this.showToast('Name, Betreff und Inhalt sind erforderlich', 'error');
+            return;
+        }
+        try {
+            let res;
+            if (this.currentEmailTemplateId) {
+                res = await fetch(`/api/email/templates/${this.currentEmailTemplateId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name, subject, body })
+                });
+            } else {
+                res = await fetch('/api/email/templates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name, subject, body })
+                });
+            }
+            if (!res.ok) throw new Error('Vorlage konnte nicht gespeichert werden');
+            const tpl = await res.json();
+            await this.loadEmailConfig();
+            this.currentEmailTemplateId = tpl.id;
+            this.selectEmailTemplate(tpl.id);
+            this.showToast('Vorlage gespeichert', 'success');
+        } catch (e) {
+            this.showToast('Speichern fehlgeschlagen', 'error');
+            console.error(e);
+        }
+    }
+
+    async deleteEmailTemplate() {
+        if (!this.currentEmailTemplateId) return;
+        if (!window.confirm('Vorlage wirklich löschen?')) return;
+        try {
+            const res = await fetch(`/api/email/templates/${this.currentEmailTemplateId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (!res.ok) throw new Error('Löschen fehlgeschlagen');
+            this.currentEmailTemplateId = null;
+            await this.loadEmailConfig();
+            this.newEmailTemplate();
+            this.showToast('Vorlage gelöscht', 'success');
+        } catch (e) {
+            this.showToast('Löschen fehlgeschlagen', 'error');
+            console.error(e);
+        }
+    }
+
+    previewEmailTemplate() {
+        const body = document.getElementById('emailTemplateBody')?.value || '';
+        const preview = document.getElementById('emailTemplatePreview');
+        if (!preview) return;
+        const ctx = this.getSampleAlarmContext();
+        preview.innerHTML = this.renderTemplateString(body, ctx) || 'Vorschau wird hier angezeigt.';
+    }
+
+    getSampleAlarmContext() {
+        return {
+            sensor_name: 'Temperatur',
+            sensor_value: '32.1',
+            threshold: '30',
+            timestamp: new Date().toISOString(),
+            alarm_type: 'HIGH',
+            details: 'Beispiel-Alarm'
+        };
+    }
+
+    async saveEmailConfigSettings() {
+        const recipientsStr = document.getElementById('alarmRecipients')?.value || '';
+        const defaultTpl = document.getElementById('defaultEmailTemplate')?.value || '';
+        const recipients = this.parseRecipients(recipientsStr);
+        try {
+            const res = await fetch('/api/email/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    recipients,
+                    defaultTemplateId: defaultTpl ? parseInt(defaultTpl) : null
+                })
+            });
+            if (!res.ok) throw new Error('Speichern fehlgeschlagen');
+            await this.loadEmailConfig();
+            this.showToast('E-Mail Einstellungen gespeichert', 'success');
+        } catch (e) {
+            this.showToast('Speichern fehlgeschlagen', 'error');
+            console.error(e);
+        }
+    }
+
+    async loadEmailLogs() {
+        try {
+            const res = await fetch('/api/email/logs?limit=100', { credentials: 'include' });
+            if (!res.ok) throw new Error('Logs konnten nicht geladen werden');
+            this.emailLogs = await res.json();
+            this.renderEmailLogs();
+        } catch (e) {
+            // ignore if unauthorized
+        }
+    }
+
+    renderEmailLogs() {
+        const container = document.getElementById('emailLogsContainer');
+        if (!container) return;
+        if (!this.emailLogs || this.emailLogs.length === 0) {
+            container.innerHTML = '<div class="template-log-row">Keine Logs.</div>';
+            return;
+        }
+        container.innerHTML = this.emailLogs.map(log => `
+            <div class="template-log-row">
+                <div>${new Date(log.timestamp).toLocaleString('de-DE')}</div>
+                <div class="${log.success ? 'status-ok' : 'status-fail'}">${log.success ? 'OK' : 'Fehler'}</div>
+                <div>${this.escapeHtml((log.type || '').toUpperCase())} → ${this.escapeHtml((log.recipients || []).join(', '))}${log.error ? ' (' + this.escapeHtml(log.error) + ')' : ''}</div>
+            </div>
+        `).join('');
+    }
+
     // ========== FORUM ==========
+    populateForumTagSelectors() {
+        const filterSelect = document.getElementById('forumTagFilter');
+        const postSelect = document.getElementById('forumTagSelect');
+        const tags = this.forumTags || [];
+        if (filterSelect) {
+            filterSelect.innerHTML = `
+                <option value="">Alle Themen</option>
+                ${tags.map(tag => `<option value="${this.escapeHtml(tag.value)}">${this.escapeHtml(tag.label)}</option>`).join('')}
+            `;
+            filterSelect.value = this.forumTagFilter || '';
+        }
+        if (postSelect) {
+            postSelect.innerHTML = tags
+                .map(tag => `<option value="${this.escapeHtml(tag.value)}">${this.escapeHtml(tag.label)}</option>`)
+                .join('');
+        }
+    }
+
+    getForumTagLabel(value) {
+        const tag = (this.forumTags || []).find(t => t.value === value);
+        return tag ? tag.label : 'Allgemein';
+    }
+
+    isValidForumTag(value) {
+        return (this.forumTags || []).some(tag => tag.value === value);
+    }
+
     async loadForumPosts() {
         const container = document.getElementById('forumPosts');
         if (!container) return;
@@ -3342,16 +3940,21 @@ class FertilizerControlSystem {
             return;
         }
 
-        this.forumFocusedPostId = query && posts.length > 0 ? posts[0].id : null;
+        const hasFilter = Boolean(query || this.forumTagFilter);
+        this.forumFocusedPostId = hasFilter && posts.length > 0 ? posts[0].id : null;
         
         container.innerHTML = posts.map(post => {
             const comments = post.comments || [];
             const created = post.created_at ? new Date(post.created_at).toLocaleString('de-DE') : '';
             const isFocused = this.forumFocusedPostId === post.id;
+            const tagLabel = this.getForumTagLabel(post.tag);
             return `
                 <div class="forum-post${isFocused ? ' forum-post-focused' : ''}" data-post-id="${post.id}">
                     <div class="forum-post-header">
-                        <span class="forum-author">${this.highlightText(post.author_username || 'Unbekannt', query)}</span>
+                        <div class="forum-post-meta">
+                            <span class="forum-author">${this.highlightText(post.author_username || 'Unbekannt', query)}</span>
+                            <span class="forum-tag">${this.escapeHtml(tagLabel)}</span>
+                        </div>
                         <span class="forum-date">${this.escapeHtml(created)}</span>
                     </div>
                     <div class="forum-post-content">${this.highlightText(post.content || '', query)}</div>
@@ -3414,8 +4017,14 @@ class FertilizerControlSystem {
 
     getFilteredForumPosts() {
         const query = this.forumSearchQuery.trim().toLowerCase();
-        if (!query) return this.forumPosts || [];
-        return (this.forumPosts || []).filter(post => {
+        const tagFilter = this.forumTagFilter;
+        const basePosts = (this.forumPosts || []).filter(post => {
+            if (!tagFilter) return true;
+            if (post.tag === tagFilter) return true;
+            return tagFilter === 'allgemein' && !post.tag;
+        });
+        if (!query) return basePosts;
+        return basePosts.filter(post => {
             const author = (post.author_username || '').toLowerCase();
             const content = (post.content || '').toLowerCase();
             if (author.includes(query) || content.includes(query)) return true;
@@ -3433,13 +4042,16 @@ class FertilizerControlSystem {
         if (!input) return;
         const content = input.value.trim();
         if (!content) return;
+        const tagSelect = document.getElementById('forumTagSelect');
+        const tagValue = tagSelect?.value || '';
+        const tag = this.isValidForumTag(tagValue) ? tagValue : 'allgemein';
         
         try {
             const res = await fetch('/api/forum/posts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ content })
+                body: JSON.stringify({ content, tag })
             });
             if (!res.ok) throw new Error('Fehler beim Posten');
             input.value = '';

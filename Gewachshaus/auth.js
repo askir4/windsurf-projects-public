@@ -104,6 +104,14 @@ class AuthManager {
             this.openModal('auditLogsModal');
             this.loadAuditLogs();
         });
+        document.getElementById('openSensorThresholdsModal')?.addEventListener('click', () => {
+            this.openModal('sensorThresholdsModal');
+            this.system?.syncSensorThresholdInputs();
+        });
+        document.getElementById('openSmtpModal')?.addEventListener('click', () => {
+            this.openModal('smtpModal');
+            this.system?.syncSmtpInputs();
+        });
         
         // Admin Mode Button
         document.getElementById('adminMode')?.addEventListener('click', () => {

@@ -230,6 +230,161 @@
         </div>
     </div>
 
+    <div class="modal-overlay hidden" id="sensorThresholdsModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2><i class="fas fa-bell"></i> Sensor-Alarmwerte</h2>
+                <button class="modal-close" data-close="sensorThresholdsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="admin-info">Leere Felder bedeuten: kein Alarm.</p>
+                <div class="sensor-thresholds">
+                    <div class="sensor-threshold-card">
+                        <div class="sensor-threshold-title"><i class="fas fa-thermometer-half"></i> Temperatur</div>
+                        <div class="sensor-threshold-inputs">
+                            <label for="tempThresholdMin">Min (°C)</label>
+                            <input type="number" id="tempThresholdMin" step="0.1" placeholder="z.B. 18">
+                            <label for="tempThresholdMax">Max (°C)</label>
+                            <input type="number" id="tempThresholdMax" step="0.1" placeholder="z.B. 30">
+                        </div>
+                    </div>
+                    <div class="sensor-threshold-card">
+                        <div class="sensor-threshold-title"><i class="fas fa-tint"></i> Luftfeuchtigkeit</div>
+                        <div class="sensor-threshold-inputs">
+                            <label for="humidityThresholdMin">Min (%)</label>
+                            <input type="number" id="humidityThresholdMin" step="1" placeholder="z.B. 45">
+                            <label for="humidityThresholdMax">Max (%)</label>
+                            <input type="number" id="humidityThresholdMax" step="1" placeholder="z.B. 80">
+                        </div>
+                    </div>
+                    <div class="sensor-threshold-card">
+                        <div class="sensor-threshold-title"><i class="fas fa-seedling"></i> Bodenfeuchte</div>
+                        <div class="sensor-threshold-inputs">
+                            <label for="soilThresholdMin">Min (%)</label>
+                            <input type="number" id="soilThresholdMin" step="1" placeholder="z.B. 35">
+                            <label for="soilThresholdMax">Max (%)</label>
+                            <input type="number" id="soilThresholdMax" step="1" placeholder="z.B. 80">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" data-close="sensorThresholdsModal">Schliessen</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="smtpModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-envelope"></i> SMTP E-Mail</h2>
+                <button class="modal-close" data-close="smtpModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="admin-info">SMTP-Zugangsdaten für Alarm-E-Mails (nur GUI).</p>
+                <div class="control-group">
+                    <label for="smtpHost">SMTP Host</label>
+                    <input type="text" id="smtpHost" placeholder="smtp.example.com">
+                </div>
+                <div class="control-group">
+                    <label for="smtpPort">SMTP Port</label>
+                    <input type="number" id="smtpPort" placeholder="587">
+                </div>
+                <div class="control-group">
+                    <label for="smtpEncryption">Verschlüsselung</label>
+                    <select id="smtpEncryption">
+                        <option value="starttls">STARTTLS</option>
+                        <option value="ssl">SSL/TLS</option>
+                        <option value="none">Keine</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="smtpUser">SMTP Benutzer</label>
+                    <input type="text" id="smtpUser" placeholder="user@example.com">
+                </div>
+                <div class="control-group">
+                    <label for="smtpPassword">SMTP Passwort</label>
+                    <input type="password" id="smtpPassword" placeholder="Passwort">
+                </div>
+                <div class="control-group">
+                    <label for="smtpFrom">Absender-Adresse</label>
+                    <input type="email" id="smtpFrom" placeholder="alerts@example.com">
+                </div>
+                <div class="control-group">
+                    <label for="smtpTestRecipient">Test-Empfänger</label>
+                    <input type="email" id="smtpTestRecipient" placeholder="test@example.com">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" data-close="smtpModal">Schliessen</button>
+                <button class="btn btn-secondary" id="sendSmtpTest">
+                    <i class="fas fa-paper-plane"></i> Test senden
+                </button>
+                <button class="btn btn-primary" id="saveSmtpSettings">
+                    <i class="fas fa-save"></i> SMTP speichern
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="emailTemplatesModal">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-alt"></i> E-Mail Vorlagen</h2>
+                <button class="modal-close" data-close="emailTemplatesModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="template-layout">
+                    <div class="template-list">
+                        <div class="control-group">
+                            <label for="emailTemplateSelect">Vorlage auswählen</label>
+                            <select id="emailTemplateSelect"></select>
+                        </div>
+                        <div class="template-actions">
+                            <button class="btn btn-secondary btn-sm" id="newEmailTemplate"><i class="fas fa-plus"></i> Neu</button>
+                            <button class="btn btn-danger btn-sm" id="deleteEmailTemplate"><i class="fas fa-trash"></i> Löschen</button>
+                        </div>
+                        <div class="control-group">
+                            <label for="defaultEmailTemplate">Standard-Vorlage</label>
+                            <select id="defaultEmailTemplate"></select>
+                        </div>
+                        <div class="control-group">
+                            <label for="alarmRecipients">Empfänger (Kommagetrennt)</label>
+                            <input type="text" id="alarmRecipients" placeholder="z.B. alice@example.com, bob@example.com">
+                        </div>
+                        <button class="btn btn-primary btn-block" id="saveEmailConfig"><i class="fas fa-save"></i> Einstellungen speichern</button>
+                    </div>
+                    <div class="template-editor">
+                        <div class="control-group">
+                            <label for="emailTemplateName">Name / Kennung</label>
+                            <input type="text" id="emailTemplateName">
+                        </div>
+                        <div class="control-group">
+                            <label for="emailTemplateSubject">Betreff</label>
+                            <input type="text" id="emailTemplateSubject">
+                        </div>
+                        <div class="control-group">
+                            <label for="emailTemplateBody">Inhalt (Unterstützt Platzhalter wie {sensor_name}, {sensor_value}, {threshold}, {timestamp}, {alarm_type})</label>
+                            <textarea id="emailTemplateBody" rows="8"></textarea>
+                        </div>
+                        <div class="template-actions">
+                            <button class="btn btn-primary" id="saveEmailTemplate"><i class="fas fa-save"></i> Vorlage speichern</button>
+                            <button class="btn btn-secondary" id="previewEmailTemplate"><i class="fas fa-eye"></i> Vorschau</button>
+                        </div>
+                        <div class="template-preview" id="emailTemplatePreview">Vorschau wird hier angezeigt.</div>
+                    </div>
+                </div>
+                <div class="template-logs">
+                    <div class="template-logs-header">
+                        <h4><i class="fas fa-history"></i> E-Mail Log</h4>
+                        <button class="btn btn-secondary btn-sm" id="refreshEmailLogs"><i class="fas fa-sync"></i> Aktualisieren</button>
+                    </div>
+                    <div class="template-logs-body" id="emailLogsContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main>
         <div class="container">
             <aside class="control-panel">
@@ -412,6 +567,21 @@
                                 <i class="fas fa-trash"></i> Alle Daten löschen
                             </button>
                             <p class="warning-text"><i class="fas fa-exclamation-triangle"></i> Achtung: Diese Aktion kann nicht rückgängig gemacht werden!</p>
+                        </div>
+                    </details>
+
+                    <details class="accordion-card">
+                        <summary class="accordion-summary"><i class="fas fa-sliders-h"></i> System-Einstellungen</summary>
+                        <div class="accordion-body">
+                            <button id="openSensorThresholdsModal" class="btn btn-secondary btn-block">
+                                <i class="fas fa-bell"></i> Sensor-Alarmwerte
+                            </button>
+                            <button id="openSmtpModal" class="btn btn-secondary btn-block" style="margin-top: 8px;">
+                                <i class="fas fa-envelope"></i> SMTP E-Mail
+                            </button>
+                            <button id="openEmailTemplatesModal" class="btn btn-secondary btn-block" style="margin-top: 8px;">
+                                <i class="fas fa-file-alt"></i> E-Mail Vorlagen
+                            </button>
                         </div>
                     </details>
 
@@ -887,14 +1057,24 @@
                                 <h2><i class="fas fa-comments"></i> Forum</h2>
                                 <p class="forum-subtitle">Austausch, Hinweise und Fragen rund ums Gewächshaus.</p>
                             </div>
-                            <div class="forum-search">
-                                <i class="fas fa-search"></i>
-                                <input type="search" id="forumSearchInput" placeholder="Suche nach Nutzername oder Inhalt...">
+                            <div class="forum-header-actions">
+                                <div class="forum-search">
+                                    <i class="fas fa-search"></i>
+                                    <input type="search" id="forumSearchInput" placeholder="Suche nach Nutzername oder Inhalt...">
+                                </div>
+                                <div class="forum-tag-filter">
+                                    <i class="fas fa-tag"></i>
+                                    <select id="forumTagFilter"></select>
+                                </div>
                             </div>
                         </div>
                         <div class="forum-search-meta" id="forumSearchMeta">0 Beiträge</div>
                     </div>
                     <form id="forumPostForm" class="forum-post-form">
+                        <div class="forum-form-row">
+                            <label for="forumTagSelect">Thema</label>
+                            <select id="forumTagSelect"></select>
+                        </div>
                         <label for="forumPostContent">Neuer Beitrag</label>
                         <textarea id="forumPostContent" rows="4" maxlength="2000" placeholder="Schreibe einen Beitrag..."></textarea>
                         <button type="submit" class="btn btn-primary">
@@ -1108,6 +1288,7 @@
                         <i class="fas fa-check-circle" id="warningIcon"></i>
                         <span id="warningText">Normal</span>
                     </div>
+                    <div class="sensor-alert tank-alert" id="tankAlert"><i class="fas fa-exclamation-triangle"></i><span>Alarm</span></div>
                 </div>
             </div>
         </section>
@@ -1139,6 +1320,7 @@
                         <div class="sensor-label">Temperatur</div>
                     </div>
                     <div class="sensor-trend" id="tempTrend"><i class="fas fa-arrow-up"></i></div>
+                    <div class="sensor-alert" id="tempAlert"><i class="fas fa-exclamation-triangle"></i><span>Alarm</span></div>
                 </div>
                 
                 <div class="sensor-card-compact" id="humidityCard">
@@ -1148,6 +1330,7 @@
                         <div class="sensor-label">Luftfeuchtigkeit</div>
                     </div>
                     <div class="sensor-trend" id="humidityTrend"><i class="fas fa-minus"></i></div>
+                    <div class="sensor-alert" id="humidityAlert"><i class="fas fa-exclamation-triangle"></i><span>Alarm</span></div>
                 </div>
                 
                 <div class="sensor-card-compact" id="soilMoistureCard">
@@ -1157,9 +1340,10 @@
                         <div class="sensor-label">Bodenfeuchtigkeit</div>
                     </div>
                     <div class="sensor-trend" id="soilMoistureTrend"><i class="fas fa-minus"></i></div>
+                    <div class="sensor-alert" id="soilMoistureAlert"><i class="fas fa-exclamation-triangle"></i><span>Alarm</span></div>
                 </div>
             </div>
-            
+
             <!-- Graphen Zeile -->
             <div class="graphs-row">
                 <div class="graph-card-compact" data-sensor="temperature">
