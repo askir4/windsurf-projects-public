@@ -1,18 +1,28 @@
 # Node-RED Integration
 
+## Ziel
+
 Die Webapp liest Sensordaten ueber WebSocket von Node-RED.
 
+---
+
 ## WebSocket
+
 - URL: ws://<HOST>:1880/ws
 - Format: {"topic":"sensors/temperature","payload":...}
 
+---
+
 ## Topics
+
 - sensors/temperature (C)
 - sensors/humidity (%)
 - sensors/soil_moisture (%)
 - sensors/water_tank (Objekt: level, temperature, capacity)
 - sensors/water_level (Liter)
 - sensors/water_temperature (C)
+
+---
 
 ## Payload Beispiele
 
@@ -31,12 +41,15 @@ Die Webapp liest Sensordaten ueber WebSocket von Node-RED.
 }
 ```
 
+---
+
 ## Aktoren
+
 Wenn in der UI geduengt wird, sendet die Webapp:
 - actuators/valve
 - actuators/pump
 
-Beispiel Payload:
+Payload Beispiel:
 ```json
 {
   "beds": [{ "id": 1, "name": "Hochbeet 1", "fertilizer": { "nitrogen": 5, "phosphorus": 2, "potassium": 3 } }],
@@ -46,5 +59,8 @@ Beispiel Payload:
 }
 ```
 
-## Alarmwerte und E-Mail
-Sensor-Alarmwerte werden im Admin Panel gesetzt. Bei Alarm kann eine E-Mail per SMTP versendet werden.
+---
+
+## Alarme und E-Mail
+
+Alarmwerte werden im Admin Panel gesetzt. Bei Alarm kann eine E-Mail via SMTP versendet werden.

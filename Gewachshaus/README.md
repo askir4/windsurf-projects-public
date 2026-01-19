@@ -1,38 +1,62 @@
 # Gewachshaus Webapp
 
-Eine Webanwendung zur Verwaltung von Hochbeeten im Gewachshaus mit optionaler Sensor-Integration und E-Mail Alarmen.
+Eine moderne Webanwendung zur Verwaltung von Hochbeeten im Gewachshaus mit Sensor-Integration, Forum und E-Mail Alarmen.
 
 Lernfeld 7 - Praezisionsduengung mit Einzelsteuerung
 
 ---
 
+## Inhalt
+
+- Features
+- Schnellstart
+- Struktur und Technik
+- Konfiguration
+- Dokumentation
+- Lizenz
+
+---
+
 ## Features
 
-- Interaktive Karte fuer Hochbeete (Editor, Drag & Drop, Zoom)
-- Pflanzenmanagement mit Icon-Picker und Todo-Listen
-- Duengerkontrolle (NPK) mit Mehrfachauswahl
-- Forum mit Tags, Suche, Highlighting und einklappbaren Kommentaren
-- Sensor-Dashboard mit Trends, Graphen und Alarmwerten
-- Wassertank Anzeige mit Warnung
-- SMTP E-Mail Integration (Testmail, Templates, Alarmlogs)
-- Admin Panel fuer Benutzer, Node-RED, System, Farbschema
+### Hochbeete und Pflanzen
+- Interaktive Karte mit Editor, Drag & Drop und Zoom
+- Pflanzenmanagement mit Icon-Picker, Suche und Todos
+- Mehrfachauswahl fuer Duengung (Shift + Klick)
+
+### Forum
+- Tags je Beitrag, Filter nach Tag
+- Suche nach Nutzername oder Inhalt
+- Treffer-Highlighting und Auto-Fokus
+- Kommentare pro Beitrag ein- und ausklappbar
+
+### Sensoren und Alarme
+- Temperatur, Luftfeuchte, Bodenfeuchte
+- Graphen und Trends
+- Alarmwerte (Min/Max) pro Sensor
+- Wassertank Anzeige inkl. Alarm
+
+### E-Mail Alarme (SMTP)
+- SMTP Konfiguration im Admin Panel
+- Testmail Versand
+- Mehrere Vorlagen mit Platzhaltern
+- Alarmversand bei Zustandwechsel (OK -> Alarm)
+- Versandprotokoll im Admin Panel
 
 ---
 
 ## Schnellstart
 
-Voraussetzungen:
-- Node.js 14+
-- npm
+Voraussetzungen: Node.js 14+ und npm
 
 ```bash
 npm install
 npm start
 ```
 
-Server URL: http://localhost:3001
+Default URL: http://localhost:3001
 
-Alternative Startoptionen:
+Weitere Startoptionen:
 ```bash
 npm run dev
 npm run start:daemon
@@ -42,23 +66,37 @@ npm run start:logs
 
 ---
 
-## Konfiguration (Server)
+## Struktur und Technik
 
-Umgebungsvariablen:
-- PORT (Standard: 3001)
-- ADMIN_USER (Standard: admin)
-- ADMIN_PASS (Standard: admin123)
+- Server: `server-simple.js` (minimaler HTTP Server)
+- Datenhaltung: `data.json` (atomisch gespeichert)
+- Frontend: Vanilla JS, HTML, CSS
+- SMTP Versand: nodemailer
+
+---
+
+## Konfiguration
+
+### Umgebungsvariablen
+- PORT (Default 3001)
+- ADMIN_USER (Default admin)
+- ADMIN_PASS (Default admin123)
 - SESSION_SECRET (empfohlen)
 
-SMTP Konfiguration und E-Mail Templates erfolgen im Admin Panel.
+### Admin Panel
+- Benutzerverwaltung und Audit Logs
+- Node-RED Verbindung
+- System-Einstellungen (Sensor Alarme, SMTP, Templates)
+- Farbschema
 
 ---
 
 ## Dokumentation
 
-- Server API und Endpunkte: SERVER.md
-- Raspberry Pi Setup: RASPI-SETUP.md
-- Node-RED Integration: NodeRed.md
+- SERVER.md: Server Setup, API und E-Mail Endpunkte
+- RASPI-SETUP.md: Raspberry Pi Installation
+- NodeRed.md: Node-RED Topics und Payloads
+- NOTES.md: Implementierungsdetails
 
 ---
 

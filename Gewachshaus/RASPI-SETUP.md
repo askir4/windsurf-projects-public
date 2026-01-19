@@ -1,8 +1,14 @@
-# Gewachshaus - Raspberry Pi Setup
+# Raspberry Pi Setup
 
-Optimierte Version fuer Raspberry Pi und ressourcenbeschraenkte Systeme.
+## Inhalt
+- Installation
+- Start
+- Autostart
+- Troubleshooting
 
-## Schnellstart
+---
+
+## Installation
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -11,16 +17,17 @@ sudo apt install -y nodejs
 
 cd ~/gewachshaus
 npm install
-node server-simple.js
 ```
-
-Zugriff: http://raspberry-pi-ip:3001
-Login: admin / admin123
 
 ---
 
-## Startskript
+## Start
 
+```bash
+node server-simple.js
+```
+
+Alternativ mit Startskript:
 ```bash
 chmod +x start.sh
 ./start.sh start
@@ -28,9 +35,12 @@ chmod +x start.sh
 ./start.sh logs
 ```
 
+Zugriff: http://raspberry-pi-ip:3001
+Login: admin / admin123
+
 ---
 
-## Systemd Service (Autostart)
+## Autostart (systemd)
 
 ```bash
 sudo cp gewachshaus.service /etc/systemd/system/
@@ -51,16 +61,6 @@ export SESSION_SECRET=xxx
 ```
 
 SMTP und E-Mail Templates werden im Admin Panel konfiguriert.
-
----
-
-## Daten
-
-`data.json` wird automatisch erstellt und gespeichert.
-Backup:
-```bash
-cp data.json data.backup.json
-```
 
 ---
 

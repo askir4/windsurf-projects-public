@@ -1,18 +1,25 @@
 # Server-Installation und Konfiguration
 
+## Inhalt
+- Voraussetzungen
+- Installation und Start
+- Datenhaltung
+- API Endpunkte (Auszug)
+- SMTP und E-Mail
+- Sicherheit
+
+---
+
 ## Voraussetzungen
 - Node.js 14+
 - npm
 
-## Installation
+---
+
+## Installation und Start
 
 ```bash
 npm install
-```
-
-## Start
-
-```bash
 npm start
 ```
 
@@ -29,14 +36,14 @@ Standard URL: http://localhost:3001
 
 ## Datenhaltung
 
-- Daten werden in `data.json` gespeichert
+- Alle Daten in `data.json`
 - Atomisches Speichern (tmp + rename)
-- Automatische Backups bei Fehlern
+- Backup bei Fehlern
 
-### Relevante Bereiche in data.json
+Wichtige Bereiche:
 - forumPosts
 - settings
-- emailConfig (SMTP, Templates, Default, Recipients)
+- emailConfig (SMTP, Templates, Default, Empfaenger)
 - emailLogs
 
 ---
@@ -52,37 +59,45 @@ Standard URL: http://localhost:3001
 - POST /api/forum/posts
 - POST /api/forum/posts/:id/comments
 
-### SMTP und E-Mail
-- GET /api/email/smtp (Admin)
-- POST /api/email/smtp (Admin)
-- POST /api/email/test (Admin)
+### SMTP und E-Mail (Admin)
+- GET /api/email/smtp
+- POST /api/email/smtp
+- POST /api/email/test
 
-### Templates
-- GET /api/email/templates (Admin)
-- POST /api/email/templates (Admin)
-- PUT /api/email/templates/:id (Admin)
-- DELETE /api/email/templates/:id (Admin)
+### Templates (Admin)
+- GET /api/email/templates
+- POST /api/email/templates
+- PUT /api/email/templates/:id
+- DELETE /api/email/templates/:id
 
-### E-Mail Konfiguration
-- GET /api/email/config (Admin)
-- POST /api/email/config (Admin)
+### E-Mail Konfiguration (Admin)
+- GET /api/email/config
+- POST /api/email/config
 
-### E-Mail Logs
-- GET /api/email/logs?limit=100 (Admin)
+### E-Mail Logs (Admin)
+- GET /api/email/logs?limit=100
 
 ### Alarm Versand (intern)
 - POST /api/email/alarms/send
 
 ---
 
-## Sicherheit
+## SMTP und Platzhalter
 
-- Rate Limiting (In-Memory)
-- CORS Restrictions
-- Security Headers
+Verfuegbare Platzhalter in Templates:
+- {sensor_name}
+- {sensor_value}
+- {timestamp}
+- {threshold}
+- {alarm_type}
+- {details}
 
 ---
 
-## Hinweis
+## Sicherheit
 
-SMTP Zugangsdaten werden serverseitig in `data.json` gespeichert. Die UI zeigt das Passwort nicht an und sendet es nur bei Aenderung.
+- Rate Limiting (In-Memory)
+- Security Headers
+- Body Limit (1MB)
+
+Hinweis: SMTP Zugangsdaten werden in `data.json` gespeichert. Die UI zeigt Passwoerter nicht an und sendet sie nur bei Aenderung.
