@@ -21,38 +21,68 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .filter(Boolean);
 
 // ============== EINFACHE DATENBANK (JSON-Datei) ==============
-let data = {
-    zones: [],
-    slots: [],
-    plants: [],
-    users: [],
-    logs: [],
-    auditLogs: [],
-    forumPosts: [],
-    settings: {}
-};
+function createEmptyData() {
+    return {
+        zones: [],
+        slots: [],
+        plants: [],
+        users: [],
+        logs: [],
+        auditLogs: [],
+        forumPosts: [],
+        settings: {}
+    };
+}
+
+function normalizeData(loaded) {
+    const base = createEmptyData();
+    if (!loaded || typeof loaded !== 'object') return base;
+    const merged = { ...base, ...loaded };
+    return {
+        ...merged,
+        zones: Array.isArray(merged.zones) ? merged.zones : base.zones,
+        slots: Array.isArray(merged.slots) ? merged.slots : base.slots,
+        plants: Array.isArray(merged.plants) ? merged.plants : base.plants,
+        users: Array.isArray(merged.users) ? merged.users : base.users,
+        logs: Array.isArray(merged.logs) ? merged.logs : base.logs,
+        auditLogs: Array.isArray(merged.auditLogs) ? merged.auditLogs : base.auditLogs,
+        forumPosts: Array.isArray(merged.forumPosts) ? merged.forumPosts : base.forumPosts,
+        settings: merged.settings && typeof merged.settings === 'object' ? merged.settings : base.settings
+    };
+}
+
+let data = createEmptyData();
+
+function ensureAdminUser() {
+    if (!Array.isArray(data.users)) data.users = [];
+    if (data.users.length === 0) {
+        data.users.push({
+            id: 1,
+            username: ADMIN_USER,
+            password: hashPassword(ADMIN_PASS),
+            role: 'ADMIN',
+            created_at: new Date().toISOString()
+        });
+        dataChanged = true;
+        log('INFO', 'Admin-User erstellt');
+        if (ADMIN_PASS === 'admin123') {
+            log('WARN', 'Standard-Admin-Passwort aktiv - bitte ADMIN_PASS setzen');
+        }
+    }
+}
 
 function loadData() {
     try {
         if (fs.existsSync(DB_FILE)) {
             const raw = fs.readFileSync(DB_FILE, 'utf8');
-            data = JSON.parse(raw);
-            if (!data.forumPosts) data.forumPosts = [];
+            data = normalizeData(raw.trim() ? JSON.parse(raw) : null);
+            ensureAdminUser();
             log('INFO', 'Daten geladen');
         } else {
-            // Default Admin erstellen
-            data.users.push({
-                id: 1,
-                username: ADMIN_USER,
-                password: hashPassword(ADMIN_PASS),
-                role: 'ADMIN',
-                created_at: new Date().toISOString()
-            });
+            data = normalizeData(null);
+            ensureAdminUser();
             saveData();
-            log('INFO', 'Neue Datenbank erstellt mit Admin-User');
-            if (ADMIN_PASS === 'admin123') {
-                log('WARN', 'Standard-Admin-Passwort aktiv - bitte ADMIN_PASS setzen');
-            }
+            log('INFO', 'Neue Datenbank erstellt');
         }
     } catch (e) {
         log('ERROR', 'Fehler beim Laden der Daten: ' + e.message);
@@ -60,14 +90,19 @@ function loadData() {
         if (fs.existsSync(DB_FILE)) {
             fs.copyFileSync(DB_FILE, DB_FILE + '.backup.' + Date.now());
         }
+        data = normalizeData(null);
+        ensureAdminUser();
+        saveData();
     }
 }
 
 function saveData() {
     try {
-        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+        const tmpFile = `${DB_FILE}.tmp`;
+        fs.writeFileSync(tmpFile, JSON.stringify(data, null, 2));
+        fs.renameSync(tmpFile, DB_FILE);
     } catch (e) {
-        log('ERROR', 'Fehler beim Speichern: ' + e.message);
+        console.error('Fehler beim Speichern: ' + e.message);
     }
 }
 
@@ -225,6 +260,7 @@ function parseBody(req) {
         req.on('data', chunk => {
             body += chunk;
             if (body.length > 1e6) { // 1MB limit
+                req.destroy();
                 reject(new Error('Body too large'));
             }
         });
@@ -862,8 +898,25 @@ const server = http.createServer(async (req, res) => {
         return sendFile(res, path.join(__dirname, 'index.html'), req);
         
     } catch (e) {
+        if (e && e.message === 'Body too large') {
+            return sendError(res, 'Request zu gross', 413, req);
+        }
         log('ERROR', `Request error: ${e.message}`);
         return sendError(res, 'Interner Serverfehler', 500, req);
+    }
+});
+
+server.on('error', (err) => {
+    log('ERROR', `Server error: ${err.message}`);
+    if (err && err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} ist bereits belegt.`);
+        process.exit(1);
+    }
+});
+
+server.on('clientError', (err, socket) => {
+    if (socket.writable) {
+        socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
     }
 });
 

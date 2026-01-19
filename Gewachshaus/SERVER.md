@@ -21,6 +21,13 @@ npm run dev
 npm start
 ```
 
+### 2a. Raspberry Pi Startskript (optional)
+```bash
+npm run start:daemon   # Auto-Restart aktiv
+npm run start:status   # Status anzeigen
+npm run start:logs     # Live-Logs
+```
+
 ### 3. Server konfigurieren
 Der Server läuft standardmäßig auf `http://localhost:3001`
 

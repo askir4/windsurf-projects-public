@@ -164,6 +164,7 @@ class FertilizerControlSystem {
         
         // Forum
         this.forumPosts = [];
+        this.forumSearchQuery = '';
         
         this.init();
     }
@@ -183,6 +184,28 @@ class FertilizerControlSystem {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    escapeRegex(text) {
+        return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    highlightText(text, query) {
+        if (!query) return this.escapeHtml(text || '');
+        const raw = String(text || '');
+        const regex = new RegExp(this.escapeRegex(query), 'gi');
+        let result = '';
+        let lastIndex = 0;
+        let match;
+        while ((match = regex.exec(raw)) !== null) {
+            const start = match.index;
+            const end = start + match[0].length;
+            result += this.escapeHtml(raw.slice(lastIndex, start));
+            result += `<mark class="forum-highlight">${this.escapeHtml(raw.slice(start, end))}</mark>`;
+            lastIndex = end;
+        }
+        result += this.escapeHtml(raw.slice(lastIndex));
+        return result;
     }
     
     init() {
@@ -447,6 +470,10 @@ class FertilizerControlSystem {
             e.preventDefault();
             this.createForumPost();
         });
+        document.getElementById('forumSearchInput')?.addEventListener('input', (e) => {
+            this.forumSearchQuery = e.target.value;
+            this.renderForumPosts();
+        });
     }
     
     setMode(mode) {
@@ -456,6 +483,7 @@ class FertilizerControlSystem {
         }
         this.mode = mode;
         document.body.classList.toggle('profile-mode', mode === 'profile');
+        document.body.classList.toggle('forum-only', mode === 'forum');
         
         // UI aktualisieren
         document.getElementById('viewMode').classList.toggle('active', mode === 'view');
@@ -505,6 +533,10 @@ class FertilizerControlSystem {
         }
 
         if (mode === 'forum') {
+            const searchInput = document.getElementById('forumSearchInput');
+            if (searchInput) {
+                searchInput.value = this.forumSearchQuery;
+            }
             this.loadForumPosts();
         }
         
@@ -3293,39 +3325,59 @@ class FertilizerControlSystem {
     renderForumPosts() {
         const container = document.getElementById('forumPosts');
         if (!container) return;
+        const posts = this.getFilteredForumPosts();
+        const query = this.forumSearchQuery.trim();
+        const meta = document.getElementById('forumSearchMeta');
+        if (meta) {
+            meta.textContent = query
+                ? `${posts.length} Treffer`
+                : `${(this.forumPosts || []).length} Beiträge`;
+        }
         if (!this.forumPosts || this.forumPosts.length === 0) {
             container.innerHTML = '<div class="forum-empty">Noch keine Beiträge.</div>';
             return;
         }
+        if (posts.length === 0) {
+            container.innerHTML = '<div class="forum-empty">Keine Treffer.</div>';
+            return;
+        }
+
+        this.forumFocusedPostId = query && posts.length > 0 ? posts[0].id : null;
         
-        container.innerHTML = this.forumPosts.map(post => {
+        container.innerHTML = posts.map(post => {
             const comments = post.comments || [];
             const created = post.created_at ? new Date(post.created_at).toLocaleString('de-DE') : '';
+            const isFocused = this.forumFocusedPostId === post.id;
             return `
-                <div class="forum-post" data-post-id="${post.id}">
+                <div class="forum-post${isFocused ? ' forum-post-focused' : ''}" data-post-id="${post.id}">
                     <div class="forum-post-header">
-                        <span class="forum-author">${this.escapeHtml(post.author_username || 'Unbekannt')}</span>
+                        <span class="forum-author">${this.highlightText(post.author_username || 'Unbekannt', query)}</span>
                         <span class="forum-date">${this.escapeHtml(created)}</span>
                     </div>
-                    <div class="forum-post-content">${this.escapeHtml(post.content || '')}</div>
+                    <div class="forum-post-content">${this.highlightText(post.content || '', query)}</div>
                     <div class="forum-comments">
-                        <div class="forum-comments-title">Kommentare (${comments.length})</div>
-                        ${comments.map(c => {
-                            const cDate = c.created_at ? new Date(c.created_at).toLocaleString('de-DE') : '';
-                            return `
-                                <div class="forum-comment">
-                                    <div class="forum-comment-header">
-                                        <span class="forum-author">${this.escapeHtml(c.author_username || 'Unbekannt')}</span>
-                                        <span class="forum-date">${this.escapeHtml(cDate)}</span>
+                        <button class="forum-comments-toggle" data-post-id="${post.id}" type="button">
+                            <i class="fas fa-chevron-down"></i>
+                            <span>Kommentare (${comments.length})</span>
+                        </button>
+                        <div class="forum-comments-body">
+                            ${comments.map(c => {
+                                const cDate = c.created_at ? new Date(c.created_at).toLocaleString('de-DE') : '';
+                                return `
+                                    <div class="forum-comment">
+                                        <div class="forum-comment-header">
+                                            <span class="forum-author">${this.highlightText(c.author_username || 'Unbekannt', query)}</span>
+                                            <span class="forum-date">${this.escapeHtml(cDate)}</span>
+                                        </div>
+                                        <div class="forum-comment-content">${this.highlightText(c.content || '', query)}</div>
                                     </div>
-                                    <div class="forum-comment-content">${this.escapeHtml(c.content || '')}</div>
-                                </div>
-                            `;
-                        }).join('')}
-                        <form class="forum-comment-form" data-post-id="${post.id}">
-                            <input type="text" maxlength="1000" placeholder="Kommentar schreiben...">
-                            <button type="submit" class="btn btn-secondary btn-sm">Kommentieren</button>
-                        </form>
+                                `;
+                            }).join('')}
+                            <form class="forum-comment-form" data-post-id="${post.id}">
+                                <input type="text" maxlength="1000" placeholder="Kommentar schreiben...">
+                                <button type="submit" class="btn btn-secondary btn-sm">Kommentieren</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             `;
@@ -3339,6 +3391,39 @@ class FertilizerControlSystem {
                 const content = input?.value.trim();
                 if (!content) return;
                 this.addForumComment(postId, content, input);
+            });
+        });
+
+        container.querySelectorAll('.forum-comments-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const postEl = toggle.closest('.forum-post');
+                if (!postEl) return;
+                postEl.classList.toggle('forum-comments-collapsed');
+            });
+        });
+
+        if (this.forumFocusedPostId) {
+            requestAnimationFrame(() => {
+                const focused = container.querySelector(`[data-post-id="${this.forumFocusedPostId}"]`);
+                if (focused) {
+                    focused.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        }
+    }
+
+    getFilteredForumPosts() {
+        const query = this.forumSearchQuery.trim().toLowerCase();
+        if (!query) return this.forumPosts || [];
+        return (this.forumPosts || []).filter(post => {
+            const author = (post.author_username || '').toLowerCase();
+            const content = (post.content || '').toLowerCase();
+            if (author.includes(query) || content.includes(query)) return true;
+            const comments = post.comments || [];
+            return comments.some(c => {
+                const cAuthor = (c.author_username || '').toLowerCase();
+                const cContent = (c.content || '').toLowerCase();
+                return cAuthor.includes(query) || cContent.includes(query);
             });
         });
     }

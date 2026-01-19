@@ -882,8 +882,17 @@
                 <!-- Forum -->
                 <section class="forum-panel hidden" id="forumPanel">
                     <div class="forum-header">
-                        <h2><i class="fas fa-comments"></i> Forum</h2>
-                        <p class="forum-subtitle">Austausch, Hinweise und Fragen rund ums Gewächshaus.</p>
+                        <div class="forum-header-row">
+                            <div class="forum-header-title">
+                                <h2><i class="fas fa-comments"></i> Forum</h2>
+                                <p class="forum-subtitle">Austausch, Hinweise und Fragen rund ums Gewächshaus.</p>
+                            </div>
+                            <div class="forum-search">
+                                <i class="fas fa-search"></i>
+                                <input type="search" id="forumSearchInput" placeholder="Suche nach Nutzername oder Inhalt...">
+                            </div>
+                        </div>
+                        <div class="forum-search-meta" id="forumSearchMeta">0 Beiträge</div>
                     </div>
                     <form id="forumPostForm" class="forum-post-form">
                         <label for="forumPostContent">Neuer Beitrag</label>

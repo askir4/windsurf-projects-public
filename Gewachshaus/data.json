@@ -6,9 +6,10 @@
     {
       "id": 1,
       "username": "admin",
-      "password": "ce77dceac0fafef1cdb900860c1f68ac0e1dbc61d3e39fc7f371529e37e05402",
+      "password": "scrypt$fbb16cc0448c3c1cda4ad643a367e0cb$f021b9935c38ed6cb040898b824da334b804cff2e982e134b5f297d234cf8bd20aa11ce1bc725d2788fbfa61de8a4fd2aca6c58d11b7c11aaeae9f604087cf05",
       "role": "ADMIN",
-      "created_at": "2026-01-18T13:18:00.000Z"
+      "created_at": "2026-01-18T13:18:00.000Z",
+      "updated_at": "2026-01-19T08:37:17.619Z"
     },
     {
       "id": 2,
@@ -20,6 +21,26 @@
     }
   ],
   "logs": [
+    {
+      "timestamp": "2026-01-19T08:37:17.555Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-19T08:10:11.767Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-19T08:10:11.752Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-01-19T08:10:11.746Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
     {
       "timestamp": "2026-01-19T07:51:34.275Z",
       "level": "INFO",
@@ -208,6 +229,26 @@
   ],
   "auditLogs": [
     {
+      "id": 3,
+      "actor_user_id": 1,
+      "actor_username": "admin",
+      "action": "FORUM_COMMENT_CREATED",
+      "entity_type": "forum_post",
+      "entity_id": "1",
+      "metadata_json": "{\"commentId\":1}",
+      "created_at": "2026-01-19T10:26:54.686Z"
+    },
+    {
+      "id": 2,
+      "actor_user_id": 1,
+      "actor_username": "admin",
+      "action": "FORUM_POST_CREATED",
+      "entity_type": "forum_post",
+      "entity_id": "1",
+      "metadata_json": null,
+      "created_at": "2026-01-19T10:17:02.236Z"
+    },
+    {
       "id": 1,
       "actor_user_id": 1,
       "actor_username": "admin",
@@ -219,5 +260,22 @@
     }
   ],
   "settings": {},
-  "forumPosts": []
+  "forumPosts": [
+    {
+      "id": 1,
+      "author_user_id": 1,
+      "author_username": "admin",
+      "content": "Hallo",
+      "created_at": "2026-01-19T10:17:02.236Z",
+      "comments": [
+        {
+          "id": 1,
+          "author_user_id": 1,
+          "author_username": "admin",
+          "content": "Test",
+          "created_at": "2026-01-19T10:26:54.686Z"
+        }
+      ]
+    }
+  ]
 }

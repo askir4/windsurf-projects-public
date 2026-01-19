@@ -6,7 +6,12 @@
   "scripts": {
     "start": "node server-simple.js",
     "start:old": "node server.js",
-    "dev": "node --watch server-simple.js"
+    "dev": "node --watch server-simple.js",
+    "start:daemon": "bash ./start.sh daemon",
+    "start:status": "bash ./start.sh status",
+    "start:stop": "bash ./start.sh stop",
+    "start:restart": "bash ./start.sh restart",
+    "start:logs": "bash ./start.sh logs"
   },
   "keywords": [
     "greenhouse",
