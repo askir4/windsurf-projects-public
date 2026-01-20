@@ -1,0 +1,23 @@
+# Ausbildungsberichts-Generator Dependencies
+# Python 3.10+
+
+# GUI Framework
+# tkinter is built-in, no need to install
+
+# Word Document Processing
+python-docx>=0.8.11
+
+# Template Engine
+Jinja2>=3.1.2
+
+# Data Processing (optional, for future enhancements)
+pandas>=2.0.0
+
+# Image Processing for GUI
+Pillow>=10.0.0
+
+# Packaging for executable
+pyinstaller>=6.0.0
+
+# Date handling
+python-dateutil>=2.8.2
