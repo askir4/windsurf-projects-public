@@ -531,6 +531,11 @@ body.dark-mode .info-item span {
     background: #fdf2f2;
 }
 
+.connection-status.error {
+    border-color: #e67e22;
+    background: #fef5e7;
+}
+
 .connection-status i {
     font-size: 0.8rem;
 }
@@ -541,6 +546,10 @@ body.dark-mode .info-item span {
 
 .connection-status.disconnected i {
     color: #e74c3c;
+}
+
+.connection-status.error i {
+    color: #e67e22;
 }
 
 .connection-status span {
@@ -673,6 +682,11 @@ body.dark-mode .connection-status.connected {
 body.dark-mode .connection-status.disconnected {
     border-color: #e74c3c;
     background: #722f37;
+}
+
+body.dark-mode .connection-status.error {
+    border-color: #e67e22;
+    background: #5b3b1a;
 }
 
 body.dark-mode .sensor-card {

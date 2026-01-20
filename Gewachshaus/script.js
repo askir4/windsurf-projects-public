@@ -74,6 +74,7 @@ class FertilizerControlSystem {
             humidity: { value: 65, trend: 'stable', lastUpdate: new Date() },
             soilMoisture: { value: 42, trend: 'stable', lastUpdate: new Date() }
         };
+        this.simulationEnabled = true;
         
         // NodeRED-Verbindung
         this.nodeRed = {
@@ -93,6 +94,14 @@ class FertilizerControlSystem {
                 valve: 'actuators/valve',
                 pump: 'actuators/pump'
             }
+        };
+        this.nodeRedHealth = {
+            lastMessageAt: null,
+            lastOpenAt: null,
+            lastAttemptAt: null,
+            staleTimeout: 10000,
+            checkInterval: 2000,
+            timerId: null
         };
         
         // Wassertank
@@ -413,6 +422,11 @@ class FertilizerControlSystem {
         
         // NodeRED-Verbindung starten
         this.connectNodeRed();
+
+        if (!this.simulationEnabled && this.nodeRed.enabled) {
+            this.nodeRedHealth.lastAttemptAt = Date.now();
+            this.startNodeRedHealthMonitor();
+        }
         
         // Server-Synchronisation starten
         this.startServerSync();
@@ -566,6 +580,31 @@ class FertilizerControlSystem {
             nodeRedUrl.addEventListener('change', (e) => {
                 this.nodeRed.websocketUrl = e.target.value;
                 this.saveToLocalStorage();
+            });
+        }
+
+        const simulationEnabled = document.getElementById('simulationEnabled');
+        if (simulationEnabled) {
+            simulationEnabled.addEventListener('change', (e) => {
+                this.simulationEnabled = e.target.checked;
+                this.saveToLocalStorage();
+                if (this.simulationEnabled) {
+                    if (this.nodeRedSocket && this.nodeRedSocket.readyState === WebSocket.OPEN) {
+                        this.updateConnectionStatus('connected');
+                    } else {
+                        this.updateConnectionStatus('disconnected');
+                    }
+                    this.stopNodeRedHealthMonitor();
+                } else {
+                    this.nodeRedHealth.lastAttemptAt = Date.now();
+                    if (this.nodeRed.enabled) {
+                        this.startNodeRedHealthMonitor();
+                    } else {
+                        this.stopNodeRedHealthMonitor();
+                        this.updateConnectionStatus('disconnected');
+                    }
+                    this.refreshSensorConnectionState();
+                }
             });
         }
 
@@ -2778,6 +2817,7 @@ class FertilizerControlSystem {
             localStorage.setItem('waterTank', JSON.stringify(this.waterTank));
             localStorage.setItem('sensors', JSON.stringify(this.sensors));
             localStorage.setItem('sensorThresholds', JSON.stringify(this.sensorThresholds));
+            localStorage.setItem('simulationEnabled', this.simulationEnabled.toString());
             localStorage.setItem('nodeRed', JSON.stringify(this.nodeRed));
             localStorage.setItem('serverConfig', JSON.stringify(this.serverConfig));
             
@@ -2841,12 +2881,16 @@ class FertilizerControlSystem {
             // Sensordaten laden
             const savedSensors = localStorage.getItem('sensors');
             const savedSensorThresholds = localStorage.getItem('sensorThresholds');
+            const savedSimulationEnabled = localStorage.getItem('simulationEnabled');
             const savedNodeRed = localStorage.getItem('nodeRed');
             const savedWaterTank = localStorage.getItem('waterTank');
             
             if (savedSensors) this.sensors = JSON.parse(savedSensors);
             if (savedSensorThresholds) {
                 this.sensorThresholds = this.normalizeSensorThresholds(JSON.parse(savedSensorThresholds));
+            }
+            if (savedSimulationEnabled !== null) {
+                this.simulationEnabled = savedSimulationEnabled === 'true';
             }
             if (savedNodeRed) this.nodeRed = JSON.parse(savedNodeRed);
             if (savedWaterTank) this.waterTank = JSON.parse(savedWaterTank);
@@ -2955,12 +2999,16 @@ class FertilizerControlSystem {
         if (!this.nodeRed.enabled) return;
         
         this.updateConnectionStatus('connecting');
+        this.nodeRedHealth.lastAttemptAt = Date.now();
+        this.startNodeRedHealthMonitor();
         
         try {
             this.nodeRedSocket = new WebSocket(this.nodeRed.websocketUrl);
             
             this.nodeRedSocket.onopen = () => {
                 this.updateConnectionStatus('connected');
+                this.nodeRedHealth.lastOpenAt = Date.now();
+                this.nodeRedHealth.lastMessageAt = null;
                 this.showToast('NodeRED verbunden', 'success');
                 
                 // Topics abonnieren
@@ -2975,6 +3023,8 @@ class FertilizerControlSystem {
             this.nodeRedSocket.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
+                    this.nodeRedHealth.lastMessageAt = Date.now();
+                    this.updateConnectionStatus('connected');
                     this.processNodeRedMessage(data);
                 } catch (e) {
                     console.error('Fehler bei NodeRED Nachricht:', e);
@@ -2983,6 +3033,7 @@ class FertilizerControlSystem {
             
             this.nodeRedSocket.onclose = () => {
                 this.updateConnectionStatus('disconnected');
+                this.nodeRedHealth.lastAttemptAt = Date.now();
                 this.showToast('NodeRED Verbindung verloren', 'error');
                 
                 // Automatischer Reconnect
@@ -2994,11 +3045,47 @@ class FertilizerControlSystem {
             this.nodeRedSocket.onerror = (error) => {
                 console.error('NodeRED WebSocket Fehler:', error);
                 this.updateConnectionStatus('disconnected');
+                this.nodeRedHealth.lastAttemptAt = Date.now();
             };
             
         } catch (e) {
             console.error('NodeRED Verbindung fehlgeschlagen:', e);
             this.updateConnectionStatus('disconnected');
+            this.nodeRedHealth.lastAttemptAt = Date.now();
+        }
+    }
+
+    startNodeRedHealthMonitor() {
+        this.stopNodeRedHealthMonitor();
+        this.nodeRedHealth.timerId = setInterval(() => {
+            this.checkNodeRedHealth();
+        }, this.nodeRedHealth.checkInterval);
+    }
+
+    stopNodeRedHealthMonitor() {
+        if (this.nodeRedHealth.timerId) {
+            clearInterval(this.nodeRedHealth.timerId);
+            this.nodeRedHealth.timerId = null;
+        }
+    }
+
+    checkNodeRedHealth() {
+        if (this.simulationEnabled) return;
+        if (!this.nodeRed.enabled) return;
+        const now = Date.now();
+        if (this.nodeRedSocket && this.nodeRedSocket.readyState === WebSocket.OPEN) {
+            const lastActivity = this.nodeRedHealth.lastMessageAt ?? this.nodeRedHealth.lastOpenAt;
+            if (!lastActivity) return;
+            if (now - lastActivity > this.nodeRedHealth.staleTimeout) {
+                this.updateConnectionStatus('error');
+            }
+            return;
+        }
+
+        const lastAttempt = this.nodeRedHealth.lastAttemptAt;
+        if (!lastAttempt) return;
+        if (now - lastAttempt > this.nodeRedHealth.staleTimeout) {
+            this.updateConnectionStatus('error');
         }
     }
     
@@ -3063,6 +3150,11 @@ class FertilizerControlSystem {
         const idPrefix = sensorType === 'temperature' ? 'temp' : sensorType;
         const valueElement = document.getElementById(`${idPrefix}Value`);
         const timeElement = document.getElementById(`${idPrefix}Time`);
+
+        if (!this.isSensorDataVisible()) {
+            this.clearSensorDisplay(sensorType);
+            return;
+        }
         
         if (valueElement) {
             valueElement.textContent = sensor.value.toFixed(1);
@@ -3075,6 +3167,48 @@ class FertilizerControlSystem {
         }
 
         this.updateSensorAlarm(sensorType);
+    }
+
+    isSensorDataVisible() {
+        if (this.simulationEnabled) return true;
+        if (!this.nodeRed.enabled) return false;
+        return this.nodeRedSocket && this.nodeRedSocket.readyState === WebSocket.OPEN;
+    }
+
+    clearSensorDisplay(sensorType) {
+        const idPrefix = sensorType === 'temperature' ? 'temp' : sensorType;
+        const valueElement = document.getElementById(`${idPrefix}Value`);
+        const timeElement = document.getElementById(`${idPrefix}Time`);
+        const trendElement = document.getElementById(`${idPrefix}Trend`);
+
+        if (valueElement) valueElement.textContent = '--';
+        if (timeElement) timeElement.textContent = 'keine Daten';
+        if (trendElement) {
+            trendElement.className = 'sensor-trend stable';
+            trendElement.innerHTML = '<i class="fas fa-minus"></i>';
+        }
+
+        this.clearSensorAlarmUI(sensorType);
+    }
+
+    clearSensorAlarmUI(sensorType) {
+        const idPrefix = sensorType === 'temperature' ? 'temp' : sensorType;
+        const card = document.getElementById(`${idPrefix}Card`);
+        const alertEl = document.getElementById(`${idPrefix}Alert`);
+        if (card) card.classList.remove('sensor-alarm');
+        if (alertEl) {
+            alertEl.classList.remove('active');
+            alertEl.title = '';
+            const text = alertEl.querySelector('span');
+            if (text) text.textContent = 'Alarm';
+        }
+        this.sensorAlarmState[sensorType] = false;
+    }
+
+    refreshSensorConnectionState() {
+        Object.keys(this.sensors).forEach(sensorType => {
+            this.updateSensorUI(sensorType);
+        });
     }
 
     getSensorAlarmState(sensorType) {
@@ -3236,7 +3370,13 @@ class FertilizerControlSystem {
                 iconElement.className = 'fas fa-circle';
                 textElement.textContent = 'Getrennt';
                 break;
+            case 'error':
+                iconElement.className = 'fas fa-exclamation-circle';
+                textElement.textContent = 'Verbindungsfehler';
+                break;
         }
+
+        this.refreshSensorConnectionState();
     }
     
     initSensors() {
@@ -3251,6 +3391,7 @@ class FertilizerControlSystem {
     startSensorSimulation() {
         // Simuliert Sensor-Werte für Demo
         setInterval(() => {
+            if (!this.simulationEnabled || this.nodeRed.enabled) return;
             // Temperatur
             const tempChange = (Math.random() - 0.5) * 2;
             const newTemp = Math.max(15, Math.min(35, this.sensors.temperature.value + tempChange));
@@ -3436,6 +3577,16 @@ class FertilizerControlSystem {
             this.nodeRedSocket.close();
             this.nodeRedSocket = null;
         }
+        if (this.simulationEnabled) {
+            this.stopNodeRedHealthMonitor();
+        } else {
+            this.nodeRedHealth.lastAttemptAt = Date.now();
+            if (this.nodeRed.enabled) {
+                this.startNodeRedHealthMonitor();
+            } else {
+                this.stopNodeRedHealthMonitor();
+            }
+        }
         this.updateConnectionStatus('disconnected');
         this.showToast('NodeRED getrennt', 'info');
     }
@@ -3444,6 +3595,7 @@ class FertilizerControlSystem {
     updateEditorUI() {
         const nodeRedUrl = document.getElementById('nodeRedUrl');
         const nodeRedEnabled = document.getElementById('nodeRedEnabled');
+        const simulationEnabled = document.getElementById('simulationEnabled');
         const tankCapacity = document.getElementById('tankCapacity');
         const tankCurrent = document.getElementById('tankCurrent');
         const zoneName = document.getElementById('zoneName');
@@ -3456,6 +3608,7 @@ class FertilizerControlSystem {
         
         if (nodeRedUrl) nodeRedUrl.value = this.nodeRed.websocketUrl;
         if (nodeRedEnabled) nodeRedEnabled.checked = this.nodeRed.enabled;
+        if (simulationEnabled) simulationEnabled.checked = this.simulationEnabled;
         if (tankCapacity) tankCapacity.value = this.waterTank.capacity;
         if (tankCurrent) tankCurrent.value = this.waterTank.currentLevel;
         

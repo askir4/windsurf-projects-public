@@ -22,6 +22,31 @@
   ],
   "logs": [
     {
+      "timestamp": "2026-01-20T06:03:52.304Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-01-20T06:03:00.999Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-20T06:03:00.989Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-01-20T06:03:00.983Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-01-19T19:00:42.857Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
       "timestamp": "2026-01-19T08:37:17.555Z",
       "level": "INFO",
       "message": "Login erfolgreich: admin"
@@ -259,7 +284,6 @@
       "created_at": "2026-01-18T22:56:48.429Z"
     }
   ],
-  "settings": {},
   "forumPosts": [
     {
       "id": 1,
@@ -277,5 +301,20 @@
         }
       ]
     }
-  ]
+  ],
+  "settings": {},
+  "emailConfig": {
+    "smtp": {
+      "host": "",
+      "port": 587,
+      "user": "",
+      "pass": "",
+      "from": "",
+      "encryption": "starttls"
+    },
+    "templates": [],
+    "defaultTemplateId": null,
+    "recipients": []
+  },
+  "emailLogs": []
 }
