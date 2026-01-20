@@ -103,9 +103,8 @@ class ReportFormFrame(ttk.Frame):
         self.canvas.bind('<Configure>', self._on_canvas_configure)
         
         # Mouse wheel scrolling
-        self.canvas.bind_all('<MouseWheel>', self._on_mousewheel)
-        self.canvas.bind_all('<Button-4>', self._on_mousewheel)
-        self.canvas.bind_all('<Button-5>', self._on_mousewheel)
+        self.canvas.bind('<Enter>', self._bind_mouse_wheel)
+        self.canvas.bind('<Leave>', self._unbind_mouse_wheel)
         
         # Placeholder message
         self.placeholder_label = ttk.Label(self.form_frame, 
@@ -124,6 +123,16 @@ class ReportFormFrame(ttk.Frame):
                                     command=self._clear_form, state='disabled')
         self.clear_btn.pack(side='left', padx=5, pady=10)
     
+    def _bind_mouse_wheel(self, event):
+        self.canvas.bind_all('<MouseWheel>', self._on_mousewheel)
+        self.canvas.bind_all('<Button-4>', self._on_mousewheel)
+        self.canvas.bind_all('<Button-5>', self._on_mousewheel)
+
+    def _unbind_mouse_wheel(self, event):
+        self.canvas.unbind_all('<MouseWheel>')
+        self.canvas.unbind_all('<Button-4>')
+        self.canvas.unbind_all('<Button-5>')
+    
     def _on_frame_configure(self, event):
         """Update scroll region when form frame changes."""
         self.canvas.configure(scrollregion=self.canvas.bbox('all'))
@@ -134,6 +143,9 @@ class ReportFormFrame(ttk.Frame):
     
     def _on_mousewheel(self, event):
         """Handle mouse wheel scrolling."""
+        # The direction of scroll is different on different platforms
+        # event.delta is for Windows and macOS
+        # event.num is for Linux
         if event.num == 5 or event.delta < 0:
             self.canvas.yview_scroll(1, 'units')
         elif event.num == 4 or event.delta > 0:

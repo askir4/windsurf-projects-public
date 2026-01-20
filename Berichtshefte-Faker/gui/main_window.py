@@ -10,9 +10,6 @@ import sys
 from pathlib import Path
 from typing import Dict, Any
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from core.template_handler import TemplateHandler
 from core.report_generator import ReportGenerator
 from core.word_exporter import WordExporter
@@ -217,7 +214,8 @@ class MainWindow:
             report_doc = self.report_generator.generate(doc, data)
             
             # Ask for save location
-            default_name = f"Ausbildungsbericht_{data.get('name', '')}_{data.get('datum', '')}.docx"
+            date_str = self.report_generator._format_value(data.get('datum', ''))
+            default_name = f"Ausbildungsbericht_{data.get('name', '')}_{date_str}.docx"
             default_name = default_name.replace('/', '-').replace('\\', '-')
             
             filepath = filedialog.asksaveasfilename(

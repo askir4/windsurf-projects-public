@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class TemplateHandler:
     """Handles Word template operations including loading, saving, and placeholder detection."""
     
-    PLACEHOLDER_PATTERN = re.compile(r'\{\{(\w+)\}\}')
+    PLACEHOLDER_PATTERN = re.compile(r'\{\{([^}]+)\}\}')
     
     def __init__(self, templates_dir: str = "templates"):
         """

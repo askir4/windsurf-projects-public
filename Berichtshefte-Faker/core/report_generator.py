@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class ReportGenerator:
     """Generates reports by replacing placeholders in templates with actual data."""
     
-    PLACEHOLDER_PATTERN = re.compile(r'\{\{(\w+)\}\}')
+    PLACEHOLDER_PATTERN = re.compile(r'\{\{([^}]+)\}\}')
     
     def __init__(self):
         """Initialize the report generator."""
@@ -42,6 +42,8 @@ class ReportGenerator:
         elif isinstance(value, (int, float)):
             return str(value)
         elif isinstance(value, list):
+            # For list values, join with newlines. This is a simple approach.
+            # In a real-world scenario, you might want more complex list formatting.
             return "\n".join(str(item) for item in value)
         else:
             return str(value)
@@ -50,60 +52,23 @@ class ReportGenerator:
         """
         Replace placeholders in a paragraph while preserving formatting.
         
+        This is a simplified implementation that assumes placeholders are not split
+        across different formatting runs.
+        
         Args:
             paragraph: The paragraph to process
             data: Dictionary mapping placeholder names to values
         """
-        # Get the full text of the paragraph
-        full_text = paragraph.text
-        
-        # Find all placeholders
-        matches = list(self.PLACEHOLDER_PATTERN.finditer(full_text))
-        
-        if not matches:
-            return
-        
-        # Build the new text with replacements
-        new_text = full_text
-        for match in reversed(matches):  # Reverse to maintain positions
-            placeholder_name = match.group(1)
-            if placeholder_name in data:
-                replacement = self._format_value(data[placeholder_name])
-                new_text = new_text[:match.start()] + replacement + new_text[match.end():]
-        
-        # If text changed, update the paragraph
-        if new_text != full_text:
-            # Clear existing runs and add new text
-            # We need to preserve the formatting of the first run
-            if paragraph.runs:
-                first_run = paragraph.runs[0]
-                # Store formatting
-                font_name = first_run.font.name
-                font_size = first_run.font.size
-                bold = first_run.font.bold
-                italic = first_run.font.italic
-                underline = first_run.font.underline
-                
-                # Clear all runs
+        for key, value in data.items():
+            placeholder = f"{{{{{key}}}}}"
+            if placeholder in paragraph.text:
+                formatted_value = self._format_value(value)
                 for run in paragraph.runs:
-                    run.text = ""
-                
-                # Set new text on first run
-                first_run.text = new_text
-                
-                # Restore formatting
-                if font_name:
-                    first_run.font.name = font_name
-                if font_size:
-                    first_run.font.size = font_size
-                if bold is not None:
-                    first_run.font.bold = bold
-                if italic is not None:
-                    first_run.font.italic = italic
-                if underline is not None:
-                    first_run.font.underline = underline
-            else:
-                paragraph.add_run(new_text)
+                    if placeholder in run.text:
+                        # This is a simple replacement. For more complex scenarios,
+                        # like a placeholder split across runs, a more advanced
+                        # algorithm would be needed.
+                        run.text = run.text.replace(placeholder, formatted_value)
     
     def _replace_in_table(self, table, data: Dict[str, Any]) -> None:
         """

@@ -54,11 +54,6 @@ def check_dependencies():
     except ImportError:
         missing.append('tkcalendar')
     
-    try:
-        from PIL import Image
-    except ImportError:
-        missing.append('Pillow')
-    
     if missing:
         print("=" * 50)
         print("FEHLENDE ABHÄNGIGKEITEN")
