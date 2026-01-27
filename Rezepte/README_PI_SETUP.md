@@ -1,6 +1,6 @@
-# 🍳 Rezept-App auf Raspberry Pi 4 Setup Guide
+# Rezept-App auf Raspberry Pi 4 Setup Guide
 
-## 📋 Voraussetzungen
+## Voraussetzungen
 - Raspberry Pi 4 (4GB RAM empfohlen)
 - Raspbian OS (oder Raspberry Pi OS)
 - Internetverbindung
@@ -8,7 +8,7 @@
 
 ---
 
-## 🚀 Schritt 1: Projekt auf den Pi kopieren
+## Schritt 1: Projekt auf den Pi kopieren
 
 ### Methode A: Git (empfohlen)
 ```bash
@@ -26,7 +26,7 @@ scp -r /path/to/Rezepte pi@<pi-ip>:/home/pi/
 
 ---
 
-## 🔧 Schritt 2: Node.js installieren
+## Schritt 2: Node.js installieren
 
 ```bash
 # System aktualisieren
@@ -43,7 +43,7 @@ npm --version
 
 ---
 
-## 📦 Schritt 3: Abhängigkeiten installieren
+## Schritt 3: Abhängigkeiten installieren
 
 ```bash
 cd /home/pi/Rezepte
@@ -59,7 +59,7 @@ cd ..
 
 ---
 
-## 🗄️ Schritt 4: Datenbank einrichten
+## Schritt 4: Datenbank einrichten
 
 ```bash
 # Datenbank wird automatisch erstellt
@@ -74,7 +74,7 @@ sqlite3 recipes.db < database.sql
 
 ---
 
-## 🚀 Schritt 5: App starten
+## Schritt 5: App starten
 
 ### Methode A: Manuell starten
 ```bash
@@ -136,7 +136,7 @@ pm2 save
 
 ---
 
-## 🌐 Schritt 6: Firewall konfigurieren
+## Schritt 6: Firewall konfigurieren
 
 ```bash
 # Ports freigeben (falls nötig)
@@ -147,7 +147,7 @@ sudo ufw reload
 
 ---
 
-## 📱 Schritt 7: Zugriff auf die App
+## Schritt 7: Zugriff auf die App
 
 ### Lokal am Pi:
 - Backend: `http://localhost:3001`
@@ -162,7 +162,7 @@ hostname -I
 
 ---
 
-## 🔧 Schritt 8: Optimierungen für Pi
+## Schritt 8: Optimierungen für Pi
 
 ### 1. Swap-Datei vergrößern
 ```bash
@@ -212,7 +212,7 @@ sudo systemctl start recipe-app.service
 
 ---
 
-## 📊 Schritt 9: Monitoring
+## Schritt 9: Monitoring
 
 ### PM2 Status prüfen:
 ```bash
@@ -235,7 +235,7 @@ ps aux | grep node
 
 ---
 
-## 🔄 Schritt 10: Updates
+## Schritt 10: Updates
 
 ### App aktualisieren:
 ```bash
@@ -255,7 +255,7 @@ sudo apt-get install -y nodejs
 
 ---
 
-## 🐛 Fehlerbehebung
+## Fehlerbehebung
 
 ### Port bereits belegt:
 ```bash
@@ -282,7 +282,7 @@ mv recipes_new.db recipes.db
 
 ---
 
-## 📱 Mobile Zugriff
+## Mobile Zugriff
 
 Die App ist mobile-freundlich und funktioniert auf:
 - Smartphones (iOS/Android)
@@ -291,7 +291,7 @@ Die App ist mobile-freundlich und funktioniert auf:
 
 ---
 
-## 🎯 Fertig!
+## Fertig!
 
 Deine Rezept-App läuft jetzt auf dem Raspberry Pi 4 und ist im lokalen Netzwerk erreichbar.
 

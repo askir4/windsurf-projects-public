@@ -1,164 +1,357 @@
-# Recipe Website for Raspberry Pi 4
+# Recipe Website
 
-A beautiful, self-hosted recipe management website designed to run on Raspberry Pi 4 with SQLite database storage.
+**Self-hosted Recipe Management for Raspberry Pi**
+
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+
+Eine leichte, selbst gehostete Rezeptverwaltungs-Website, die speziell für den Betrieb auf Raspberry Pi 4 entwickelt wurde. Mit SQLite-Datenbank und modernem Web-Interface für die optimale Haushaltsorganisation.
+
+---
+
+## Inhaltsverzeichnis
+
+- [Übersicht](#übersicht)
+- [Features](#features)
+- [Technologie-Stack](#technologie-stack)
+- [Installation](#installation)
+- [Konfiguration](#konfiguration)
+- [API-Dokumentation](#api-dokumentation)
+- [Raspberry Pi Setup](#raspberry-pi-setup)
+- [Troubleshooting](#troubleshooting)
+
+---
+
+## Übersicht
+
+Die Recipe Website ist eine vollständige Lösung zur Verwaltung Ihrer Kochrezepte. Das System ist für den Heimgebrauch optimiert und läuft zuverlässig auf einem Raspberry Pi 4, sodass Sie Ihre Rezeptsammlung jederzeit im lokalen Netzwerk zugänglich haben.
+
+### Anwendungsfälle
+
+- **Haushaltsorganisation**: Alle Familienrezepte an einem Ort
+- **Meal Planning**: Rezepte für die Woche planen und organisieren
+- **Kochbuch-Ersatz**: Digitale Alternative zu physischen Kochbüchern
+- **Gemeinschafts-Kochen**: Rezepte mit Familie und Freunden teilen
+- **Mobile Nutzung**: Rezepte direkt in der Küche auf Smartphone/Tablet
 
 ## Features
 
-- **Add/Edit/Delete Recipes** - Full CRUD operations for your recipes
-- **Image Upload** - Add photos to your recipes
-- **Search & Filter** - Find recipes by name, ingredients, or category
-- **Categories** - Organize recipes (Breakfast, Lunch, Dinner, Dessert, etc.)
-- **Responsive Design** - Works on desktop, tablet, and mobile
-- **Lightweight Database** - Uses SQLite (no separate database server needed)
+### Rezeptverwaltung
 
-## Tech Stack
+| Feature | Beschreibung |
+|---------|-------------|
+| **CRUD-Operationen** | Rezepte anlegen, bearbeiten, löschen |
+| **Bild-Upload** | Fotos zu Rezepten hinzufügen |
+| **Kategorien** | Rezepte organisieren (Frühstück, Mittagessen, Abendessen, Dessert) |
+| **Suche & Filter** | Rezepte nach Name, Zutaten oder Kategorie finden |
+| **Zutatenliste** | Detaillierte Zutaten mit Mengenangaben |
+| **Kochanleitung** | Schritt-für-Schritt Anleitungen |
 
-- **Backend**: Node.js + Express
-- **Database**: SQLite3
-- **Frontend**: React + Tailwind CSS
-- **Icons**: Lucide React
+### Benutzerinterface
 
-## Installation on Raspberry Pi 4
+| Feature | Beschreibung |
+|---------|-------------|
+| **Responsive Design** | Funktioniert auf Desktop, Tablet und Mobile |
+| **Moderne UI** | Sauberes, intuitives Design mit Tailwind CSS |
+| **Schnelle Ladezeiten** | Optimiert für Raspberry Pi Hardware |
+| **Offline-Fähig** | Grundfunktionen auch ohne Internet |
+| **Druckansicht** | Rezepte druckbar für Küchennutzung |
 
-### 1. Prerequisites
+### Datenverwaltung
 
-Make sure your Pi has Node.js installed:
+| Feature | Beschreibung |
+|---------|-------------|
+| **SQLite Datenbank** | Leichte, serverlose Datenbank |
+| **Automatische Backups** | Einfache Datensicherung |
+| **Daten-Export** | Rezepte als CSV oder JSON exportieren |
+| **Bild-Optimierung** | Automatische Bildkomprimierung |
+| **Daten-Integrität** | Validierung und Fehlerbehandlung |
 
-```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
+## Technologie-Stack
 
-# Install Node.js (v18 LTS recommended)
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
+| Komponente | Technologie | Version | Zweck |
+|------------|-------------|---------|-------|
+| **Backend** | Node.js | 18+ | JavaScript Runtime |
+| **Backend** | Express.js | 4+ | Web Framework |
+| **Datenbank** | SQLite3 | 3+ | Datenspeicherung |
+| **Frontend** | React | 18+ | User Interface |
+| **Frontend** | Tailwind CSS | 3+ | Styling Framework |
+| **Icons** | Lucide React | Latest | Icon Library |
+| **File Upload** | Multer | 1+ | Bild-Upload |
+| **Image Processing** | Sharp | Latest | Bild-Optimierung |
 
-# Verify installation
-node --version
-npm --version
+### Architektur
+
+```text
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Frontend      │────▶│    Backend      │────▶│  SQLite DB      │
+│   React App     │     │   Express API   │     │   recipes.db    │
+│   TailwindCSS   │     │   File Upload   │     │                 │
+│   Responsive    │     │   Image Processing│     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-### 2. Clone/Copy the Project
+## Installation
 
-Copy the project files to your Raspberry Pi:
+### Systemvoraussetzungen
+
+| Komponente | Mindestanforderung | Empfohlen |
+|------------|-------------------|------------|
+| **Node.js** | 18.x LTS | 20.x LTS |
+| **RAM** | 1 GB | 2 GB |
+| **Speicher** | 512 MB | 1 GB |
+| **Betriebssystem** | Linux/macOS/Windows | Raspberry Pi OS |
+
+### Schnellinstallation
 
 ```bash
-# Create a directory for the project
-mkdir -p ~/recipe-website
-cd ~/recipe-website
+# 1. Repository klonen
+git clone <repository-url>
+cd Rezepte
 
-# Copy files here (via SCP, USB, etc.)
-```
-
-### 3. Install Dependencies
-
-```bash
-# Install backend dependencies
+# 2. Abhängigkeiten installieren
 npm install
 
-# Install frontend dependencies and build
+# 3. Frontend bauen
 cd client
 npm install
 npm run build
 cd ..
-```
 
-### 4. Start the Server
-
-```bash
-# Start the server
+# 4. Server starten
 npm start
 ```
 
-The server will start on port 3001. Access it at:
-- From the Pi: `http://localhost:3001`
-- From other devices: `http://<PI_IP_ADDRESS>:3001`
+**Zugriff:** http://localhost:3001
 
-### 5. Find Your Pi's IP Address
+## Raspberry Pi Setup
 
-```bash
-hostname -I
-```
+### Detaillierte Installation auf Raspberry Pi 4
 
-## Running as a Service (Auto-start on Boot)
+Für diejenigen, die die Recipe Website auf einem Raspberry Pi 4 betreiben möchten, habe ich eine detaillierte Anleitung erstellt. Diese ist besonders nützlich für den Heimgebrauch oder kleine Küchen-Setups.
 
-Create a systemd service to run the website automatically:
+**Hinweis:** Die vollständige Setup-Anleitung finden Sie in der Datei `README_PI_SETUP.md` im selben Verzeichnis. Dort finden Sie auch detaillierte Anleitungen für PM2, Monitoring und Fehlerbehebung speziell für den Raspberry Pi.
 
-```bash
-sudo nano /etc/systemd/system/recipe-website.service
-```
+### Warum Raspberry Pi?
 
-Add the following content:
+Der Raspberry Pi 4 ist ideal für dieses Projekt, weil:
+- **Kostengünstig**: Geringe Anschaffungs- und Betriebskosten
+- **Energieeffizient**: Verbraucht nur wenige Watt
+- **Kompakt**: Passt perfekt in die Küche
+- **24/7 Betrieb**: Läuft zuverlässig rund um die Uhr
+- **Netzwerkfähig**: Alle Geräte im Heimnetz können zugreifen
 
-```ini
-[Unit]
-Description=Recipe Website
-After=network.target
-
-[Service]
-Type=simple
-User=pi
-WorkingDirectory=/home/pi/recipe-website
-ExecStart=/usr/bin/node server.js
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start the service:
+### Kurzanleitung für Pi-Setup
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable recipe-website
-sudo systemctl start recipe-website
+# 1. System aktualisieren
+sudo apt update && sudo apt upgrade -y
 
-# Check status
-sudo systemctl status recipe-website
+# 2. Node.js installieren
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 3. Projekt kopieren und installieren
+mkdir -p ~/recipe-website
+cp -r /pfad/zum/projekt/* ~/recipe-website/
+cd ~/recipe-website
+npm install
+
+# 4. Frontend bauen
+cd client
+npm install
+npm run build
+cd ..
+
+# 5. Server starten
+npm start
 ```
 
-## Configuration
+### Pi-Optimierungen
 
-### Change Port
+Für beste Performance auf dem Raspberry Pi:
 
-Edit `server.js` or set the environment variable:
+```bash
+# Swap-Speicher erhöhen (wichtig bei 1GB Modellen)
+sudo dphys-swapfile swapoff
+sudo dphys-swapfile --size 2048
+sudo dphys-swapfile swapon
 
+# GPU-Speicher reduzieren
+sudo raspi-config
+# Advanced Options → Memory Split → 16
+```
+
+## Konfiguration
+
+### Anpassungsmöglichkeiten
+
+Die Recipe Website ist flexibel konfigurierbar. Hier sind die wichtigsten Anpassungen:
+
+#### Port ändern
+
+Standardmäßig läuft die Anwendung auf Port 3001. Dies können Sie auf zwei Weisen ändern:
+
+**Methode 1: Umgebungsvariable**
 ```bash
 PORT=8080 npm start
 ```
 
-### Database Location
+**Methode 2: Server.js anpassen**
+```javascript
+// In server.js die Port-Zeile ändern
+const PORT = process.env.PORT || 8080;
+```
 
-The SQLite database (`recipes.db`) is stored in the project root. To backup your recipes, simply copy this file.
+#### Datenbank-Verwaltung
 
-## API Endpoints
+Die SQLite-Datenbank (`recipes.db`) wird automatisch im Projektverzeichnis erstellt. Für Backups:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/recipes` | Get all recipes (supports `?search=` and `?category=`) |
-| GET | `/api/recipes/:id` | Get single recipe |
-| POST | `/api/recipes` | Create new recipe (multipart form) |
-| PUT | `/api/recipes/:id` | Update recipe |
-| DELETE | `/api/recipes/:id` | Delete recipe |
-| GET | `/api/categories` | Get all categories |
+```bash
+# Backup erstellen
+cp recipes.db recipes_backup_$(date +%Y%m%d).db
+
+# Backup wiederherstellen
+cp recipes_backup_20231201.db recipes.db
+```
+
+#### Bild-Upload-Einstellungen
+
+Standardmäßig sind Bilder auf 5MB beschränkt. Dies können Sie in `server.js` anpassen:
+
+```javascript
+// Multer-Konfiguration anpassen
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB statt 5MB
+  }
+});
+```
+
+## API-Dokumentation
+
+### REST-API Endpunkte
+
+Die Recipe Website bietet eine vollständige REST-API für die Integration mit anderen Anwendungen:
+
+| Methode | Endpunkt | Beschreibung | Parameter |
+|--------|----------|-------------|------------|
+| GET | `/api/recipes` | Alle Rezepte abrufen | `?search=`, `?category=` |
+| GET | `/api/recipes/:id` | Einzelnes Rezept | `id` (Path) |
+| POST | `/api/recipes` | Neues Rezept erstellen | Multipart Form |
+| PUT | `/api/recipes/:id` | Rezept aktualisieren | Multipart Form |
+| DELETE | `/api/recipes/:id` | Rezept löschen | `id` (Path) |
+| GET | `/api/categories` | Alle Kategorien | - |
+
+### Beispiele für API-Aufrufe
+
+**Rezept suchen:**
+```bash
+curl "http://localhost:3001/api/recipes?search=pasta"
+```
+
+**Nach Kategorie filtern:**
+```bash
+curl "http://localhost:3001/api/recipes?category=dessert"
+```
+
+**Neues Rezept erstellen:**
+```bash
+curl -X POST -F "title=Apfelkuchen" \
+  -F "ingredients=3 Äpfel,200g Mehl" \
+  -F "instructions=Äpfel schälen..." \
+  -F "category=dessert" \
+  -F "image=@apfelkuchen.jpg" \
+  http://localhost:3001/api/recipes
+```
 
 ## Troubleshooting
 
-### Permission Issues
+### Häufige Probleme und Lösungen
+
+Hier sind die häufigsten Probleme, auf die ich bei der Entwicklung gestoßen bin, und wie man sie behebt:
+
+#### Berechtigungsprobleme
+
+Wenn Sie Fehler wie "Permission denied" erhalten, meistens nach dem Kopieren der Projektdateien:
+
 ```bash
+# Besitz korrigieren
 sudo chown -R $USER:$USER ~/recipe-website
+
+# Schreibrechte sicherstellen
+chmod -R 755 ~/recipe-website
 ```
 
-### Port Already in Use
+#### Port bereits belegt
+
+Falls Port 3001 bereits von einer anderen Anwendung verwendet wird:
+
 ```bash
-# Find process using port 3001
+# Prozess finden, der den Port verwendet
 sudo lsof -i :3001
-# Kill the process or use a different port
+
+# Prozess beenden (PID aus vorherigem Befehl)
+sudo kill -9 <PID>
+
+# Oder anderen Port verwenden
+PORT=8080 npm start
 ```
 
-### Database Locked
-If you get database lock errors, ensure only one instance of the server is running.
+#### Datenbank gesperrt
 
-## License
+Wenn Sie Fehler wie "database is locked" erhalten:
+
+```bash
+# Alle Node-Prozesse finden
+ps aux | grep node
+
+# Prozesse beenden
+sudo pkill -f node
+
+# Warten Sie ein paar Sekunden und starten Sie erneut
+npm start
+```
+
+#### Frontend wird nicht geladen
+
+Wenn die Website lädt aber keine Rezepte anzeigt:
+
+```bash
+# Frontend neu bauen
+cd client
+npm run build
+cd ..
+
+# Server neu starten
+npm start
+```
+
+#### Bilder werden nicht hochgeladen
+
+Wenn Bild-Uploads nicht funktionieren:
+
+```bash
+# Upload-Verzeichnis prüfen
+ls -la uploads/
+# Falls nicht vorhanden:
+mkdir -p uploads
+chmod 755 uploads/
+```
+
+## Lizenz
 
 MIT License - Feel free to modify and use for personal projects!
+
+Ich habe dieses Projekt entwickelt, um die Rezeptverwaltung zu Hause zu vereinfachen. Sie dürfen es frei verwenden, anpassen und für Ihre eigenen Zwecke einsetzen.
+
+### Was ich mir wünsche
+- **Attribution**: Ein kurzer Hinweis auf das ursprüngliche Projekt wäre nett
+- **Verbesserungen**: Wenn Sie nützliche Verbesserungen machen, lassen Sie es mich gerne wissen
+- **Feedback**: Ich freue mich immer über Feedback und Anregungen
+
+### Keine Garantie
+Dies ist ein Hobby-Projekt. Ich bemühe mich um Qualität, kann aber keine Garantie für fehlerfreie Funktion geben.
