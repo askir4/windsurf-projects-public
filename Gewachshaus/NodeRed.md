@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔴 Node-RED Integration
+# Node-RED Integration
 
 **Echtzeit-Sensordaten über WebSocket**
 
@@ -11,26 +11,26 @@
 
 ---
 
-## 📋 Inhaltsverzeichnis
+## Inhaltsverzeichnis
 
-- [🎯 Übersicht](#-übersicht)
-- [🔌 WebSocket-Verbindung](#-websocket-verbindung)
-- [📡 Sensor-Topics](#-sensor-topics)
-- [📤 Payload-Formate](#-payload-formate)
-- [⚡ Aktor-Steuerung](#-aktor-steuerung)
-- [🚨 Alarme & E-Mail](#-alarme--e-mail)
-- [🔧 Node-RED Setup](#-node-red-setup)
+- [Übersicht](#übersicht)
+- [WebSocket-Verbindung](#websocket-verbindung)
+- [Sensor-Topics](#sensor-topics)
+- [Payload-Formate](#payload-formate)
+- [Aktor-Steuerung](#aktor-steuerung)
+- [Alarme & E-Mail](#alarme--e-mail)
+- [Node-RED Setup](#node-red-setup)
 
 ---
 
-## 🎯 Übersicht
+## Übersicht
 
 Die Gewächshaus-Webapp kommuniziert über **WebSocket** mit Node-RED, um:
 
-- 📊 **Sensordaten** in Echtzeit zu empfangen
-- 📈 **Graphen** mit historischen Daten anzuzeigen
-- 🚨 **Alarme** bei Schwellwertüberschreitungen auszulösen
-- ⚡ **Aktoren** (Ventile, Pumpen) zu steuern
+- Sensordaten in Echtzeit zu empfangen
+- Graphen mit historischen Daten anzuzeigen
+- Alarme bei Schwellwertüberschreitungen auszulösen
+- Aktoren (Ventile, Pumpen) zu steuern
 
 ```
 ┌─────────────┐    WebSocket    ┌─────────────┐
@@ -46,7 +46,7 @@ Die Gewächshaus-Webapp kommuniziert über **WebSocket** mit Node-RED, um:
 
 ---
 
-## 🔌 WebSocket-Verbindung
+## WebSocket-Verbindung
 
 ### Konfiguration im Admin Panel
 
@@ -63,7 +63,7 @@ Die WebSocket-URL wird im **Admin Panel** unter **Einstellungen → Node-RED** k
 ws://localhost:1880/ws
 ```
 
-> 💡 **Tipp:** Bei Raspberry Pi: `ws://raspberrypi:1880/ws` oder IP-Adresse verwenden.
+> Tipp: Bei Raspberry Pi: `ws://raspberrypi:1880/ws` oder IP-Adresse verwenden.
 
 ### Nachrichtenformat
 
@@ -78,7 +78,7 @@ Alle Nachrichten folgen dem MQTT-ähnlichen Format:
 
 ---
 
-## 📡 Sensor-Topics
+## Sensor-Topics
 
 ### Übersicht
 
@@ -93,7 +93,7 @@ Alle Nachrichten folgen dem MQTT-ähnlichen Format:
 
 ### Detaillierte Beschreibung
 
-#### 🌡️ `sensors/temperature`
+### Temperatur
 
 Lufttemperatur im Gewächshaus.
 
@@ -107,7 +107,7 @@ Lufttemperatur im Gewächshaus.
 
 ---
 
-#### 💧 `sensors/humidity`
+### Luftfeuchtigkeit
 
 Relative Luftfeuchtigkeit.
 
@@ -121,7 +121,7 @@ Relative Luftfeuchtigkeit.
 
 ---
 
-#### 🌱 `sensors/soil_moisture`
+### Bodenfeuchtigkeit
 
 Bodenfeuchtigkeit (0% = trocken, 100% = nass).
 
@@ -135,7 +135,7 @@ Bodenfeuchtigkeit (0% = trocken, 100% = nass).
 
 ---
 
-#### 🚰 `sensors/water_tank`
+### Wassertank
 
 Kompletter Wassertank-Status.
 
@@ -158,7 +158,7 @@ Kompletter Wassertank-Status.
 
 ---
 
-#### 📊 `sensors/water_level`
+### Wasserstand
 
 Nur der Wasserstand (alternative zu water_tank).
 
@@ -168,7 +168,7 @@ Nur der Wasserstand (alternative zu water_tank).
 
 ---
 
-#### 🌊 `sensors/water_temperature`
+### Wassertemperatur
 
 Nur die Wassertemperatur.
 
@@ -178,7 +178,7 @@ Nur die Wassertemperatur.
 
 ---
 
-## 📤 Payload-Formate
+## Payload-Formate
 
 Die Webapp akzeptiert verschiedene Payload-Formate:
 
@@ -208,11 +208,11 @@ Die Webapp akzeptiert verschiedene Payload-Formate:
 }
 ```
 
-> 💡 **Tipp:** Die Webapp erkennt automatisch das Format und extrahiert den Wert.
+> Tipp: Die Webapp erkennt automatisch das Format und extrahiert den Wert.
 
 ---
 
-## ⚡ Aktor-Steuerung
+## Aktor-Steuerung
 
 Wenn in der Webapp **Dünger angewendet** wird, sendet sie Befehle an Node-RED.
 
@@ -271,7 +271,7 @@ Wenn in der Webapp **Dünger angewendet** wird, sendet sie Befehle an Node-RED.
 
 ---
 
-## 🚨 Alarme & E-Mail
+## Alarme & E-Mail
 
 ### Schwellwerte konfigurieren
 
@@ -279,9 +279,9 @@ Im **Admin Panel** unter **Einstellungen → Sensor Alarme**:
 
 | Sensor | Min | Max |
 |--------|-----|-----|
-| 🌡️ Temperatur | 5°C | 35°C |
-| 💧 Luftfeuchtigkeit | 30% | 90% |
-| 🌱 Bodenfeuchtigkeit | 20% | 80% |
+| Temperatur | 5°C | 35°C |
+| Luftfeuchtigkeit | 30% | 90% |
+| Bodenfeuchtigkeit | 20% | 80% |
 
 ### Alarm-Logik
 
@@ -292,7 +292,7 @@ Im **Admin Panel** unter **Einstellungen → Sensor Alarme**:
                       │
                       ▼
               ┌───────────────┐
-              │  Wert < Min   │──── Ja ────► 🚨 Alarm (zu niedrig)
+              │  Wert < Min   │──── Ja ────► Alarm (zu niedrig)
               │  oder         │
               │  Wert > Max?  │
               └───────────────┘
@@ -312,11 +312,11 @@ Wenn ein Alarm ausgelöst wird:
 3. **Platzhalter** ersetzen
 4. **E-Mail senden** an konfigurierte Empfänger
 
-> ⚠️ **Hinweis:** E-Mails werden nur beim **Zustandswechsel** gesendet, nicht bei jedem Messwert.
+> Hinweis: E-Mails werden nur beim **Zustandswechsel** gesendet, nicht bei jedem Messwert.
 
 ---
 
-## 🔧 Node-RED Setup
+## Node-RED Setup
 
 ### Voraussetzungen
 
@@ -378,17 +378,75 @@ Wenn ein Alarm ausgelöst wird:
 ]
 ```
 
-### WebSocket-Konfiguration in Node-RED
+### Beispiel-Flow: Wassertank
 
-1. **WebSocket-Out Node** hinzufügen
-2. Server konfigurieren:
-   - **Type:** Listen on
-   - **Path:** `/ws`
-   - **Port:** 1880
+```json
+[
+  {
+    "id": "water-level-sensor",
+    "type": "ultrasonic",
+    "name": "Water Level",
+    "pin": 18,
+    "interval": 30000
+  },
+  {
+    "id": "calculate-liters",
+    "type": "function",
+    "name": "Calculate Liters",
+    "func": "const tankHeight = 100; // cm\nconst sensorHeight = msg.payload; // cm\nconst waterLevel = tankHeight - sensorHeight;\nconst liters = Math.round(waterLevel * 10); // Annahme: 1cm = 10 Liter\nmsg.payload = {\n  level: liters,\n  temperature: 20, // Optional: Temperatur-Sensor\n  capacity: 1000\n};\nmsg.topic = 'sensors/water_tank';\nreturn msg;"
+  },
+  {
+    "id": "ws-out",
+    "type": "websocket out",
+    "name": "WebSocket Out"
+  }
+]
+```
+
+### Fehlerbehandlung
+
+#### Verbindungstests
+
+```javascript
+// Test-Node für Verbindung
+msg.topic = 'test/connection';
+msg.payload = {
+  timestamp: new Date().toISOString(),
+  status: 'connected'
+};
+return msg;
+```
+
+#### Debug-Output
+
+```javascript
+// Debug-Function Node
+console.log('Received message:', msg);
+console.log('Topic:', msg.topic);
+console.log('Payload:', msg.payload);
+return msg;
+```
+
+### Häufige Probleme
+
+| Problem | Ursache | Lösung |
+|--------|---------|---------|
+| **Keine Verbindung** | WebSocket-Port falsch | Port 1880 und Path `/ws` prüfen |
+| **Daten nicht angezeigt** | Falsches Topic | Topic-Format überprüfen |
+| **Sensor-Werte unplausibel** | Kalibrierung | Sensor-Kalibrierung anpassen |
+| **Verbindung bricht ab** | Network-Timeout | Keep-Alive implementieren |
+
+### Best Practices
+
+1. **Regelmäßige Updates**: Intervall von 30-60 Sekunden für Sensoren
+2. **Fehlerbehandlung**: Try-Catch Blocks in Function Nodes
+3. **Logging**: Debug-Nodes für Troubleshooting
+4. **Sicherheit**: WebSocket-Authentifizierung in Produktion
+5. **Performance**: Batch-Updates für mehrere Sensoren
 
 ---
 
-## 🔗 Nützliche Links
+## Nützliche Links
 
 | Ressource | Link |
 |-----------|------|

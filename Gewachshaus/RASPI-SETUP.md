@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🍓 Raspberry Pi Setup
+# Raspberry Pi Setup
 
 **Vollständige Installationsanleitung für Raspberry Pi**
 
@@ -11,19 +11,19 @@
 
 ---
 
-## 📋 Inhaltsverzeichnis
+## Inhaltsverzeichnis
 
-- [📦 Voraussetzungen](#-voraussetzungen)
-- [🔧 Installation](#-installation)
-- [🚀 Start](#-start)
-- [⚡ Autostart einrichten](#-autostart-einrichten)
-- [⚙️ Konfiguration](#️-konfiguration)
-- [🔍 Troubleshooting](#-troubleshooting)
-- [📊 Systemüberwachung](#-systemüberwachung)
+- [Voraussetzungen](#voraussetzungen)
+- [Installation](#installation)
+- [Start](#start)
+- [Autostart einrichten](#autostart-einrichten)
+- [Konfiguration](#konfiguration)
+- [Troubleshooting](#troubleshooting)
+- [Systemüberwachung](#systemüberwachung)
 
 ---
 
-## 📦 Voraussetzungen
+## Voraussetzungen
 
 ### Hardware
 
@@ -44,7 +44,7 @@
 
 ---
 
-## 🔧 Installation
+## Installation
 
 ### Schritt 1: System aktualisieren
 
@@ -55,16 +55,21 @@ sudo apt update && sudo apt upgrade -y
 ### Schritt 2: Node.js installieren
 
 ```bash
-# Node.js 18 LTS Repository hinzufügen
+# Node.js 20 LTS Repository hinzufügen (empfohlen)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+
+# Alternative: Node.js 18 LTS
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 
 # Node.js installieren
 sudo apt install -y nodejs
 
 # Version prüfen
-node --version  # Sollte v18.x.x zeigen
-npm --version   # Sollte 9.x.x zeigen
+node --version  # Sollte v18.x.x oder v20.x.x zeigen
+npm --version   # Sollte 9.x.x oder 10.x.x zeigen
 ```
+
+> Hinweis: Für Raspberry Pi Zero oder ältere Modelle wird Node.js 18 empfohlen.
 
 ### Schritt 3: Projekt klonen/kopieren
 
@@ -78,20 +83,26 @@ git clone https://github.com/yourname/gewachshaus.git .
 
 # Option B: SCP vom eigenen Rechner
 # scp -r /pfad/zum/projekt pi@raspberry-pi-ip:~/gewachshaus
+
+# Option C: ZIP-Datei entpacken
+# wget https://github.com/yourname/gewachshaus/archive/main.zip
+# unzip main.zip
+# mv gewachshaus-main/* .
+# rm -rf gewachshaus-main main.zip
 ```
 
 ### Schritt 4: Abhängigkeiten installieren
 
 ```bash
 cd ~/gewachshaus
-npm install
+npm install --production
 ```
 
-> ⏱️ **Hinweis:** Die Installation kann auf einem Pi Zero mehrere Minuten dauern.
+> Hinweis: Die Installation kann auf einem Pi Zero mehrere Minuten dauern. Das `--production` Flag installiert nur Produktionsabhängigkeiten.
 
 ---
 
-## 🚀 Start
+## Start
 
 ### Manueller Start
 
@@ -126,7 +137,7 @@ chmod +x start.sh
 | **Lokal** | `http://localhost:3001` |
 | **Im Netzwerk** | `http://raspberry-pi-ip:3001` |
 
-> 💡 **Tipp:** IP-Adresse herausfinden: `hostname -I`
+> Tipp: IP-Adresse herausfinden: `hostname -I`
 
 ### Standard-Login
 
@@ -135,11 +146,11 @@ chmod +x start.sh
 | **Benutzer** | `admin` |
 | **Passwort** | `admin123` |
 
-> ⚠️ **Wichtig:** Passwort nach dem ersten Login ändern!
+> Wichtig: Passwort nach dem ersten Login ändern!
 
 ---
 
-## ⚡ Autostart einrichten
+## Autostart einrichten
 
 ### Option A: systemd Service (Empfohlen)
 
@@ -222,7 +233,7 @@ pm2 logs gewachshaus
 
 ---
 
-## ⚙️ Konfiguration
+## Konfiguration
 
 ### Umgebungsvariablen
 
@@ -232,18 +243,25 @@ Entweder in der systemd Service-Datei oder als `.env` Datei:
 nano ~/gewachshaus/.env
 ```
 
+### Beispiel: `.env` Datei
+
+```bash
+nano ~/gewachshaus/.env
+```
+
 ```env
-# Server
+# Server-Konfiguration
 PORT=3001
+NODE_ENV=production
 
-# Admin-Account
+# Admin-Account (ändern Sie dies!)
 ADMIN_USER=admin
-ADMIN_PASS=sicheres_passwort
+ADMIN_PASS=ihr_sicheres_passwort
 
-# Sicherheit
-SESSION_SECRET=ein_langer_zufaelliger_string
+# Sicherheit (wichtig!)
+SESSION_SECRET=$(openssl rand -hex 32)
 
-# Optional: CORS
+# Optional: CORS für externe Zugriffe
 ALLOWED_ORIGINS=http://192.168.1.100:3001
 ```
 
@@ -258,7 +276,7 @@ Die E-Mail-Einstellungen werden im **Admin Panel** unter **E-Mail → SMTP-Einst
 
 ---
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Häufige Probleme
 
@@ -319,9 +337,11 @@ chmod 644 ~/gewachshaus/data.json
 
 ---
 
-## 📊 Systemüberwachung
+## Systemüberwachung
 
-### RAM-Nutzung optimieren
+### Performance-Optimierung
+
+#### RAM-Nutzung optimieren
 
 Für Raspberry Pi mit wenig RAM (1 GB):
 
@@ -329,9 +349,30 @@ Für Raspberry Pi mit wenig RAM (1 GB):
 # Swap vergrößern
 sudo dphys-swapfile swapoff
 sudo nano /etc/dphys-swapfile
-# CONF_SWAPSIZE=512 setzen
+# CONF_SWAPSIZE=1024 setzen (statt 512)
 sudo dphys-swapfile setup
 sudo dphys-swapfile swapon
+```
+
+#### Node.js Optimierung
+
+```bash
+# Umgebungsvariable für geringeren Speicherverbrauch
+echo 'export NODE_OPTIONS="--max-old-space-size=256"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### System-Überwachung
+
+```bash
+# System-Monitoring Tools installieren
+sudo apt install -y htop iotop
+
+# Prozess-Überwachung
+htop
+
+# I/O-Überwachung
+sudo iotop
 ```
 
 ### Automatisches Backup
@@ -345,10 +386,25 @@ nano ~/backup-gewachshaus.sh
 #!/bin/bash
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR=~/backups
+SOURCE_DIR=~/gewachshaus
+
+# Verzeichnisse erstellen
 mkdir -p $BACKUP_DIR
-cp ~/gewachshaus/data.json $BACKUP_DIR/data_$DATE.json
-# Alte Backups löschen (älter als 30 Tage)
+
+# Daten sichern
+cp $SOURCE_DIR/data.json $BACKUP_DIR/data_$DATE.json
+
+# Konfiguration sichern (falls vorhanden)
+if [ -f "$SOURCE_DIR/.env" ]; then
+    cp $SOURCE_DIR/.env $BACKUP_DIR/env_$DATE.backup
+fi
+
+# Alte Backups aufräumen (älter als 30 Tage)
 find $BACKUP_DIR -name "data_*.json" -mtime +30 -delete
+find $BACKUP_DIR -name "env_*.backup" -mtime +30 -delete
+
+# Log-Eintrag
+echo "Backup erstellt: $DATE" >> $BACKUP_DIR/backup.log
 ```
 
 ```bash
@@ -363,7 +419,7 @@ crontab -e
 
 ---
 
-## 🔐 Sicherheitsempfehlungen
+## Sicherheitsempfehlungen
 
 | Empfehlung | Befehl / Anleitung |
 |------------|-------------------|

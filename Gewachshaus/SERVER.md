@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🖥️ Server-Installation und Konfiguration
+# Server-Installation und Konfiguration
 
 **Vollständige Anleitung für das Backend-Setup**
 
@@ -8,18 +8,18 @@
 
 ---
 
-## 📋 Inhaltsverzeichnis
+## Inhaltsverzeichnis
 
-- [📦 Voraussetzungen](#-voraussetzungen)
-- [🚀 Installation & Start](#-installation--start)
-- [💾 Datenhaltung](#-datenhaltung)
-- [🔌 API-Endpunkte](#-api-endpunkte)
-- [📧 E-Mail & SMTP](#-e-mail--smtp)
-- [🔒 Sicherheit](#-sicherheit)
+- [Voraussetzungen](#voraussetzungen)
+- [Installation & Start](#installation--start)
+- [Datenhaltung](#datenhaltung)
+- [API-Endpunkte](#api-endpunkte)
+- [E-Mail & SMTP](#e-mail--smtp)
+- [Sicherheit](#sicherheit)
 
 ---
 
-## 📦 Voraussetzungen
+## Voraussetzungen
 
 | Komponente | Version | Beschreibung |
 |------------|---------|--------------|
@@ -35,7 +35,7 @@
 
 ---
 
-## 🚀 Installation & Start
+## Installation & Start
 
 ### Schnellstart
 
@@ -60,31 +60,31 @@ npm start
 
 ### Zugriff
 
-```
-🌐 Weboberfläche:  http://localhost:3001
-❤️ Health-Check:   http://localhost:3001/api/health
+```text
+Weboberfläche:  http://localhost:3001
+Health-Check:   http://localhost:3001/api/health
 ```
 
 ---
 
-## 💾 Datenhaltung
+## Datenhaltung
 
 ### Übersicht
 
 Der Server verwendet eine einfache JSON-Datei als Datenbank.
 
-```
-📁 data.json
-├── 👥 users          # Benutzerkonten
-├── 🌱 zones          # Hochbeete/Zonen
-├── 🌿 plants         # Pflanzen
-├── 💬 forumPosts     # Forum-Beiträge
-├── ⚙️ settings       # Allgemeine Einstellungen
-├── 🎨 colorScheme    # Farbschema
-├── 📧 emailConfig    # E-Mail-Konfiguration
-├── 📋 emailLogs      # Versandprotokoll
-├── 📝 logs           # System-Logs
-└── 🔍 auditLogs      # Audit-Logs
+```text
+data.json
+├── users          # Benutzerkonten
+├── zones          # Hochbeete/Zonen
+├── plants         # Pflanzen
+├── forumPosts     # Forum-Beiträge
+├── settings       # Allgemeine Einstellungen
+├── colorScheme    # Farbschema
+├── emailConfig    # E-Mail-Konfiguration
+├── emailLogs      # Versandprotokoll
+├── logs           # System-Logs
+└── auditLogs      # Audit-Logs
 ```
 
 ### Sicherheitsmerkmale
@@ -97,9 +97,9 @@ Der Server verwendet eine einfache JSON-Datei als Datenbank.
 
 ---
 
-## 🔌 API-Endpunkte
+## API-Endpunkte
 
-### 🔐 Authentifizierung
+### Authentifizierung
 
 | Methode | Endpunkt | Beschreibung | Auth |
 |---------|----------|--------------|------|
@@ -108,14 +108,14 @@ Der Server verwendet eine einfache JSON-Datei als Datenbank.
 | `GET` | `/api/auth/me` | Aktueller Benutzer | ✅ |
 | `POST` | `/api/auth/change-password` | Passwort ändern | ✅ |
 
-### 📊 Daten
+### Daten
 
 | Methode | Endpunkt | Beschreibung | Auth |
 |---------|----------|--------------|------|
 | `GET` | `/api/data` | Alle Daten abrufen | ❌ |
 | `POST` | `/api/data` | Daten speichern | ✅ |
 
-### 🌱 Zonen & Pflanzen
+### Zonen & Pflanzen
 
 | Methode | Endpunkt | Beschreibung | Auth |
 |---------|----------|--------------|------|
@@ -126,7 +126,7 @@ Der Server verwendet eine einfache JSON-Datei als Datenbank.
 | `PUT` | `/api/plants/:id` | Pflanze aktualisieren | ✅ |
 | `DELETE` | `/api/plants/:id` | Pflanze löschen | ✅ |
 
-### 💬 Forum
+### Forum
 
 | Methode | Endpunkt | Beschreibung | Auth |
 |---------|----------|--------------|------|
@@ -136,7 +136,7 @@ Der Server verwendet eine einfache JSON-Datei als Datenbank.
 
 > *Gäste können posten, aber der Autor wird als "Gast" angezeigt.
 
-### 👥 Benutzerverwaltung (Admin)
+### Benutzerverwaltung (Admin)
 
 | Methode | Endpunkt | Beschreibung | Auth |
 |---------|----------|--------------|------|
@@ -146,7 +146,7 @@ Der Server verwendet eine einfache JSON-Datei als Datenbank.
 | `DELETE` | `/api/users/:id` | Benutzer löschen | 🔐 Admin |
 | `POST` | `/api/users/:id/reset-password` | Passwort zurücksetzen | 🔐 Admin |
 
-### 📧 E-Mail-Konfiguration (Admin)
+### E-Mail-Konfiguration (Admin)
 
 | Methode | Endpunkt | Beschreibung |
 |---------|----------|--------------|
@@ -161,7 +161,7 @@ Der Server verwendet eine einfache JSON-Datei als Datenbank.
 | `POST` | `/api/email/config` | E-Mail-Konfiguration speichern |
 | `GET` | `/api/email/logs` | Versandprotokoll |
 
-### 🎨 Farbschema
+### Farbschema
 
 | Methode | Endpunkt | Beschreibung | Auth |
 |---------|----------|--------------|------|
@@ -169,7 +169,7 @@ Der Server verwendet eine einfache JSON-Datei als Datenbank.
 | `POST` | `/api/colors` | Farbschema speichern | 🔐 Admin |
 | `POST` | `/api/colors/reset` | Auf Standard zurücksetzen | 🔐 Admin |
 
-### ❤️ System
+### System
 
 | Methode | Endpunkt | Beschreibung |
 |---------|----------|--------------|
@@ -179,7 +179,7 @@ Der Server verwendet eine einfache JSON-Datei als Datenbank.
 
 ---
 
-## 📧 E-Mail & SMTP
+## E-Mail & SMTP
 
 ### SMTP-Konfiguration
 
@@ -198,7 +198,7 @@ Die SMTP-Einstellungen werden im Admin Panel unter **E-Mail → SMTP-Einstellung
 
 #### Gmail
 
-```
+```text
 Host:     smtp.gmail.com
 Port:     587
 TLS:      Ja
@@ -206,11 +206,11 @@ Benutzer: deine-email@gmail.com
 Passwort: App-Passwort (16 Zeichen)
 ```
 
-> ⚠️ Bei Gmail: 2-Faktor-Authentifizierung aktivieren und [App-Passwort](https://myaccount.google.com/apppasswords) erstellen.
+> Wichtig: Bei Gmail 2-Faktor-Authentifizierung aktivieren und [App-Passwort](https://myaccount.google.com/apppasswords) erstellen.
 
 #### Eigener Server
 
-```
+```text
 Host:     mail.example.com
 Port:     587
 TLS:      Ja
@@ -234,7 +234,7 @@ E-Mail-Templates unterstützen folgende Platzhalter:
 ### Beispiel-Template
 
 ```html
-<h2>⚠️ Alarm: {sensor_name}</h2>
+<h2>Alarm: {sensor_name}</h2>
 
 <p>Der Sensor <strong>{sensor_name}</strong> hat einen kritischen Wert erreicht.</p>
 
@@ -249,7 +249,7 @@ E-Mail-Templates unterstützen folgende Platzhalter:
 
 ---
 
-## 🔒 Sicherheit
+## Sicherheit
 
 ### Implementierte Maßnahmen
 
@@ -265,23 +265,61 @@ E-Mail-Templates unterstützen folgende Platzhalter:
 
 ### Security Headers
 
-```
+```http
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 Referrer-Policy: no-referrer
 Permissions-Policy: geolocation=(), microphone=(), camera=()
-Strict-Transport-Security: max-age=15552000 (nur HTTPS)
+Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 ```
 
 ### Empfehlungen für Produktion
 
-| Empfehlung | Beschreibung |
-|------------|-------------|
-| ✅ **HTTPS aktivieren** | Nginx/Caddy als Reverse Proxy |
-| ✅ **SESSION_SECRET setzen** | Eigener geheimer Schlüssel |
-| ✅ **Admin-Passwort ändern** | Kein Standard-Passwort verwenden |
-| ✅ **Firewall konfigurieren** | Nur Port 80/443 öffentlich |
-| ⚠️ **Backup erstellen** | Regelmäßiges Backup von `data.json` |
+| Priorität | Empfehlung | Beschreibung |
+|-----------|------------|-------------|
+| **Kritisch** | HTTPS aktivieren | Nginx/Caddy als Reverse Proxy |
+| **Kritisch** | SESSION_SECRET setzen | Eigener geheimer Schlüssel |
+| **Kritisch** | Admin-Passwort ändern | Kein Standard-Passwort verwenden |
+| **Hoch** | Firewall konfigurieren | Nur Port 80/443 öffentlich |
+| **Mittel** | Backup erstellen | Regelmäßiges Backup von `data.json` |
+| **Mittel** | Logging überwachen | Logs auf verdächtige Aktivitäten prüfen |
+
+### Performance-Optimierung
+
+| Maßnahme | Beschreibung |
+|-----------|-------------|
+| **Debounced Saving** | Verzögertes Speichern zur Reduzierung der I/O-Last |
+| **Atomisches Schreiben** | Verhindert Datenkorruption bei Abstürzen |
+| **In-Memory Caching** | Sessions und Rate Limits im Speicher |
+| **Body Limit** | Maximale Request-Größe: 1 MB |
+
+### Monitoring und Logging
+
+#### Log-Level
+
+| Level | Beschreibung | Verwendung |
+|-------|-------------|------------|
+| **INFO** | Allgemeine Informationen | Server-Start, API-Aufrufe |
+| **WARN** | Warnungen | Fehlgeschlagene Login-Versuche |
+| **ERROR** | Fehler | Server-Fehler, Exceptions |
+| **DEBUG** | Debug-Informationen | Nur in Entwicklung |
+
+#### Health-Check
+
+Der Health-Check Endpunkt (`/api/health`) liefert:
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-01-19T14:30:00.000Z",
+  "uptime": 3600,
+  "version": "1.0.0",
+  "memory": {
+    "used": "45MB",
+    "total": "512MB"
+  }
+}
+```
 
 ---
 

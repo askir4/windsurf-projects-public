@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌱 Gewächshaus Webapp
+# Gewächshaus Webapp
 
 **Intelligente Gewächshausverwaltung mit Präzisionsdüngung**
 
@@ -16,20 +16,33 @@
 
 ---
 
-## 📋 Inhaltsverzeichnis
+## Inhaltsverzeichnis
 
-- [✨ Features](#-features)
-- [🚀 Schnellstart](#-schnellstart)
-- [🏗️ Architektur](#️-architektur)
-- [⚙️ Konfiguration](#️-konfiguration)
-- [📖 Dokumentation](#-dokumentation)
-- [📜 Lizenz](#-lizenz)
+- [Features](#features)
+- [Schnellstart](#schnellstart)
+- [Architektur](#architektur)
+- [Konfiguration](#konfiguration)
+- [Dokumentation](#dokumentation)
+- [Lizenz](#lizenz)
 
 ---
 
-## ✨ Features
+## Projektübersicht
 
-### 🌿 Hochbeete & Pflanzenmanagement
+Die Gewächshaus Webapp ist eine umfassende Lösung für die intelligente Verwaltung von Gewächshausanlagen mit Präzisionsdüngung. Das System ermöglicht die Überwachung und Steuerung von Hochbeeten, die Integration von Sensordaten sowie die automatische Alarmierung bei kritischen Werten.
+
+### Kernfunktionen
+
+- **Hochbeet-Management**: Interaktive Karte mit Drag & Drop Editor
+- **Pflanzenverwaltung**: Detaillierte Pflanzenprofile mit Düngeplänen
+- **Sensor-Integration**: Echtzeitdaten von Temperatur, Luftfeuchtigkeit, Bodenfeuchtigkeit und Wassertank
+- **Alarm-System**: Automatische E-Mail-Benachrichtigung bei Schwellwertüberschreitungen
+- **Community Forum**: Austauschplattform für Anwender mit Tags und Suche
+- **Admin Panel**: Umfassende Verwaltungsoberfläche für Benutzer, Einstellungen und Logs
+
+## Features
+
+### Hochbeete & Pflanzenmanagement
 
 | Feature | Beschreibung |
 |---------|-------------|
@@ -39,7 +52,7 @@
 | **Mehrfachauswahl** | `Shift + Klick` für Gruppendüngung |
 | **Responsive Design** | Optimiert für Desktop und Mobile |
 
-### 💬 Community Forum
+### Community Forum
 
 | Feature | Beschreibung |
 |---------|-------------|
@@ -48,22 +61,22 @@
 | **Highlighting** | Treffer werden hervorgehoben |
 | **Kommentare** | Ein-/ausklappbare Diskussionen |
 
-### 📊 Sensoren & Monitoring
+### Sensoren & Monitoring
 
 | Sensor | Beschreibung |
 |--------|-------------|
-| 🌡️ **Temperatur** | Echtzeit-Messung mit Trendanzeige |
-| 💧 **Luftfeuchtigkeit** | Prozentuale Anzeige |
-| 🌱 **Bodenfeuchtigkeit** | Feuchtigkeitsgrad pro Zone |
-| 🚰 **Wassertank** | Füllstand und Temperatur |
+| Temperatur | Echtzeit-Messung mit Trendanzeige |
+| Luftfeuchtigkeit | Prozentuale Anzeige |
+| Bodenfeuchtigkeit | Feuchtigkeitsgrad pro Zone |
+| Wassertank | Füllstand und Temperatur |
 
-### 📈 Graphen & Trends
+### Graphen & Trends
 
 - **Zeiträume:** 1h, 6h, 24h, 7d, 30d
 - **Live-Updates** über WebSocket
 - **Trendpfeile** für schnelle Übersicht
 
-### 🚨 Alarm-System & E-Mail
+### Alarm-System & E-Mail
 
 | Feature | Beschreibung |
 |---------|-------------|
@@ -75,7 +88,25 @@
 
 ---
 
-## 🚀 Schnellstart
+## Systemvoraussetzungen
+
+### Minimale Anforderungen
+- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **npm** 9+ (wird mit Node.js installiert)
+- **RAM**: Mindestens 512 MB
+- **Speicher**: 100 MB freier Speicherplatz
+
+### Empfohlene Konfiguration
+- **Node.js** 20 LTS oder neuer
+- **RAM**: 1 GB oder mehr
+- **Speicher**: 1 GB freier Speicherplatz für Logs und Daten
+
+### Unterstützte Plattformen
+- **Linux**: Ubuntu 20.04+, Debian 11+, Raspberry Pi OS
+- **Windows**: Windows 10+ (mit WSL empfohlen)
+- **macOS**: macOS 11+ (Intel/Apple Silicon)
+
+## Schnellstart
 
 ### Voraussetzungen
 
@@ -92,50 +123,67 @@ cd gewachshaus
 # Abhängigkeiten installieren
 npm install
 
+# Konfiguration anpassen (optional)
+cp .env.example .env
+nano .env
+
 # Server starten
 npm start
 ```
 
-### 🌐 Zugriff
+### Zugriff
 
 | URL | Beschreibung |
 |-----|-------------|
 | `http://localhost:3001` | Weboberfläche |
 | `http://localhost:3001/api/health` | Health-Check |
 
-### 🔑 Standard-Login
+### Standard-Login
 
 | Feld | Wert |
 |------|------|
 | **Benutzer** | `admin` |
 | **Passwort** | `admin123` |
 
-> ⚠️ **Wichtig:** Passwort nach dem ersten Login ändern!
+> Wichtig: Passwort nach dem ersten Login ändern!
 
-### Weitere Startoptionen
+### Entwicklung
+
+Für Entwickler stehen zusätzliche Befehle zur Verfügung:
 
 ```bash
-npm run dev           # Entwicklungsmodus
-npm run start:daemon  # Als Hintergrundprozess
-npm run start:status  # Status prüfen
-npm run start:logs    # Logs anzeigen
+npm run dev           # Entwicklungsmodus mit Auto-Reload
+npm run start:daemon  # Als Hintergrundprozess (Raspberry Pi)
+npm run start:status  # Status des Daemon prüfen
+npm run start:logs    # Logs des Daemon anzeigen
+npm run start:stop    # Daemon stoppen
+npm run test          # Unit-Tests ausführen
+```
+
+### Docker (Optional)
+
+Für Container-basierte Installation:
+
+```bash
+docker build -t gewachshaus .
+docker run -p 3001:3001 -v $(pwd)/data.json:/app/data.json gewachshaus
 ```
 
 ---
 
-## 🏗️ Architektur
+## Architektur
 
-```
+```text
 gewachshaus/
-├── 📄 server-simple.js   # HTTP-Server (Node.js)
-├── 📄 index.html         # Haupt-UI
-├── 📄 styles.css         # Styling
-├── 📄 script.js          # Frontend-Logik
-├── 📄 auth.js            # Authentifizierung
-├── 📄 color-manager.js   # Farbschema-Verwaltung
-├── 📄 log-utils.js       # Logging-Utilities
-├── 📄 data.json          # Persistente Daten
-└── 📁 assets/            # Icons und Bilder
+├── server-simple.js   # HTTP-Server (Node.js)
+├── index.html         # Haupt-UI
+├── styles.css         # Styling
+├── script.js          # Frontend-Logik
+├── auth.js            # Authentifizierung
+├── color-manager.js   # Farbschema-Verwaltung
+├── log-utils.js       # Logging-Utilities
+├── data.json          # Persistente Daten
+└── assets/            # Icons und Bilder
 ```
 
 ### Technologie-Stack
@@ -150,9 +198,11 @@ gewachshaus/
 
 ---
 
-## ⚙️ Konfiguration
+## Konfiguration
 
 ### Umgebungsvariablen
+
+Die Anwendung kann über Umgebungsvariablen konfiguriert werden:
 
 | Variable | Standard | Beschreibung |
 |----------|----------|--------------|
@@ -161,42 +211,53 @@ gewachshaus/
 | `ADMIN_PASS` | `admin123` | Administrator-Passwort |
 | `SESSION_SECRET` | - | Geheimer Schlüssel für Sessions |
 | `ALLOWED_ORIGINS` | - | Erlaubte CORS-Origins (kommagetrennt) |
+| `NODE_ENV` | `development` | Laufzeitumgebung |
 
-### Beispiel: `.env` Datei
+#### Beispiel: `.env` Datei
 
 ```env
+# Server-Konfiguration
 PORT=3001
+NODE_ENV=production
+
+# Admin-Account
 ADMIN_USER=admin
 ADMIN_PASS=sicheres_passwort_123
+
+# Sicherheit
 SESSION_SECRET=mein_geheimer_schluessel_xyz
+
+# Optional: CORS
+ALLOWED_ORIGINS=http://192.168.1.100:3001,https://mein-domain.com
 ```
 
 ### Admin Panel Funktionen
 
 | Bereich | Funktionen |
 |---------|-----------|
-| 👥 **Benutzer** | Erstellen, Bearbeiten, Löschen, Passwort zurücksetzen |
-| 📋 **Audit-Logs** | Alle Benutzeraktionen nachvollziehen |
-| 🔗 **Node-RED** | WebSocket-Verbindung konfigurieren |
-| 🚨 **Alarme** | Schwellwerte für Sensoren setzen |
-| 📧 **E-Mail** | SMTP, Templates, Empfänger verwalten |
-| 🎨 **Design** | Farbschema anpassen (live Preview) |
+| Benutzer | Erstellen, Bearbeiten, Löschen, Passwort zurücksetzen |
+| Audit-Logs | Alle Benutzeraktionen nachvollziehen |
+| Node-RED | WebSocket-Verbindung konfigurieren |
+| Alarme | Schwellwerte für Sensoren setzen |
+| E-Mail | SMTP, Templates, Empfänger verwalten |
+| Design | Farbschema anpassen (live Preview) |
 
 ---
 
-## 📖 Dokumentation
+## Dokumentation
 
 | Dokument | Beschreibung |
 |----------|-------------|
-| 📘 [SERVER.md](SERVER.md) | Server-Setup, API-Endpunkte, E-Mail-Konfiguration |
-| 🍓 [RASPI-SETUP.md](RASPI-SETUP.md) | Raspberry Pi Installation & Autostart |
-| 🔴 [NodeRed.md](NodeRed.md) | Node-RED Integration, Topics & Payloads |
-| 📝 [NOTES.md](NOTES.md) | Technische Implementierungsdetails |
-| 🔒 [AUDIT_REPORT.md](AUDIT_REPORT.md) | Sicherheitsaudit & Empfehlungen |
+| [SERVER.md](SERVER.md) | Server-Setup, API-Endpunkte, E-Mail-Konfiguration |
+| [RASPI-SETUP.md](RASPI-SETUP.md) | Raspberry Pi Installation & Autostart |
+| [NodeRed.md](NodeRed.md) | Node-RED Integration, Topics & Payloads |
+| [NOTES.md](NOTES.md) | Technische Implementierungsdetails |
+| [AUDIT_REPORT.md](AUDIT_REPORT.md) | Sicherheitsaudit & Empfehlungen |
+| [report.md](report.md) | Code Review und technische Analyse |
 
 ---
 
-## 🤝 Mitwirken
+## Mitwirken
 
 Beiträge sind willkommen! Bitte erstelle einen Fork und reiche einen Pull Request ein.
 
@@ -208,7 +269,7 @@ Beiträge sind willkommen! Bitte erstelle einen Fork und reiche einen Pull Reque
 
 ---
 
-## 📜 Lizenz
+## Lizenz
 
 Dieses Projekt steht unter der **MIT-Lizenz**.
 
@@ -236,6 +297,6 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 
 <div align="center">
 
-**Made with 💚 for smart gardening**
+**Made with care for smart gardening**
 
 </div>

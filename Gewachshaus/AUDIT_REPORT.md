@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔒 Sicherheitsaudit Report
+# Sicherheitsaudit Report
 
 **Code-Review und Sicherheitsanalyse**
 
@@ -11,17 +11,17 @@
 
 ---
 
-## 📋 Inhaltsverzeichnis
+## Inhaltsverzeichnis
 
-- [📊 Zusammenfassung](#-zusammenfassung)
-- [✅ Implementierte Sicherheitsmaßnahmen](#-implementierte-sicherheitsmaßnahmen)
-- [⚠️ Identifizierte Risiken](#️-identifizierte-risiken)
-- [📋 Empfehlungen](#-empfehlungen)
-- [🔍 Detaillierte Analyse](#-detaillierte-analyse)
+- [Zusammenfassung](#zusammenfassung)
+- [Implementierte Sicherheitsmaßnahmen](#implementierte-sicherheitsmaßnahmen)
+- [Identifizierte Risiken](#identifizierte-risiken)
+- [Empfehlungen](#empfehlungen)
+- [Detaillierte Analyse](#detaillierte-analyse)
 
 ---
 
-## 📊 Zusammenfassung
+## Zusammenfassung
 
 | Kategorie | Status |
 |-----------|--------|
@@ -44,9 +44,24 @@
 
 ---
 
-## ✅ Implementierte Sicherheitsmaßnahmen
+## Implementierte Sicherheitsmaßnahmen
 
-### 🛡️ Authentifizierung & Sessions
+### Sicherheits-Bewertung
+
+| Bereich | Score | Status | Bemerkung |
+|---------|-------|--------|-----------|
+| **Authentifizierung** | 8/10 | Gut | scrypt, aber Standard-Credentials |
+| **Session-Management** | 6/10 | Mittel | In-Memory, kein Persistenz |
+| **Input-Validation** | 7/10 | Gut | Body-Limit, aber fehlende CSP |
+| **Daten-Schutz** | 5/10 | Mittel | SMTP-Passwörter in Klartext |
+| **Network-Security** | 4/10 | Schwach | Kein HTTPS erzwungen |
+| **Logging** | 8/10 | Gut | Umfassende Audit-Logs |
+
+### Gesamt-Score: **6.3/10** - **Mittel**
+
+> Die Anwendung hat eine solide Sicherheitsbasis, benötigt aber wichtige Verbesserungen für den Produktionseinsatz.
+
+### Implementierte Sicherheitsmaßnahmen
 
 | Feature | Beschreibung | Status |
 |---------|-------------|--------|
@@ -56,14 +71,38 @@
 | **Session-Timeout** | 24 Stunden | ✅ |
 | **Legacy-Hash-Migration** | SHA256 → scrypt bei Login | ✅ |
 
-### 🚦 Rate Limiting
+### Zusätzliche Sicherheitsmerkmale
+
+| Feature | Implementierung | Status |
+|---------|----------------|--------|
+| **Rate Limiting** | In-Memory Map (100 req/min) | ✅ |
+| **Input Validation** | Body-Limit 1MB, JSON-Validierung | ✅ |
+| **Error Handling** | Keine Information Leakage | ✅ |
+| **File Access** | Statisches Serving mit Einschränkungen | ⚠️ |
+| **Backup-Strategy** | Manuelles Backup empfohlen | ❌ |
+
+### Sicherheits-Header Analyse
+
+```http
+# Aktuell implementiert
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
+
+# Fehlende Header
+Content-Security-Policy: default-src 'self'
+X-XSS-Protection: 1; mode=block
+Expect-CT: max-age=86400
+```
 
 | Typ | Limit | Zeitfenster |
 |-----|-------|-------------|
 | **Allgemein** | 100 Requests | 1 Minute |
 | **Login-Versuche** | 10 Versuche | 10 Minuten |
 
-### 📋 Security Headers
+### Security Headers
 
 ```http
 X-Content-Type-Options: nosniff
@@ -73,7 +112,7 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()
 Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 ```
 
-### 🔐 Weitere Maßnahmen
+### Weitere Maßnahmen
 
 | Feature | Beschreibung |
 |---------|-------------|
@@ -85,16 +124,16 @@ Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 
 ---
 
-## ⚠️ Identifizierte Risiken
+## Identifizierte Risiken
 
-### 🔴 Hohes Risiko
+### Hohes Risiko
 
 | Risiko | Beschreibung | Auswirkung |
 |--------|-------------|------------|
 | **Standard-Credentials** | `admin/admin123` bei Erstinstallation | Unbefugter Zugriff |
 | **Kein HTTPS erzwungen** | Daten im Klartext übertragbar | Abhören möglich |
 
-### 🟠 Mittleres Risiko
+### Mittleres Risiko
 
 | Risiko | Beschreibung | Auswirkung |
 |--------|-------------|------------|
@@ -102,7 +141,7 @@ Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 | **SMTP-Credentials in data.json** | Passwort in Datei gespeichert | Bei Zugriff kompromittiert |
 | **Kein CSP-Header** | Content Security Policy fehlt | XSS-Risiko erhöht |
 
-### 🟡 Niedriges Risiko
+### Niedriges Risiko
 
 | Risiko | Beschreibung | Auswirkung |
 |--------|-------------|------------|
@@ -111,9 +150,9 @@ Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 
 ---
 
-## 📋 Empfehlungen
+## Empfehlungen
 
-### 🔴 Kritisch (Sofort umsetzen)
+### Kritisch (Sofort umsetzen)
 
 | # | Empfehlung | Aufwand |
 |---|------------|---------|
@@ -121,7 +160,7 @@ Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 | 2 | **SESSION_SECRET** per Umgebungsvariable setzen | ⭐ |
 | 3 | **HTTPS aktivieren** (Nginx/Caddy als Reverse Proxy) | ⭐⭐ |
 
-### 🟠 Wichtig (Zeitnah umsetzen)
+### Wichtig (Zeitnah umsetzen)
 
 | # | Empfehlung | Aufwand |
 |---|------------|---------|
@@ -129,7 +168,7 @@ Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 | 5 | **Firewall** konfigurieren (nur 80/443 öffentlich) | ⭐ |
 | 6 | **Automatische Backups** von `data.json` einrichten | ⭐ |
 
-### 🟡 Optional (Bei Bedarf)
+### Optional (Bei Bedarf)
 
 | # | Empfehlung | Aufwand |
 |---|------------|---------|
@@ -140,7 +179,7 @@ Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 
 ---
 
-## 🔍 Detaillierte Analyse
+## Detaillierte Analyse
 
 ### Authentifizierung
 
@@ -180,7 +219,7 @@ Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 
 ---
 
-## 📊 Risiko-Matrix
+## Risiko-Matrix
 
 ```
         │ Niedrig    Mittel     Hoch
@@ -200,7 +239,7 @@ Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
 
 ---
 
-## 🛠️ Implementierungshinweise
+## Implementierungshinweise
 
 ### HTTPS mit Caddy (einfachste Methode)
 
