@@ -2,38 +2,32 @@
 
 Eine Sammlung von Softwareprojekten für verschiedene Anwendungsbereiche.
 ## Disclaimer
-Dieser Projekte wurden für die Schule erstellt. Es geht hier um das erlernen von Technik. Da wir allerdings keine Entwickler sind, haben wir in diesen Projekten auf KI zurückgegriffen. Der Code hier sollte also nur verwendet, werden, wenn ihn vorher reviwed und verstanden hat. 
+
+Diese Projekte wurden für die Schule erstellt. Es geht hier um das erlernen von Technik. Da wir allerdings keine Entwickler sind, haben wir in diesen Projekten auf KI zurückgegriffen. Der Code hier sollte also nur verwendet werden, wenn er vorher reviewed und verstanden wurde.
+
 ## Projektübersicht
 
-Dieses Repository enthält vier Hauptprojekte:
+Dieses Repository enthält drei Hauptprojekte:
 
-### 1. Berichtshefte-Faker
-
-**Python Desktop-Anwendung zur automatischen Erstellung von Ausbildungsberichten**
-
-- **Technologie**: Python 3.10+, Tkinter, python-docx
-- **Zweck**: Automatische Generierung von Ausbildungsberichten aus Word-Vorlagen
-- **Hauptfunktionen**: 
-  - Vorlagen-Management mit Platzhalter-Erkennung
-  - Dynamische Formularerstellung
-  - Word-Export (.docx)
-- **Installation**: `pip install -r requirements.txt` und `python main.py`
-
-### 2. Gewächshaus
+### 1. Gewächshaus
 
 **Intelligente Gewächshausverwaltung mit Präzisionsdüngung**
 
-- **Technologie**: Node.js, Vanilla JavaScript, HTML5, CSS3
+- **Technologie**: Node.js 14+, Vanilla JavaScript, HTML5, CSS3
 - **Zweck**: Webanwendung zur Steuerung von Gewächshausanlagen
 - **Hauptfunktionen**:
   - Interaktive Hochbeet-Verwaltung
   - Sensor-Integration (Temperatur, Feuchtigkeit, etc.)
   - Alarm-System mit E-Mail-Benachrichtigung
   - Community Forum
+  - Admin Panel mit Benutzerverwaltung
+  - Node-RED Integration über WebSocket
 - **Installation**: `npm install` und `npm start`
+- **Entwicklung**: `npm run dev` (mit Auto-Reload)
 - **Zugriff**: http://localhost:3001
+- **Dokumentation**: Siehe `Gewaechshaus/README.md` für Details
 
-### 3. LAPS
+### 2. LAPS
 
 **Sicheres Passwort-Anfrage-System für Microsoft LAPS + Active Directory**
 
@@ -44,38 +38,35 @@ Dieses Repository enthält vier Hauptprojekte:
   - Active Directory Integration
   - Vollständiger Audit-Trail
   - JWT-basierte Authentifizierung
+  - Frontend mit React + TypeScript
 - **Installation**: `npm install` und `npm run dev`
 - **Zugriff**: Backend: http://localhost:3001, Frontend: http://localhost:5173
+- **Dokumentation**: Siehe `LAPS/README.md` für Details
 
-### 4. Rezepte
+### 3. Rezepte
 
 **Self-hosted Recipe Management für Raspberry Pi**
 
-- **Technologie**: Node.js, React, SQLite3, Tailwind CSS
+- **Technologie**: Node.js 16+, Express, SQLite3, React
 - **Zweck**: Rezeptverwaltungs-Website für den Heimgebrauch
 - **Hauptfunktionen**:
   - CRUD-Operationen für Rezepte
   - Bild-Upload mit Optimierung
-  - Responsive Design
+  - Responsive Design mit Tailwind CSS
   - Such- und Filterfunktionen
+  - Raspberry Pi optimiert
 - **Installation**: `npm install`, Frontend-Build mit `cd client && npm run build`, dann `npm start`
 - **Zugriff**: http://localhost:3001
+- **Dokumentation**: Siehe `Rezepte/README.md` und `Rezepte/README_PI_SETUP.md` für Details
 
 ## Systemvoraussetzungen
 
 ### Allgemeine Anforderungen
-- **Node.js**: 18+ LTS (für JavaScript/TypeScript Projekte)
-- **Python**: 3.10+ (für Berichtshefte-Faker)
+- **Node.js**: 16+ LTS (für alle JavaScript/TypeScript Projekte)
 - **RAM**: Mindestens 2 GB
 - **Speicher**: Mindestens 1 GB freier Speicherplatz
 
 ### Projektspezifische Anforderungen
-
-#### Berichtshefte-Faker
-```bash
-# Python-Abhängigkeiten
-pip install python-docx tkcalendar pyinstaller
-```
 
 #### Gewächshaus
 ```bash
@@ -154,30 +145,46 @@ cd .. && npm start
 
 ## Architektur-Übersicht
 
-### Python-Projekt (Berichtshefte-Faker)
-```
-Berichtshefte-Faker/
-├── main.py                 # Einstiegspunkt
-├── gui/                    # Benutzeroberfläche
-│   ├── main_window.py
-│   ├── template_manager.py
-│   └── report_form.py
-├── core/                   # Geschäftslogik
-│   ├── template_handler.py
-│   ├── report_generator.py
-│   └── word_exporter.py
-└── requirements.txt        # Python-Abhängigkeiten
+### Gewächshaus Projekt
+```text
+Gewaechshaus/
+├── server-simple.js       # Haupt-Server
+├── index.html             # Web-Interface
+├── styles.css              # Styling
+├── script.js               # Frontend-Logik
+├── auth.js                 # Authentifizierung
+├── color-manager.js        # Farbschema-Verwaltung
+├── log-utils.js            # Logging-Utilities
+├── data.json               # Datenspeicherung
+└── assets/                 # Bilder und Icons
 ```
 
-### Node.js Projekte
+### LAPS Projekt
+```text
+LAPS/
+├── package.json            # Workspace-Konfiguration
+├── backend/                 # Node.js Backend
+│   ├── package.json
+│   ├── server.js
+│   └── database.sqlite
+└── frontend/                # React Frontend
+    ├── package.json
+    ├── src/
+    └── build/
 ```
-[projekt]/
-├── package.json           # Projekt-Konfiguration
-├── server.js              # Backend-Server
-├── frontend/              # React-Anwendung (LAPS, Rezepte)
-├── client/                # Frontend (Rezepte)
-├── backend/               # Backend (LAPS)
-└── node_modules/          # Abhängigkeiten
+
+### Rezepte Projekt
+```text
+Rezepte/
+├── package.json            # Backend-Konfiguration
+├── server.js               # Express-Server
+├── database.js             # SQLite-Datenbank
+├── recipes.db              # Rezept-Daten
+├── client/                 # React Frontend
+│   ├── package.json
+│   ├── src/
+│   └── build/
+└── uploads/                # Bild-Uploads
 ```
 
 ## Datenbanken
@@ -187,7 +194,6 @@ Berichtshefte-Faker/
 | LAPS | SQLite | `backend/database.sqlite` |
 | Rezepte | SQLite | `recipes.db` |
 | Gewächshaus | JSON | `data.json` |
-| Berichtshefte-Faker | Dateisystem | `templates/`, `output/` |
 
 ## Sicherheitshinweise
 
@@ -208,6 +214,7 @@ Berichtshefte-Faker/
 ### Häufige Probleme
 
 #### Port bereits belegt
+
 ```bash
 # Prozess finden
 sudo lsof -i :3001
@@ -220,6 +227,7 @@ PORT=8080 npm start
 ```
 
 #### Berechtigungsprobleme (Raspberry Pi)
+
 ```bash
 # Besitz korrigieren
 sudo chown -R $USER:$USER /pfad/zum/projekt
@@ -229,24 +237,17 @@ chmod -R 755 /pfad/zum/projekt
 ```
 
 #### Node.js Abhängigkeiten
+
 ```bash
 # Neu installieren bei Problemen
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-#### Python Module
-```bash
-# Module neu installieren
-pip uninstall python-docx tkcalendar
-pip install python-docx tkcalendar
-```
-
 ## Lizenz
 
 Die Projekte unterliegen unterschiedlichen Lizenzen:
 
-- **Berichtshefte-Faker**: Private Nutzung für Ausbildungszwecke
 - **Gewächshaus**: MIT License
 - **LAPS**: Intern / Proprietär
 - **Rezepte**: MIT License
@@ -255,7 +256,6 @@ Die Projekte unterliegen unterschiedlichen Lizenzen:
 
 Bei Fragen zu spezifischen Projekten:
 
-- **Berichtshefte-Faker**: Python-Dokumentation und Tkinter-Referenzen
 - **Gewächshaus**: Node.js-Dokumentation und Raspberry Pi Guides
 - **LAPS**: Active Directory und LDAP-Dokumentation
 - **Rezepte**: React- und SQLite-Dokumentation
