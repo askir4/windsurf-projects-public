@@ -15,7 +15,9 @@
 </div>
 
 ---
-
+## Disclaimer
+Dieser Projekte wurden für die Schule erstellt. Es geht hier um das erlernen von Technik. Da wir allerdings keine Entwickler sind, haben wir in diesen Projekten auf KI zurückgegriffen. Der Code hier sollte also nur verwendet, werden, wenn ihn vorher reviwed und verstanden hat. 
+---
 ## Inhaltsverzeichnis
 
 - [Features](#features)
