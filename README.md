@@ -3,7 +3,7 @@
 Eine Sammlung von Softwareprojekten für verschiedene Anwendungsbereiche.
 ## Disclaimer
 
-Diese Projekte wurden für die Schule erstellt. Es geht hier um das erlernen von Technik. Da wir allerdings keine Entwickler sind, haben wir in diesen Projekten auf KI zurückgegriffen. Der Code hier sollte also nur verwendet werden, wenn er vorher reviewed und verstanden wurde.
+Dieses Projekt wurde für die Schule erstellt. Es geht hier um das Erlernen von Technik. Da wir allerdings keine Entwickler sind, haben wir in diesem Projekt auf KI zurückgegriffen. Der Code hier sollte also nur verwendet werden, wenn er vorher reviewed und verstanden wurde.
 
 ## Projektübersicht
 
