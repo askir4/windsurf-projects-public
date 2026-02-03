@@ -22,6 +22,21 @@
   ],
   "logs": [
     {
+      "timestamp": "2026-01-29T10:36:34.136Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-01-29T10:36:34.125Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-01-29T10:36:34.119Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
       "timestamp": "2026-01-20T06:03:52.304Z",
       "level": "INFO",
       "message": "Login erfolgreich: admin"
