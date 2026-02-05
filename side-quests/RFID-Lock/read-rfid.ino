@@ -1,6 +1,7 @@
 //Project is for educational purposes only
 //Author: Askir4
 //Date: 2026-02-05
+//DO NOT USE IN PRODUCTION
 //Version: 1.0 (Development)
 #include <SPI.h> //Include SPI libary for RFID communication
 #include <MFRC522.h> //Include MFRC22 Libary for RFID functions
@@ -24,5 +25,19 @@ void setup() {
     
     //Initalize LCD
     lcd.init(); // Initialize LCD
+    lcd.clear(); // Clear LCD
+    lcd.setCursor(0, 0); // Set cursor to first row
+    lcd.print("Show card please"); // Print "RFID Reader" on first row
     lcd.backlight(); // Turn on LCD backlight
+
+    delay(2000); // Wait for 2 seconds
+    lcd.clear(); // Clear LCD
+    
+}
+
+void loop() {
+    //Look for new Cards
+    if (!rfid.PCC_IsNewCardPresent() || !rfid.PCC_ReadCardSerial()) {
+        return; //if new card is present exit loop
+    }
 }
