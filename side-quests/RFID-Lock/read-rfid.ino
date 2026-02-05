@@ -5,7 +5,7 @@
 #include <SPI.h> //Include SPI libary for RFID communication
 #include <MFRC522.h> //Include MFRC22 Libary for RFID functions
 #include <Wire.h> //Include Wire libary for I2C communication
-#include <LiquidCrystal.h> //Include LiquidCrystal libary for LCD display
+#include <LiquidCrystal.h> //Include LiquidCrystal libary for LCD display (if needed)
 
 //RFID PINS
 #define SS_PIN 10 //RFID SS pin
