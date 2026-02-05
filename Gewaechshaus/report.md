@@ -1,21 +1,21 @@
-# Gewächshaus Projekt - Code Review
+# Greenhouse Project - Code Review
 
-## Zusammenfassung
-Die Gewächshaus Webanwendung ist eine monolithische Vanilla-Webapp mit einem minimalen Node.js Server (`server-simple.js`) und JSON-basierter Datenspeicherung (`data.json`). Die Anwendung bietet zentrale Funktionen wie Hochbeet-Verwaltung, Community Forum, Sensor-Dashboard, Admin Panel und SMTP E-Mail Alarmierung. Die Architektur ist bewusst einfach gehalten, was sie ideal für Raspberry Pi und Demo-Szenarien geeignet macht.
+## Summary
+The Greenhouse Web Application is a monolithic vanilla web app with a minimal Node.js server (`server-simple.js`) and JSON-based data storage (`data.json`). The application provides core functions such as raised bed management, community forum, sensor dashboard, admin panel, and SMTP email alarm system. The architecture is deliberately kept simple, making it ideal for Raspberry Pi and demo scenarios.
 
-## Stärken
-- **Klarer Feature-Scope**: Fokus auf Kernfunktionen (Hochbeete, Forum, Sensoren, Admin)
-- **Geringe Server-Komplexität**: Minimaler Node.js Server ohne Framework-Abhängigkeiten
-- **Umfassende Alarmierung**: Komplettes E-Mail System mit Templates und SMTP Test
-- **Konsistente UI-Struktur**: Durchdachtes Benutzerinterface mit responsivem Design
+## Strengths
+- **Clear Feature Scope**: Focus on core functions (raised beds, forum, sensors, admin)
+- **Low Server Complexity**: Minimal Node.js server without framework dependencies
+- **Comprehensive Alerting**: Complete email system with templates and SMTP testing
+- **Consistent UI Structure**: Well-thought-out user interface with responsive design
 
-## Architektur-Übersicht
+## Architecture Overview
 
 ### Backend
 - **Server**: `server-simple.js` (Node.js HTTP Server)
-- **Datenspeicherung**: `data.json` mit atomischem Schreiben
-- **Authentifizierung**: Session-basiert mit scrypt Passwort-Hashing
-- **API**: RESTful Endpunkte für alle Funktionen
+- **Data Storage**: `data.json` with atomic writing
+- **Authentication**: Session-based with scrypt password hashing
+- **API**: RESTful endpoints for all functions
 
 ### Frontend
 - **Technologie**: Vanilla JavaScript, HTML5, CSS3

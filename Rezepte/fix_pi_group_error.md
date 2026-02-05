@@ -2,19 +2,19 @@
 
 ## 🚨 Problem: `status=216/GROUP`
 
-Der Fehler bedeutet, dass der systemd Service versucht, als nicht existierende Gruppe zu laufen.
+The error means that the systemd service is trying to run as a non-existent group.
 
 ---
 
-## 🛠️ Lösung 1: Gruppe korrigieren
+## 🛠️ Solution 1: Fix Group
 
-### 1. Aktuelle User/Gruppen prüfen
+### 1. Check Current User/Groups
 ```bash
-# Aktuellen User und Gruppen anzeigen
+# Show current user and groups
 id lionsin4
-# Ausgabe z.B.: uid=1000(lionsin4) gid=1000(lionsin4) groups=1000(lionsin4),...
+# Output e.g.: uid=1000(lionsin4) gid=1000(lionsin4) groups=1000(lionsin4),...
 
-# Alle Gruppen anzeigen
+# Show all groups
 getent group | grep lionsin4
 ```
 

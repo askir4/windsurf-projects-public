@@ -1,26 +1,26 @@
-# Rezept-App auf Raspberry Pi 4 Setup Guide
+# Recipe App on Raspberry Pi 4 Setup Guide
 
-## Voraussetzungen
-- Raspberry Pi 4 (4GB RAM empfohlen)
-- Raspbian OS (oder Raspberry Pi OS)
-- Internetverbindung
-- SSH-Zugang (oder direkt am Pi)
+## Prerequisites
+- Raspberry Pi 4 (4GB RAM recommended)
+- Raspbian OS (or Raspberry Pi OS)
+- Internet connection
+- SSH access (or directly on Pi)
 
 ---
 
-## Schritt 1: Projekt auf den Pi kopieren
+## Step 1: Copy project to Pi
 
-### Methode A: Git (empfohlen)
+### Method A: Git (recommended)
 ```bash
-# Auf dem Pi ausführen
+# Run on the Pi
 cd /home/pi
-git clone <dein-repo-url> Rezepte
+git clone <your-repo-url> Rezepte
 cd Rezepte
 ```
 
-### Methode B: SCP/WinSCP
+### Method B: SCP/WinSCP
 ```bash
-# Von deinem PC zum Pi kopieren
+# Copy from your PC to Pi
 scp -r /path/to/Rezepte pi@<pi-ip>:/home/pi/
 ```
 

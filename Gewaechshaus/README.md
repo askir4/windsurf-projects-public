@@ -1,14 +1,14 @@
 <div align="center">
 
-# Gewächshaus Webapp
+# Greenhouse Webapp
 
-**Intelligente Gewächshausverwaltung mit Präzisionsdüngung**
+**Smart Greenhouse Management with Precision Fertilization**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)]()
 
-*Lernfeld 7 - Präzisionsdüngung mit Einzelsteuerung*
+*Learning Field 7 - Precision Fertilization with Individual Control*
 
 <img src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/leaflet.svg" width="120" alt="Logo">
 
@@ -16,155 +16,155 @@
 
 ---
 ## Disclaimer
-Dieses Projekt wurde für die Schule erstellt. Es geht hier um das Erlernen von Technik. Da wir allerdings keine Entwickler sind, haben wir in diesem Projekt auf KI zurückgegriffen. Der Code hier sollte also nur verwendet werden, wenn er vorher reviewed und verstanden wurde. 
+This project was created for school. It's about learning technology. However, since we are not developers, we relied on AI for this project. The code here should only be used if it has been reviewed and understood beforehand. 
 ---
-## Inhaltsverzeichnis
+## Table of Contents
 
 - [Features](#features)
-- [Schnellstart](#schnellstart)
-- [Architektur](#architektur)
-- [Konfiguration](#konfiguration)
-- [Dokumentation](#dokumentation)
-- [Lizenz](#lizenz)
+- [Quick Start](#quick-start)
+- [Architecture](#architecture)
+- [Configuration](#configuration)
+- [Documentation](#documentation)
+- [License](#license)
 
 ---
 
-## Projektübersicht
+## Project Overview
 
-Die Gewächshaus Webapp ist eine umfassende Lösung für die intelligente Verwaltung von Gewächshausanlagen mit Präzisionsdüngung. Das System ermöglicht die Überwachung und Steuerung von Hochbeeten, die Integration von Sensordaten sowie die automatische Alarmierung bei kritischen Werten.
+The Greenhouse Webapp is a comprehensive solution for intelligent management of greenhouse systems with precision fertilization. The system enables monitoring and control of raised beds, integration of sensor data, and automatic alarm notifications for critical values.
 
-### Kernfunktionen
+### Core Features
 
-- **Hochbeet-Management**: Interaktive Karte mit Drag & Drop Editor
-- **Pflanzenverwaltung**: Detaillierte Pflanzenprofile mit Düngeplänen
-- **Sensor-Integration**: Echtzeitdaten von Temperatur, Luftfeuchtigkeit, Bodenfeuchtigkeit und Wassertank
-- **Alarm-System**: Automatische E-Mail-Benachrichtigung bei Schwellwertüberschreitungen
-- **Community Forum**: Austauschplattform für Anwender mit Tags und Suche
-- **Admin Panel**: Umfassende Verwaltungsoberfläche für Benutzer, Einstellungen und Logs
+- **Raised Bed Management**: Interactive map with drag & drop editor
+- **Plant Management**: Detailed plant profiles with fertilization plans
+- **Sensor Integration**: Real-time data from temperature, humidity, soil moisture, and water tank
+- **Alarm System**: Automatic email notification for threshold violations
+- **Community Forum**: Exchange platform for users with tags and search
+- **Admin Panel**: Comprehensive management interface for users, settings, and logs
 
 ## Features
 
-### Hochbeete & Pflanzenmanagement
+### Raised Beds & Plant Management
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Interaktive Karte** | Drag & Drop Editor mit Zoom und Pan |
-| **Pflanzen-Picker** | Icon-Auswahl mit Suchfunktion |
-| **Todo-System** | Aufgaben pro Pflanze verwalten |
-| **Mehrfachauswahl** | `Shift + Klick` für Gruppendüngung |
-| **Responsive Design** | Optimiert für Desktop und Mobile |
+| **Interactive Map** | Drag & Drop editor with zoom and pan |
+| **Plant Picker** | Icon selection with search function |
+| **Todo System** | Manage tasks per plant |
+| **Multi-selection** | `Shift + Click` for group fertilization |
+| **Responsive Design** | Optimized for desktop and mobile |
 
 ### Community Forum
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Tags & Filter** | Beiträge kategorisieren und filtern |
-| **Volltextsuche** | Suche nach Nutzer oder Inhalt |
-| **Highlighting** | Treffer werden hervorgehoben |
-| **Kommentare** | Ein-/ausklappbare Diskussionen |
+| **Tags & Filters** | Categorize and filter posts |
+| **Full-text Search** | Search by user or content |
+| **Highlighting** | Matches are highlighted |
+| **Comments** | Collapsible discussions |
 
-### Sensoren & Monitoring
+### Sensors & Monitoring
 
-| Sensor | Beschreibung |
+| Sensor | Description |
 |--------|-------------|
-| Temperatur | Echtzeit-Messung mit Trendanzeige |
-| Luftfeuchtigkeit | Prozentuale Anzeige |
-| Bodenfeuchtigkeit | Feuchtigkeitsgrad pro Zone |
-| Wassertank | Füllstand und Temperatur |
+| Temperature | Real-time measurement with trend display |
+| Humidity | Percentage display |
+| Soil Moisture | Moisture level per zone |
+| Water Tank | Fill level and temperature |
 
-### Graphen & Trends
+### Graphs & Trends
 
-- **Zeiträume:** 1h, 6h, 24h, 7d, 30d
-- **Live-Updates** über WebSocket
-- **Trendpfeile** für schnelle Übersicht
+- **Time periods:** 1h, 6h, 24h, 7d, 30d
+- **Live updates** via WebSocket
+- **Trend arrows** for quick overview
 
-### Alarm-System & E-Mail
+### Alarm System & E-Mail
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Schwellwerte** | Min/Max pro Sensor konfigurierbar |
-| **SMTP-Integration** | Eigener Mailserver oder Provider |
-| **Templates** | Anpassbare E-Mail-Vorlagen |
-| **Platzhalter** | `{sensor_name}`, `{value}`, `{timestamp}` |
-| **Versandprotokoll** | Alle E-Mails nachvollziehbar |
+| **Thresholds** | Min/Max configurable per sensor |
+| **SMTP Integration** | Own mail server or provider |
+| **Templates** | Customizable email templates |
+| **Placeholders** | `{sensor_name}`, `{value}`, `{timestamp}` |
+| **Delivery Log** | All emails traceable |
 
 ---
 
-## Systemvoraussetzungen
+## System Requirements
 
-### Minimale Anforderungen
+### Minimal Requirements
 - **Node.js** 18+ ([Download](https://nodejs.org/))
-- **npm** 9+ (wird mit Node.js installiert)
-- **RAM**: Mindestens 512 MB
-- **Speicher**: 100 MB freier Speicherplatz
+- **npm** 9+ (installed with Node.js)
+- **RAM**: Minimum 512 MB
+- **Storage**: 100 MB free disk space
 
-### Empfohlene Konfiguration
-- **Node.js** 20 LTS oder neuer
-- **RAM**: 1 GB oder mehr
-- **Speicher**: 1 GB freier Speicherplatz für Logs und Daten
+### Recommended Configuration
+- **Node.js** 20 LTS or newer
+- **RAM**: 1 GB or more
+- **Storage**: 1 GB free disk space for logs and data
 
-### Unterstützte Plattformen
+### Supported Platforms
 - **Linux**: Ubuntu 20.04+, Debian 11+, Raspberry Pi OS
-- **Windows**: Windows 10+ (mit WSL empfohlen)
+- **Windows**: Windows 10+ (WSL recommended)
 - **macOS**: macOS 11+ (Intel/Apple Silicon)
 
-## Schnellstart
+## Quick Start
 
-### Voraussetzungen
+### Prerequisites
 
 - **Node.js** 18+ ([Download](https://nodejs.org/))
-- **npm** (wird mit Node.js installiert)
+- **npm** (installed with Node.js)
 
 ### Installation
 
 ```bash
-# Repository klonen
+# Clone repository
 git clone https://github.com/yourname/gewachshaus.git
 cd gewachshaus
 
-# Abhängigkeiten installieren
+# Install dependencies
 npm install
 
-# Konfiguration anpassen (optional)
+# Adjust configuration (optional)
 cp .env.example .env
 nano .env
 
-# Server starten
+# Start server
 npm start
 ```
 
-### Zugriff
+### Access
 
-| URL | Beschreibung |
+| URL | Description |
 |-----|-------------|
-| `http://localhost:3001` | Weboberfläche |
-| `http://localhost:3001/api/health` | Health-Check |
+| `http://localhost:3001` | Web interface |
+| `http://localhost:3001/api/health` | Health check |
 
-### Standard-Login
+### Default Login
 
-| Feld | Wert |
+| Field | Value |
 |------|------|
-| **Benutzer** | `admin` |
-| **Passwort** | `admin123` |
+| **User** | `admin` |
+| **Password** | `admin123` |
 
-> Wichtig: Passwort nach dem ersten Login ändern!
+> Important: Change password after first login!
 
-### Entwicklung
+### Development
 
-Für Entwickler stehen zusätzliche Befehle zur Verfügung:
+Additional commands are available for developers:
 
 ```bash
-npm run dev           # Entwicklungsmodus mit Auto-Reload
-npm run start:daemon  # Als Hintergrundprozess (Raspberry Pi)
-npm run start:status  # Status des Daemon prüfen
-npm run start:logs    # Logs des Daemon anzeigen
-npm run start:stop    # Daemon stoppen
-npm run test          # Unit-Tests ausführen
+npm run dev           # Development mode with auto-reload
+npm run start:daemon  # As background process (Raspberry Pi)
+npm run start:status  # Check daemon status
+npm run start:logs    # Show daemon logs
+npm run start:stop    # Stop daemon
+npm run test          # Run unit tests
 ```
 
 ### Docker (Optional)
 
-Für Container-basierte Installation:
+For container-based installation:
 
 ```bash
 docker build -t gewachshaus .
@@ -173,112 +173,112 @@ docker run -p 3001:3001 -v $(pwd)/data.json:/app/data.json gewachshaus
 
 ---
 
-## Architektur
+## Architecture
 
 ```text
 gewachshaus/
-├── server-simple.js   # HTTP-Server (Node.js)
-├── index.html         # Haupt-UI
+├── server-simple.js   # HTTP server (Node.js)
+├── index.html         # Main UI
 ├── styles.css         # Styling
-├── script.js          # Frontend-Logik
-├── auth.js            # Authentifizierung
-├── color-manager.js   # Farbschema-Verwaltung
-├── log-utils.js       # Logging-Utilities
-├── data.json          # Persistente Daten
-└── assets/            # Icons und Bilder
+├── script.js          # Frontend logic
+├── auth.js            # Authentication
+├── color-manager.js   # Color scheme management
+├── log-utils.js       # Logging utilities
+├── data.json          # Persistent data
+└── assets/            # Icons and images
 ```
 
-### Technologie-Stack
+### Technology Stack
 
-| Komponente | Technologie |
+| Component | Technology |
 |------------|-------------|
-| **Backend** | Node.js (HTTP-Server, kein Framework) |
+| **Backend** | Node.js (HTTP server, no framework) |
 | **Frontend** | Vanilla JavaScript, HTML5, CSS3 |
-| **Datenbank** | JSON-Datei (atomisches Schreiben) |
+| **Database** | JSON file (atomic writing) |
 | **E-Mail** | Nodemailer (SMTP) |
-| **Sensoren** | Node-RED über WebSocket |
+| **Sensors** | Node-RED via WebSocket |
 
 ---
 
-## Konfiguration
+## Configuration
 
-### Umgebungsvariablen
+### Environment Variables
 
-Die Anwendung kann über Umgebungsvariablen konfiguriert werden:
+The application can be configured via environment variables:
 
-| Variable | Standard | Beschreibung |
+| Variable | Default | Description |
 |----------|----------|--------------|
-| `PORT` | `3001` | Server-Port |
-| `ADMIN_USER` | `admin` | Administrator-Benutzername |
-| `ADMIN_PASS` | `admin123` | Administrator-Passwort |
-| `SESSION_SECRET` | - | Geheimer Schlüssel für Sessions |
-| `ALLOWED_ORIGINS` | - | Erlaubte CORS-Origins (kommagetrennt) |
-| `NODE_ENV` | `development` | Laufzeitumgebung |
+| `PORT` | `3001` | Server port |
+| `ADMIN_USER` | `admin` | Administrator username |
+| `ADMIN_PASS` | `admin123` | Administrator password |
+| `SESSION_SECRET` | - | Secret key for sessions |
+| `ALLOWED_ORIGINS` | - | Allowed CORS origins (comma-separated) |
+| `NODE_ENV` | `development` | Runtime environment |
 
-#### Beispiel: `.env` Datei
+#### Example: `.env` file
 
 ```env
-# Server-Konfiguration
+# Server configuration
 PORT=3001
 NODE_ENV=production
 
-# Admin-Account
+# Admin account
 ADMIN_USER=admin
-ADMIN_PASS=sicheres_passwort_123
+ADMIN_PASS=secure_password_123
 
-# Sicherheit
-SESSION_SECRET=mein_geheimer_schluessel_xyz
+# Security
+SESSION_SECRET=my_secret_key_xyz
 
 # Optional: CORS
-ALLOWED_ORIGINS=http://192.168.1.100:3001,https://mein-domain.com
+ALLOWED_ORIGINS=http://192.168.1.100:3001,https://my-domain.com
 ```
 
-### Admin Panel Funktionen
+### Admin Panel Functions
 
-| Bereich | Funktionen |
+| Area | Functions |
 |---------|-----------|
-| Benutzer | Erstellen, Bearbeiten, Löschen, Passwort zurücksetzen |
-| Audit-Logs | Alle Benutzeraktionen nachvollziehen |
-| Node-RED | WebSocket-Verbindung konfigurieren |
-| Alarme | Schwellwerte für Sensoren setzen |
-| E-Mail | SMTP, Templates, Empfänger verwalten |
-| Design | Farbschema anpassen (live Preview) |
+| Users | Create, edit, delete, reset password |
+| Audit Logs | Track all user actions |
+| Node-RED | Configure WebSocket connection |
+| Alarms | Set sensor thresholds |
+| E-Mail | Manage SMTP, templates, recipients |
+| Design | Adjust color scheme (live preview) |
 
 ---
 
-## Dokumentation
+## Documentation
 
-| Dokument | Beschreibung |
+| Document | Description |
 |----------|-------------|
-| [SERVER.md](SERVER.md) | Server-Setup, API-Endpunkte, E-Mail-Konfiguration |
-| [RASPI-SETUP.md](RASPI-SETUP.md) | Raspberry Pi Installation & Autostart |
-| [NodeRed.md](NodeRed.md) | Node-RED Integration, Topics & Payloads |
-| [NOTES.md](NOTES.md) | Technische Implementierungsdetails |
-| [AUDIT_REPORT.md](AUDIT_REPORT.md) | Sicherheitsaudit & Empfehlungen |
-| [report.md](report.md) | Code Review und technische Analyse |
+| [SERVER.md](SERVER.md) | Server setup, API endpoints, email configuration |
+| [RASPI-SETUP.md](RASPI-SETUP.md) | Raspberry Pi installation & autostart |
+| [NodeRed.md](NodeRed.md) | Node-RED integration, topics & payloads |
+| [NOTES.md](NOTES.md) | Technical implementation details |
+| [AUDIT_REPORT.md](AUDIT_REPORT.md) | Security audit & recommendations |
+| [report.md](report.md) | Code review and technical analysis |
 
 ---
 
-## Mitwirken
+## Contributing
 
-Beiträge sind willkommen! Bitte erstelle einen Fork und reiche einen Pull Request ein.
+Contributions are welcome! Please create a fork and submit a pull request.
 
-1. Fork erstellen
-2. Feature-Branch anlegen (`git checkout -b feature/neues-feature`)
-3. Änderungen committen (`git commit -m 'Neues Feature hinzugefügt'`)
-4. Branch pushen (`git push origin feature/neues-feature`)
-5. Pull Request erstellen
+1. Create a fork
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit changes (`git commit -m 'Add new feature'`)
+4. Push branch (`git push origin feature/new-feature`)
+5. Create pull request
 
 ---
 
-## Lizenz
+## License
 
-Dieses Projekt steht unter der **MIT-Lizenz**.
+This project is licensed under the **MIT License**.
 
 ```
 MIT License
 
-Copyright (c) 2026 Gewächshaus Projekt
+Copyright (c) 2026 Greenhouse Project
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

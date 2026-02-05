@@ -1,8 +1,8 @@
 <div align="center">
 
-# Implementierungsnotizen
+# Implementation Notes
 
-**Technische Details und Architektur-Entscheidungen**
+**Technical Details and Architecture Decisions**
 
 [![Architecture](https://img.shields.io/badge/Architecture-Documentation-purple?style=for-the-badge&logo=bookstack&logoColor=white)]()
 
@@ -10,14 +10,14 @@
 
 ---
 
-## Inhaltsverzeichnis
+## Table of Contents
 
-- [Architektur](#architektur)
-- [Rollen & Berechtigungen](#rollen--berechtigungen)
-- [Forum-System](#forum-system)
-- [Sensoren & Alarme](#sensoren--alarme)
-- [E-Mail-System](#e-mail-system)
-- [Sicherheit](#sicherheit)
+- [Architecture](#architecture)
+- [Roles & Permissions](#roles--permissions)
+- [Forum System](#forum-system)
+- [Sensors & Alarms](#sensors--alarms)
+- [E-Mail System](#e-mail-system)
+- [Security](#security)
 - [UI-Komponenten](#ui-komponenten)
 - [Dateistruktur](#dateistruktur)
 

@@ -1,77 +1,97 @@
 # Windsurf-Projects
 
-Eine Sammlung von Softwareprojekten für verschiedene Anwendungsbereiche.
+A collection of software projects for various application areas.
 ## Disclaimer
 
-Dieses Projekt wurde für die Schule erstellt. Es geht hier um das Erlernen von Technik. Da wir allerdings keine Entwickler sind, haben wir in diesem Projekt auf KI zurückgegriffen. Der Code hier sollte also nur verwendet werden, wenn er vorher reviewed und verstanden wurde.
+This project was created for school. It's about learning technology. However, since we are not developers, we relied on AI for this project. The code here should only be used if it has been reviewed and understood beforehand.
 
-## Projektübersicht
+## Project Overview
 
-Dieses Repository enthält drei Hauptprojekte:
+This repository contains three main projects and additional side-projects:
 
-### 1. Gewächshaus
+### 1. Greenhouse
 
-**Intelligente Gewächshausverwaltung mit Präzisionsdüngung**
+**Smart Greenhouse Management with Precision Fertilization**
 
-- **Technologie**: Node.js 14+, Vanilla JavaScript, HTML5, CSS3
-- **Zweck**: Webanwendung zur Steuerung von Gewächshausanlagen
-- **Hauptfunktionen**:
-  - Interaktive Hochbeet-Verwaltung
-  - Sensor-Integration (Temperatur, Feuchtigkeit, etc.)
-  - Alarm-System mit E-Mail-Benachrichtigung
-  - Community Forum
-  - Admin Panel mit Benutzerverwaltung
-  - Node-RED Integration über WebSocket
-- **Installation**: `npm install` und `npm start`
-- **Entwicklung**: `npm run dev` (mit Auto-Reload)
-- **Zugriff**: http://localhost:3001
-- **Dokumentation**: Siehe `Gewaechshaus/README.md` für Details
+- **Technology**: Node.js 14+, Vanilla JavaScript, HTML5, CSS3
+- **Version**: 3.0.0
+- **Purpose**: Web application for controlling greenhouse systems
+- **Main Features**:
+  - Interactive raised bed management
+  - Sensor integration (temperature, humidity, etc.)
+  - Alarm system with email notification
+  - Community forum
+  - Admin panel with user management
+  - Node-RED integration via WebSocket
+- **Installation**: `npm install` and `npm start`
+- **Development**: `npm run dev` (with auto-reload)
+- **Access**: http://localhost:3001
+- **Documentation**: See `Gewaechshaus/README.md` for details
 
 ### 2. LAPS
 
-**Sicheres Passwort-Anfrage-System für Microsoft LAPS + Active Directory**
+**Secure Password Request System for Microsoft LAPS + Active Directory**
 
-- **Technologie**: Node.js, TypeScript, React, SQLite
-- **Zweck**: Sichere Verwaltung von lokalen Administrator-Passwörtern
-- **Hauptfunktionen**:
-  - Passwort-Anfragen mit Genehmigungs-Workflow
-  - Active Directory Integration
-  - Vollständiger Audit-Trail
-  - JWT-basierte Authentifizierung
-  - Frontend mit React + TypeScript
-- **Installation**: `npm install` und `npm run dev`
-- **Zugriff**: Backend: http://localhost:3001, Frontend: http://localhost:5173
-- **Dokumentation**: Siehe `LAPS/README.md` für Details
+- **Technology**: Node.js 18+, TypeScript, React, SQLite
+- **Version**: 1.0.0
+- **Purpose**: Secure management of local administrator passwords
+- **Main Features**:
+  - Password requests with approval workflow
+  - Active Directory integration
+  - Complete audit trail
+  - JWT-based authentication
+  - Frontend with React + TypeScript
+- **Installation**: `npm install` and `npm run dev`
+- **Access**: Backend: http://localhost:3001, Frontend: http://localhost:5173
+- **Documentation**: See `LAPS/README.md` for details
 
-### 3. Rezepte
+### 3. Recipes
 
-**Self-hosted Recipe Management für Raspberry Pi**
+**Self-hosted Recipe Management for Raspberry Pi**
 
-- **Technologie**: Node.js 16+, Express, SQLite3, React
-- **Zweck**: Rezeptverwaltungs-Website für den Heimgebrauch
-- **Hauptfunktionen**:
-  - CRUD-Operationen für Rezepte
-  - Bild-Upload mit Optimierung
-  - Responsive Design mit Tailwind CSS
-  - Such- und Filterfunktionen
-  - Raspberry Pi optimiert
-- **Installation**: `npm install`, Frontend-Build mit `cd client && npm run build`, dann `npm start`
-- **Zugriff**: http://localhost:3001
-- **Dokumentation**: Siehe `Rezepte/README.md` und `Rezepte/README_PI_SETUP.md` für Details
+- **Technology**: Node.js 16+, Express, SQLite3, React
+- **Version**: 1.0.0
+- **Purpose**: Recipe management website for home use
+- **Main Features**:
+  - CRUD operations for recipes
+  - Image upload with optimization
+  - Responsive design with Tailwind CSS
+  - Search and filter functions
+  - Raspberry Pi optimized
+- **Installation**: `npm install`, Frontend build with `cd client && npm run build`, then `npm start`
+- **Access**: http://localhost:3001
+- **Documentation**: See `Rezepte/README.md` and `Rezepte/README_PI_SETUP.md` for details
 
-## Systemvoraussetzungen
+### 4. Side-Projects
 
-### Allgemeine Anforderungen
-- **Node.js**: 16+ LTS (für alle JavaScript/TypeScript Projekte)
-- **RAM**: Mindestens 2 GB
-- **Speicher**: Mindestens 1 GB freier Speicherplatz
+Additional experimental and learning projects:
 
-### Projektspezifische Anforderungen
+#### RFID-Lock
 
-#### Gewächshaus
+- **Technology**: Arduino, MFRC522 RFID Module
+- **Purpose**: RFID-based lock system for educational purposes
+- **Status**: Educational/Prototype
+- **Documentation**: See `side-quests/RFID-Lock/README.md`
+
+#### Temperature-Warning-ESP
+
+- **Technology**: ESP32 (planned)
+- **Purpose**: Temperature monitoring with warning function
+- **Status**: In planning
+
+## System Requirements
+
+### General Requirements
+- **Node.js**: 18+ LTS (recommended for all JavaScript/TypeScript projects)
+- **RAM**: Minimum 2 GB
+- **Storage**: Minimum 1 GB free disk space
+
+### Project-specific Requirements
+
+#### Greenhouse
 ```bash
-# Minimale Abhängigkeiten
-npm install  # Nur nodemailer
+# Minimal dependencies
+npm install  # Only nodemailer
 ```
 
 #### LAPS
@@ -82,7 +102,7 @@ cd backend && npm install
 cd frontend && npm install
 ```
 
-#### Rezepte
+#### Recipes
 ```bash
 # Backend + Frontend
 npm install
@@ -91,175 +111,195 @@ cd client && npm install
 
 ## Quick Start
 
-### Projekt auswählen und starten
+### Select and start project
 
 ```bash
-# Ins gewünschte Projektverzeichnis wechseln
-cd [projekt-name]
+# Change to desired project directory
+cd [project-name]
 
-# Abhängigkeiten installieren (falls noch nicht geschehen)
-npm install  # oder pip install -r requirements.txt
+# Install dependencies (if not already done)
+npm install  # or pip install -r requirements.txt
 
-# Projekt starten
-npm start     # oder python main.py
+# Start project
+npm start     # or python main.py
 ```
 
-### Standard-Ports
+### Standard Ports
 
-| Projekt | Port | Zugriff |
+| Project | Port | Access |
 |---------|------|---------|
-| Gewächshaus | 3001 | http://localhost:3001 |
+| Greenhouse | 3001 | http://localhost:3001 |
 | LAPS Backend | 3001 | http://localhost:3001 |
 | LAPS Frontend | 5173 | http://localhost:5173 |
-| Rezepte | 3001 | http://localhost:3001 |
+| Recipes | 3001 | http://localhost:3001 |
 
-## Entwicklungs-Workflows
+## Development Workflows
 
-### Entwicklung mit Auto-Reload
+### Development with Auto-Reload
 
 ```bash
-# Gewächshaus
+# Greenhouse
 npm run dev
 
 # LAPS
 npm run dev
 
-# Rezepte
-npm run dev  # falls nodemon konfiguriert
+# Recipes
+npm run dev  # if nodemon configured
 ```
 
-### Produktion
+### Production
 
 ```bash
-# Gewächshaus (als Daemon)
+# Greenhouse (as daemon)
 npm run start:daemon
 
 # LAPS
 npm run build
 npm start
 
-# Rezepte
+# Recipes
 cd client && npm run build
 cd .. && npm start
 ```
 
-## Architektur-Übersicht
+## Architecture Overview
 
-### Gewächshaus Projekt
+### Greenhouse Project
 ```text
 Gewaechshaus/
-├── server-simple.js       # Haupt-Server
-├── index.html             # Web-Interface
+├── server-simple.js       # Main server (v3.0.0)
+├── index.html             # Web interface
 ├── styles.css              # Styling
-├── script.js               # Frontend-Logik
-├── auth.js                 # Authentifizierung
-├── color-manager.js        # Farbschema-Verwaltung
-├── log-utils.js            # Logging-Utilities
-├── data.json               # Datenspeicherung
-└── assets/                 # Bilder und Icons
+├── script.js               # Frontend logic
+├── auth.js                 # Authentication
+├── color-manager.js        # Color scheme management
+├── log-utils.js            # Logging utilities
+├── data.json               # Data storage
+├── start.sh                # Daemon start script
+└── assets/                 # Images and icons
 ```
 
-### LAPS Projekt
+### LAPS Project
 ```text
 LAPS/
-├── package.json            # Workspace-Konfiguration
+├── package.json            # Workspace configuration (v1.0.0)
 ├── backend/                 # Node.js Backend
 │   ├── package.json
 │   ├── server.js
+│   ├── .env.example
 │   └── database.sqlite
 └── frontend/                # React Frontend
     ├── package.json
     ├── src/
+    ├── tsconfig.json
     └── build/
 ```
 
-### Rezepte Projekt
+### Recipes Project
 ```text
 Rezepte/
-├── package.json            # Backend-Konfiguration
-├── server.js               # Express-Server
-├── database.js             # SQLite-Datenbank
-├── recipes.db              # Rezept-Daten
+├── package.json            # Backend configuration (v1.0.0)
+├── server.js               # Express server
+├── database.js             # SQLite database
+├── recipes.db              # Recipe data
 ├── client/                 # React Frontend
 │   ├── package.json
 │   ├── src/
 │   └── build/
-└── uploads/                # Bild-Uploads
+├── uploads/                # Image uploads
+└── README_PI_SETUP.md      # Raspberry Pi Setup Guide
 ```
 
-## Datenbanken
+### Side-Projects
 
-| Projekt | Datenbank | Speicherort |
-|---------|-----------|-------------|
+#### RFID-Lock Project
+```text
+side-quests/RFID-Lock/
+├── README.md               # Project documentation
+├── read-rfid.ino           # Main program
+├── rfid-lock.ino           # Extension (Placeholder)
+```
+
+#### Temperature-Warning-ESP Project
+```text
+side-quests/Temperatur-Warnung-ESP/
+├── (in planning)
+```
+
+## Databases
+
+| Project | Database | Storage Location |
+|---------|-----------|-----------------|
 | LAPS | SQLite | `backend/database.sqlite` |
-| Rezepte | SQLite | `recipes.db` |
-| Gewächshaus | JSON | `data.json` |
+| Recipes | SQLite | `recipes.db` |
+| Greenhouse | JSON | `data.json` |
 
-## Sicherheitshinweise
+## Security Notes
 
-### Produktionseinsatz
-1. **Standard-Passwörter ändern**: Alle Projekte verwenden Demo-Passwörter
-2. **HTTPS verwenden**: Insbesondere für LAPS und Gewächshaus
-3. **Firewall konfigurieren**: Ports nur bei Bedarf freigeben
-4. **Regelmäßige Backups**: Datenbanken und Konfigurationen sichern
-5. **Updates**: Abhängigkeiten aktuell halten
+### Production Use
+1. **Change default passwords**: All projects use demo passwords
+2. **Use HTTPS**: Especially for LAPS and Greenhouse
+3. **Configure firewall**: Only open ports when necessary
+4. **Regular backups**: Secure databases and configurations
+5. **Updates**: Keep dependencies up to date
 
 ### Active Directory Integration (LAPS)
-- Service-Account mit minimalen Rechten erstellen
-- LDAP-Verbindungen über TLS absichern
-- JWT-Secrets stark wählen
+- Create service account with minimal rights
+- Secure LDAP connections via TLS
+- Choose strong JWT secrets
 
 ## Troubleshooting
 
-### Häufige Probleme
+### Common Problems
 
-#### Port bereits belegt
+#### Port already in use
 
 ```bash
-# Prozess finden
+# Find process
 sudo lsof -i :3001
 
-# Prozess beenden
+# Kill process
 sudo kill -9 <PID>
 
-# Oder anderen Port verwenden
+# Or use different port
 PORT=8080 npm start
 ```
 
-#### Berechtigungsprobleme (Raspberry Pi)
+#### Permission issues (Raspberry Pi)
 
 ```bash
-# Besitz korrigieren
-sudo chown -R $USER:$USER /pfad/zum/projekt
+# Correct ownership
+sudo chown -R $USER:$USER /path/to/project
 
-# Schreibrechte sicherstellen
-chmod -R 755 /pfad/zum/projekt
+# Ensure write permissions
+chmod -R 755 /path/to/project
 ```
 
-#### Node.js Abhängigkeiten
+#### Node.js Dependencies
 
 ```bash
-# Neu installieren bei Problemen
+# Reinstall if problems occur
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-## Lizenz
+## License
 
-Die Projekte unterliegen unterschiedlichen Lizenzen:
+The projects are subject to different licenses:
 
-- **Gewächshaus**: MIT License
-- **LAPS**: Intern / Proprietär
-- **Rezepte**: MIT License
+- **Greenhouse**: MIT License
+- **LAPS**: Internal / Proprietary
+- **Recipes**: MIT License
 
 ## Support
 
-Bei Fragen zu spezifischen Projekten:
+For questions about specific projects:
 
-- **Gewächshaus**: Node.js-Dokumentation und Raspberry Pi Guides
-- **LAPS**: Active Directory und LDAP-Dokumentation
-- **Rezepte**: React- und SQLite-Dokumentation
+- **Greenhouse**: Node.js documentation and Raspberry Pi Guides
+- **LAPS**: Active Directory and LDAP documentation
+- **Recipes**: React and SQLite documentation
 
 ---
 
-Erstellt im Januar 2026 | Vielfältige Technologie-Stacks
+Created in February 2026 | Diverse Technology Stacks

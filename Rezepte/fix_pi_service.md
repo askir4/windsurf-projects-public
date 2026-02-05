@@ -2,13 +2,13 @@
 
 ## 🚨 Problem: systemd Service USER Error (Status 217)
 
-Der Fehler `status=217/USER` bedeutet, dass der systemd Service versucht, als nicht existierenden User zu laufen.
+The error `status=217/USER` means that the systemd service is trying to run as a non-existent user.
 
 ---
 
-## 🛠️ Lösung 1: Service korrigieren
+## 🛠️ Solution 1: Fix Service
 
-### 1. Aktuellen Service stoppen und deaktivieren
+### 1. Stop and disable current service
 ```bash
 sudo systemctl stop recipe-website.service
 sudo systemctl disable recipe-website.service
@@ -16,7 +16,7 @@ sudo rm /etc/systemd/system/recipe-website.service
 sudo systemctl daemon-reload
 ```
 
-### 2. Neuen Service mit korrektem User erstellen
+### 2. Create new service with correct user
 ```bash
 sudo nano /etc/systemd/system/recipe-app.service
 ```

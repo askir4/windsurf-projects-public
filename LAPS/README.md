@@ -1,52 +1,52 @@
 # LAPS Portal
 
-**Sicheres Passwort-Anfrage-System für Microsoft LAPS + Active Directory**
+**Secure Password Request System for Microsoft LAPS + Active Directory**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![License](https://img.shields.io/badge/License-Internal-red?style=for-the-badge)]()
 
-Eine sichere Webanwendung zur Anfrage und Freigabe von lokalen Administrator-Passwörtern für Windows-Clients über Microsoft LAPS (Local Administrator Password Solution) in Kombination mit Active Directory.
+A secure web application for requesting and approving local administrator passwords for Windows clients via Microsoft LAPS (Local Administrator Password Solution) in combination with Active Directory.
 
 ---
 
-## Inhaltsverzeichnis
+## Table of Contents
 
-- [Übersicht](#übersicht)
+- [Overview](#overview)
 - [Features](#features)
-- [Architektur](#architektur)
-- [Voraussetzungen](#voraussetzungen)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Konfiguration](#konfiguration)
-- [API-Dokumentation](#api-dokumentation)
-- [Sicherheit](#sicherheit)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Security](#security)
 - [Troubleshooting](#troubleshooting)
 
 ---
 
-## Übersicht
+## Overview
 
-Das LAPS Portal bietet eine sichere, auditierte Lösung für die Verwaltung von lokalen Administrator-Passwörtern in Windows-Umgebungen. Benutzer können Passwörter für spezifische Computer anfragen, während Administratoren diese Anfragen prüfen und freigeben können.
+The LAPS Portal provides a secure, audited solution for managing local administrator passwords in Windows environments. Users can request passwords for specific computers, while administrators can review and approve these requests.
 
-### Anwendungsfälle
+### Use Cases
 
-- **IT-Helpdesk**: Techniker benötigen temporären Administratorzugriff
-- **Wartungsarbeiten**: Geplante Systemwartung mit erweiterten Rechten
-- **Notfallzugriff**: Schnelle Freigabe bei kritischen Systemproblemen
-- **Compliance**: Vollständige Protokollierung aller Passwort-Zugriffe
+- **IT Helpdesk**: Technicians need temporary administrator access
+- **Maintenance Work**: Planned system maintenance with elevated rights
+- **Emergency Access**: Quick approval for critical system issues
+- **Compliance**: Complete logging of all password accesses
 
 ## Features
 
-### User-Portal
+### User Portal
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Passwort-Anfragen** | Erstellen mit Pflicht-Begründung (min. 20 Zeichen) |
-| **Hostname-Validierung** | Überprüfung gegen Active Directory |
-| **Status-Tracking** | Offen / Genehmigt / Abgelehnt / Abgelaufen |
-| **Zeitlich begrenzte Anzeige** | Standard: 10 Minuten Sichtbarkeit |
-| **Historie** | Eigene vergangene Anfragen einsehen |
+| **Password Requests** | Create with mandatory justification (min. 20 characters) |
+| **Hostname Validation** | Verification against Active Directory |
+| **Status Tracking** | Open / Approved / Rejected / Expired |
+| **Time-limited Display** | Default: 10 minutes visibility |
+| **History** | View own past requests |
 
 ### Admin-Portal
 

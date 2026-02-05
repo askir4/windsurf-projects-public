@@ -1,21 +1,21 @@
 <div align="center">
 
-# Server-Installation und Konfiguration
+# Server Installation and Configuration
 
-**Vollständige Anleitung für das Backend-Setup**
+**Complete Guide for Backend Setup**
 
 </div>
 
 ---
 
-## Inhaltsverzeichnis
+## Table of Contents
 
-- [Voraussetzungen](#voraussetzungen)
+- [Prerequisites](#prerequisites)
 - [Installation & Start](#installation--start)
-- [Datenhaltung](#datenhaltung)
-- [API-Endpunkte](#api-endpunkte)
+- [Data Storage](#data-storage)
+- [API Endpoints](#api-endpoints)
 - [E-Mail & SMTP](#e-mail--smtp)
-- [Sicherheit](#sicherheit)
+- [Security](#security)
 
 ---
 

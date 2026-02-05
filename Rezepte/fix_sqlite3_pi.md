@@ -1,22 +1,22 @@
-# 🔧 SQLite3 Architecture Fix für Raspberry Pi
+# 🔧 SQLite3 Architecture Fix for Raspberry Pi
 
 ## 🚨 Problem: `invalid ELF header`
 
-Der Fehler bedeutet, dass sqlite3 für eine andere CPU-Architektur kompiliert wurde (x86 statt ARM).
+The error means that sqlite3 was compiled for a different CPU architecture (x86 instead of ARM).
 
 ---
 
-## 🛠️ Lösung 1: sqlite3 neu kompilieren (empfohlen)
+## 🛠️ Solution 1: Recompile sqlite3 (recommended)
 
-### 1. Build-Tools installieren
+### 1. Install build tools
 ```bash
 sudo apt update
 sudo apt install -y build-essential python3-dev
 ```
 
-### 2. Node.js neu installieren (falls nötig)
+### 2. Reinstall Node.js (if needed)
 ```bash
-# Aktuelle Version deinstallieren
+# Uninstall current version
 sudo apt remove nodejs npm
 
 # Node.js 18.x für ARM neu installieren

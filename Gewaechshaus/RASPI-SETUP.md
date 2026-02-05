@@ -2,7 +2,7 @@
 
 # Raspberry Pi Setup
 
-**Vollständige Installationsanleitung für Raspberry Pi**
+**Complete Installation Guide for Raspberry Pi**
 
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry_Pi-4B+-C51A4A?style=for-the-badge&logo=raspberry-pi&logoColor=white)]()
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)]()
@@ -11,13 +11,13 @@
 
 ---
 
-## Inhaltsverzeichnis
+## Table of Contents
 
-- [Voraussetzungen](#voraussetzungen)
+- [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Start](#start)
-- [Autostart einrichten](#autostart-einrichten)
-- [Konfiguration](#konfiguration)
+- [Setup Autostart](#setup-autostart)
+- [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
 - [Systemüberwachung](#systemüberwachung)
 

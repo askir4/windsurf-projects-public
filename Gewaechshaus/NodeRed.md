@@ -1,11 +1,11 @@
 <div align="center">
 
 ## Disclaimer
-Dieses Projekt wurde für die Schule erstellt. Es geht hier um das Erlernen von Technik. Da wir allerdings keine Entwickler sind, haben wir in diesem Projekt auf KI zurückgegriffen. Der Code hier sollte also nur verwendet werden, wenn er vorher reviewed und verstanden wurde. 
+This project was created for school. It's about learning technology. However, since we are not developers, we relied on AI for this project. The code here should only be used if it has been reviewed and understood beforehand. 
 ---
 # Node-RED Integration
 
-**Echtzeit-Sensordaten über WebSocket**
+**Real-time Sensor Data via WebSocket**
 
 [![Node-RED](https://img.shields.io/badge/Node--RED-8F0000?style=for-the-badge&logo=node-red&logoColor=white)]()
 [![WebSocket](https://img.shields.io/badge/WebSocket-010101?style=for-the-badge&logo=socketdotio&logoColor=white)]()
@@ -14,26 +14,26 @@ Dieses Projekt wurde für die Schule erstellt. Es geht hier um das Erlernen von 
 
 ---
 
-## Inhaltsverzeichnis
+## Table of Contents
 
-- [Übersicht](#übersicht)
-- [WebSocket-Verbindung](#websocket-verbindung)
-- [Sensor-Topics](#sensor-topics)
-- [Payload-Formate](#payload-formate)
-- [Aktor-Steuerung](#aktor-steuerung)
-- [Alarme & E-Mail](#alarme--e-mail)
+- [Overview](#overview)
+- [WebSocket Connection](#websocket-connection)
+- [Sensor Topics](#sensor-topics)
+- [Payload Formats](#payload-formats)
+- [Actuator Control](#actuator-control)
+- [Alarms & E-Mail](#alarms--e-mail)
 - [Node-RED Setup](#node-red-setup)
 
 ---
 
-## Übersicht
+## Overview
 
-Die Gewächshaus-Webapp kommuniziert über **WebSocket** mit Node-RED, um:
+The greenhouse webapp communicates via **WebSocket** with Node-RED to:
 
-- Sensordaten in Echtzeit zu empfangen
-- Graphen mit historischen Daten anzuzeigen
-- Alarme bei Schwellwertüberschreitungen auszulösen
-- Aktoren (Ventile, Pumpen) zu steuern
+- Receive sensor data in real-time
+- Display graphs with historical data
+- Trigger alarms for threshold violations
+- Control actuators (valves, pumps)
 
 ```
 ┌─────────────┐    WebSocket    ┌─────────────┐
@@ -41,36 +41,36 @@ Die Gewächshaus-Webapp kommuniziert über **WebSocket** mit Node-RED, um:
 │   :1880     │                 │   :3001     │
 └─────────────┘                 └─────────────┘
       │                               │
-      │  Sensoren                     │  Browser
+      │  Sensors                     │  Browser
       ▼                               ▼
-  DHT22, Bodenfeuchtigkeit,      Live-Dashboard
-  Wasserstand, etc.              & Steuerung
+  DHT22, Soil Moisture,      Live Dashboard
+  Water Level, etc.            & Control
 ```
 
 ---
 
-## WebSocket-Verbindung
+## WebSocket Connection
 
-### Konfiguration im Admin Panel
+### Configuration in Admin Panel
 
-Die WebSocket-URL wird im **Admin Panel** unter **Einstellungen → Node-RED** konfiguriert.
+The WebSocket URL is configured in the **Admin Panel** under **Settings → Node-RED**.
 
-| Einstellung | Wert | Beschreibung |
-|-------------|------|--------------|
-| **URL** | `ws://hostname:1880/ws` | WebSocket-Endpunkt |
-| **Aktiviert** | `true/false` | Verbindung ein/aus |
+| Setting | Value | Description |
+|---------|-------|-------------|
+| **URL** | `ws://hostname:1880/ws` | WebSocket endpoint |
+| **Enabled** | `true/false` | Connection on/off |
 
-### Standard-URL
+### Default URL
 
 ```
 ws://localhost:1880/ws
 ```
 
-> Tipp: Bei Raspberry Pi: `ws://raspberrypi:1880/ws` oder IP-Adresse verwenden.
+> Tip: For Raspberry Pi: Use `ws://raspberrypi:1880/ws` or IP address.
 
-### Nachrichtenformat
+### Message Format
 
-Alle Nachrichten folgen dem MQTT-ähnlichen Format:
+All messages follow the MQTT-like format:
 
 ```json
 {

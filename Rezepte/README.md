@@ -7,34 +7,34 @@
 [![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-Eine leichte, selbst gehostete Rezeptverwaltungs-Website, die speziell für den Betrieb auf Raspberry Pi 4 entwickelt wurde. Mit SQLite-Datenbank und modernem Web-Interface für die optimale Haushaltsorganisation.
+A lightweight, self-hosted recipe management website specifically developed for operation on Raspberry Pi 4. With SQLite database and modern web interface for optimal household organization.
 
 ---
 
-## Inhaltsverzeichnis
+## Table of Contents
 
-- [Übersicht](#übersicht)
+- [Overview](#overview)
 - [Features](#features)
-- [Technologie-Stack](#technologie-stack)
+- [Technology Stack](#technology-stack)
 - [Installation](#installation)
-- [Konfiguration](#konfiguration)
-- [API-Dokumentation](#api-dokumentation)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
 - [Raspberry Pi Setup](#raspberry-pi-setup)
 - [Troubleshooting](#troubleshooting)
 
 ---
 
-## Übersicht
+## Overview
 
-Die Recipe Website ist eine vollständige Lösung zur Verwaltung Ihrer Kochrezepte. Das System ist für den Heimgebrauch optimiert und läuft zuverlässig auf einem Raspberry Pi 4, sodass Sie Ihre Rezeptsammlung jederzeit im lokalen Netzwerk zugänglich haben.
+The Recipe Website is a complete solution for managing your cooking recipes. The system is optimized for home use and runs reliably on a Raspberry Pi 4, so you can access your recipe collection anytime on your local network.
 
-### Anwendungsfälle
+### Use Cases
 
-- **Haushaltsorganisation**: Alle Familienrezepte an einem Ort
-- **Meal Planning**: Rezepte für die Woche planen und organisieren
-- **Kochbuch-Ersatz**: Digitale Alternative zu physischen Kochbüchern
-- **Gemeinschafts-Kochen**: Rezepte mit Familie und Freunden teilen
-- **Mobile Nutzung**: Rezepte direkt in der Küche auf Smartphone/Tablet
+- **Household Organization**: All family recipes in one place
+- **Meal Planning**: Plan and organize recipes for the week
+- **Cookbook Replacement**: Digital alternative to physical cookbooks
+- **Community Cooking**: Share recipes with family and friends
+- **Mobile Use**: Recipes directly in the kitchen on smartphone/tablet
 
 ## Features
 
