@@ -19,59 +19,59 @@
 
 ---
 
-## Voraussetzungen
+## Prerequisites
 
-| Komponente | Version | Beschreibung |
+| Component | Version | Description |
 |------------|---------|--------------|
 | **Node.js** | 18+ | JavaScript Runtime |
-| **npm** | 9+ | Paketmanager (mit Node.js) |
+| **npm** | 9+ | Package Manager (included with Node.js) |
 
-### Optionale Komponenten
+### Optional Components
 
-| Komponente | Zweck |
+| Component | Purpose |
 |------------|-------|
-| **Node-RED** | Sensor-Integration über WebSocket |
-| **SMTP-Server** | E-Mail-Versand für Alarme |
+| **Node-RED** | Sensor integration via WebSocket |
+| **SMTP Server** | Email delivery for alarms |
 
 ---
 
 ## Installation & Start
 
-### Schnellstart
+### Quick Start
 
 ```bash
-# Abhängigkeiten installieren
+# Install dependencies
 npm install
 
-# Server starten
+# Start server
 npm start
 ```
 
-### Startoptionen
+### Start Options
 
-| Befehl | Beschreibung |
+| Command | Description |
 |--------|-------------|
-| `npm start` | Normaler Start |
-| `npm run dev` | Entwicklungsmodus |
-| `npm run start:daemon` | Als Hintergrundprozess (Raspberry Pi) |
-| `npm run start:status` | Status des Daemon prüfen |
-| `npm run start:logs` | Logs des Daemon anzeigen |
-| `npm run start:stop` | Daemon stoppen |
+| `npm start` | Normal start |
+| `npm run dev` | Development mode |
+| `npm run start:daemon` | As background process (Raspberry Pi) |
+| `npm run start:status` | Check daemon status |
+| `npm run start:logs` | Show daemon logs |
+| `npm run start:stop` | Stop daemon |
 
-### Zugriff
+### Access
 
 ```text
-Weboberfläche:  http://localhost:3001
-Health-Check:   http://localhost:3001/api/health
+Web interface:  http://localhost:3001
+Health check:   http://localhost:3001/api/health
 ```
 
 ---
 
-## Datenhaltung
+## Data Storage
 
-### Übersicht
+### Overview
 
-Der Server verwendet eine einfache JSON-Datei als Datenbank.
+The server uses a simple JSON file as database.
 
 ```text
 data.json
@@ -87,161 +87,161 @@ data.json
 └── auditLogs      # Audit-Logs
 ```
 
-### Sicherheitsmerkmale
+### Security Features
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Atomisches Schreiben** | Schreiben in temporäre Datei, dann Umbenennen |
-| **Backup bei Fehlern** | Automatische Sicherung vor Überschreiben |
-| **Debounced Saving** | Verzögertes Speichern zur Lastreduzierung |
+| **Atomic Writing** | Write to temporary file, then rename |
+| **Backup on Errors** | Automatic backup before overwriting |
+| **Debounced Saving** | Delayed saving to reduce load |
 
 ---
 
-## API-Endpunkte
+## API Endpoints
 
-### Authentifizierung
+### Authentication
 
-| Methode | Endpunkt | Beschreibung | Auth |
+| Method | Endpoint | Description | Auth |
 |---------|----------|--------------|------|
-| `POST` | `/api/auth/login` | Benutzer anmelden | ❌ |
-| `POST` | `/api/auth/logout` | Benutzer abmelden | ✅ |
-| `GET` | `/api/auth/me` | Aktueller Benutzer | ✅ |
-| `POST` | `/api/auth/change-password` | Passwort ändern | ✅ |
+| `POST` | `/api/auth/login` | User login | ❌ |
+| `POST` | `/api/auth/logout` | User logout | ✅ |
+| `GET` | `/api/auth/me` | Current user | ✅ |
+| `POST` | `/api/auth/change-password` | Change password | ✅ |
 
-### Daten
+### Data
 
-| Methode | Endpunkt | Beschreibung | Auth |
+| Method | Endpoint | Description | Auth |
 |---------|----------|--------------|------|
-| `GET` | `/api/data` | Alle Daten abrufen | ❌ |
-| `POST` | `/api/data` | Daten speichern | ✅ |
+| `GET` | `/api/data` | Get all data | ❌ |
+| `POST` | `/api/data` | Save data | ✅ |
 
-### Zonen & Pflanzen
+### Zones & Plants
 
-| Methode | Endpunkt | Beschreibung | Auth |
+| Method | Endpoint | Description | Auth |
 |---------|----------|--------------|------|
-| `GET` | `/api/zones` | Alle Zonen | ❌ |
-| `POST` | `/api/zones` | Zone erstellen | ✅ |
-| `GET` | `/api/plants` | Alle Pflanzen | ❌ |
-| `POST` | `/api/plants` | Pflanze hinzufügen | ✅ |
-| `PUT` | `/api/plants/:id` | Pflanze aktualisieren | ✅ |
-| `DELETE` | `/api/plants/:id` | Pflanze löschen | ✅ |
+| `GET` | `/api/zones` | All zones | ❌ |
+| `POST` | `/api/zones` | Create zone | ✅ |
+| `GET` | `/api/plants` | All plants | ❌ |
+| `POST` | `/api/plants` | Add plant | ✅ |
+| `PUT` | `/api/plants/:id` | Update plant | ✅ |
+| `DELETE` | `/api/plants/:id` | Delete plant | ✅ |
 
 ### Forum
 
-| Methode | Endpunkt | Beschreibung | Auth |
+| Method | Endpoint | Description | Auth |
 |---------|----------|--------------|------|
-| `GET` | `/api/forum/posts` | Alle Beiträge | ❌ |
-| `POST` | `/api/forum/posts` | Beitrag erstellen | ❌* |
-| `POST` | `/api/forum/posts/:id/comments` | Kommentar hinzufügen | ❌* |
+| `GET` | `/api/forum/posts` | All posts | ❌ |
+| `POST` | `/api/forum/posts` | Create post | ❌* |
+| `POST` | `/api/forum/posts/:id/comments` | Add comment | ❌* |
 
-> *Gäste können posten, aber der Autor wird als "Gast" angezeigt.
+> *Guests can post, but author is shown as "Guest".
 
-### Benutzerverwaltung (Admin)
+### User Management (Admin)
 
-| Methode | Endpunkt | Beschreibung | Auth |
+| Method | Endpoint | Description | Auth |
 |---------|----------|--------------|------|
-| `GET` | `/api/users` | Alle Benutzer | 🔐 Admin |
-| `POST` | `/api/users` | Benutzer erstellen | 🔐 Admin |
-| `PUT` | `/api/users/:id` | Benutzer bearbeiten | 🔐 Admin |
-| `DELETE` | `/api/users/:id` | Benutzer löschen | 🔐 Admin |
-| `POST` | `/api/users/:id/reset-password` | Passwort zurücksetzen | 🔐 Admin |
+| `GET` | `/api/users` | All users | 🔐 Admin |
+| `POST` | `/api/users` | Create user | 🔐 Admin |
+| `PUT` | `/api/users/:id` | Edit user | 🔐 Admin |
+| `DELETE` | `/api/users/:id` | Delete user | 🔐 Admin |
+| `POST` | `/api/users/:id/reset-password` | Reset password | 🔐 Admin |
 
-### E-Mail-Konfiguration (Admin)
+### Email Configuration (Admin)
 
-| Methode | Endpunkt | Beschreibung |
+| Method | Endpoint | Description |
 |---------|----------|--------------|
-| `GET` | `/api/email/smtp` | SMTP-Einstellungen abrufen |
-| `POST` | `/api/email/smtp` | SMTP-Einstellungen speichern |
-| `POST` | `/api/email/test` | Test-E-Mail senden |
-| `GET` | `/api/email/templates` | Alle Templates |
-| `POST` | `/api/email/templates` | Template erstellen |
-| `PUT` | `/api/email/templates/:id` | Template bearbeiten |
-| `DELETE` | `/api/email/templates/:id` | Template löschen |
-| `GET` | `/api/email/config` | E-Mail-Konfiguration |
-| `POST` | `/api/email/config` | E-Mail-Konfiguration speichern |
-| `GET` | `/api/email/logs` | Versandprotokoll |
+| `GET` | `/api/email/smtp` | Get SMTP settings |
+| `POST` | `/api/email/smtp` | Save SMTP settings |
+| `POST` | `/api/email/test` | Send test email |
+| `GET` | `/api/email/templates` | All templates |
+| `POST` | `/api/email/templates` | Create template |
+| `PUT` | `/api/email/templates/:id` | Edit template |
+| `DELETE` | `/api/email/templates/:id` | Delete template |
+| `GET` | `/api/email/config` | Email configuration |
+| `POST` | `/api/email/config` | Save email configuration |
+| `GET` | `/api/email/logs` | Delivery log |
 
-### Farbschema
+### Color Scheme
 
-| Methode | Endpunkt | Beschreibung | Auth |
+| Method | Endpoint | Description | Auth |
 |---------|----------|--------------|------|
-| `GET` | `/api/colors` | Aktuelles Farbschema | ❌ |
-| `POST` | `/api/colors` | Farbschema speichern | 🔐 Admin |
-| `POST` | `/api/colors/reset` | Auf Standard zurücksetzen | 🔐 Admin |
+| `GET` | `/api/colors` | Current color scheme | ❌ |
+| `POST` | `/api/colors` | Save color scheme | 🔐 Admin |
+| `POST` | `/api/colors/reset` | Reset to default | 🔐 Admin |
 
 ### System
 
-| Methode | Endpunkt | Beschreibung |
+| Method | Endpoint | Description |
 |---------|----------|--------------|
-| `GET` | `/api/health` | Health-Check |
-| `GET` | `/api/logs` | System-Logs (Admin) |
-| `GET` | `/api/audit-logs` | Audit-Logs (Admin) |
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/logs` | System logs (Admin) |
+| `GET` | `/api/audit-logs` | Audit logs (Admin) |
 
 ---
 
 ## E-Mail & SMTP
 
-### SMTP-Konfiguration
+### SMTP Configuration
 
-Die SMTP-Einstellungen werden im Admin Panel unter **E-Mail → SMTP-Einstellungen** konfiguriert.
+The SMTP settings are configured in the **Admin Panel** under **E-Mail → SMTP Settings**.
 
-| Feld | Beschreibung | Beispiel |
+| Field | Description | Example |
 |------|-------------|----------|
-| **Host** | SMTP-Server | `smtp.gmail.com` |
-| **Port** | SMTP-Port | `587` (TLS) oder `465` (SSL) |
-| **Benutzer** | E-Mail-Adresse | `alarm@example.com` |
-| **Passwort** | App-Passwort | `xxxx xxxx xxxx xxxx` |
-| **Verschlüsselung** | TLS oder SSL | TLS (empfohlen) |
-| **Absender** | Von-Adresse | `Gewächshaus <alarm@example.com>` |
+| **Host** | SMTP server | `smtp.gmail.com` |
+| **Port** | SMTP port | `587` (TLS) or `465` (SSL) |
+| **User** | Email address | `alarm@example.com` |
+| **Password** | App password | `xxxx xxxx xxxx xxxx` |
+| **Encryption** | TLS or SSL | TLS (recommended) |
+| **Sender** | From address | `Greenhouse <alarm@example.com>` |
 
-### Beispiel-Konfigurationen
+### Example Configurations
 
 #### Gmail
 
 ```text
 Host:     smtp.gmail.com
 Port:     587
-TLS:      Ja
-Benutzer: deine-email@gmail.com
-Passwort: App-Passwort (16 Zeichen)
+TLS:      Yes
+User:     your-email@gmail.com
+Password: App password (16 characters)
 ```
 
-> Wichtig: Bei Gmail 2-Faktor-Authentifizierung aktivieren und [App-Passwort](https://myaccount.google.com/apppasswords) erstellen.
+> Important: Enable 2-factor authentication for Gmail and create an [App Password](https://myaccount.google.com/apppasswords).
 
-#### Eigener Server
+#### Own Server
 
 ```text
 Host:     mail.example.com
 Port:     587
-TLS:      Ja
-Benutzer: alarm@example.com
-Passwort: Dein Passwort
+TLS:      Yes
+User:     alarm@example.com
+Password: Your password
 ```
 
-### Template-Platzhalter
+### Template Placeholders
 
-E-Mail-Templates unterstützen folgende Platzhalter:
+Email templates support the following placeholders:
 
-| Platzhalter | Beschreibung | Beispiel |
+| Placeholder | Description | Example |
 |-------------|-------------|----------|
-| `{sensor_name}` | Name des Sensors | `Temperatur` |
-| `{sensor_value}` | Aktueller Wert | `35.2` |
-| `{timestamp}` | Zeitstempel | `2026-01-19 14:30:00` |
-| `{threshold}` | Schwellwert | `30` |
-| `{alarm_type}` | Art des Alarms | `Überschreitung Maximum` |
-| `{details}` | Zusätzliche Details | `Zone: Hochbeet 1` |
+| `{sensor_name}` | Sensor name | `Temperature` |
+| `{sensor_value}` | Current value | `35.2` |
+| `{timestamp}` | Timestamp | `2026-01-19 14:30:00` |
+| `{threshold}` | Threshold value | `30` |
+| `{alarm_type}` | Alarm type | `Maximum exceeded` |
+| `{details}` | Additional details | `Zone: Raised Bed 1` |
 
-### Beispiel-Template
+### Example Template
 
 ```html
 <h2>Alarm: {sensor_name}</h2>
 
-<p>Der Sensor <strong>{sensor_name}</strong> hat einen kritischen Wert erreicht.</p>
+<p>The sensor <strong>{sensor_name}</strong> has reached a critical value.</p>
 
 <table>
-  <tr><td>Aktueller Wert:</td><td><strong>{sensor_value}</strong></td></tr>
-  <tr><td>Schwellwert:</td><td>{threshold}</td></tr>
-  <tr><td>Zeitpunkt:</td><td>{timestamp}</td></tr>
+  <tr><td>Current value:</td><td><strong>{sensor_value}</strong></td></tr>
+  <tr><td>Threshold:</td><td>{threshold}</td></tr>
+  <tr><td>Time:</td><td>{timestamp}</td></tr>
 </table>
 
 <p>{details}</p>
@@ -249,19 +249,19 @@ E-Mail-Templates unterstützen folgende Platzhalter:
 
 ---
 
-## Sicherheit
+## Security
 
-### Implementierte Maßnahmen
+### Implemented Measures
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Rate Limiting** | Max. 100 Requests/Minute pro IP |
-| **Auth Rate Limiting** | Max. 10 Login-Versuche / 10 Min |
+| **Rate Limiting** | Max. 100 requests/minute per IP |
+| **Auth Rate Limiting** | Max. 10 login attempts / 10 min |
 | **Security Headers** | X-Content-Type-Options, X-Frame-Options, etc. |
-| **Body Limit** | Maximale Request-Größe: 1 MB |
+| **Body Limit** | Maximum request size: 1 MB |
 | **Session Cookies** | HttpOnly, SameSite=Lax, Secure (HTTPS) |
-| **Password Hashing** | scrypt mit Salt |
-| **CORS** | Konfigurierbare Origins |
+| **Password Hashing** | scrypt with salt |
+| **CORS** | Configurable origins |
 
 ### Security Headers
 
@@ -270,43 +270,43 @@ X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 Referrer-Policy: no-referrer
 Permissions-Policy: geolocation=(), microphone=(), camera=()
-Strict-Transport-Security: max-age=15552000 (nur bei HTTPS)
+Strict-Transport-Security: max-age=15552000 (only with HTTPS)
 ```
 
-### Empfehlungen für Produktion
+### Production Recommendations
 
-| Priorität | Empfehlung | Beschreibung |
+| Priority | Recommendation | Description |
 |-----------|------------|-------------|
-| **Kritisch** | HTTPS aktivieren | Nginx/Caddy als Reverse Proxy |
-| **Kritisch** | SESSION_SECRET setzen | Eigener geheimer Schlüssel |
-| **Kritisch** | Admin-Passwort ändern | Kein Standard-Passwort verwenden |
-| **Hoch** | Firewall konfigurieren | Nur Port 80/443 öffentlich |
-| **Mittel** | Backup erstellen | Regelmäßiges Backup von `data.json` |
-| **Mittel** | Logging überwachen | Logs auf verdächtige Aktivitäten prüfen |
+| **Critical** | Enable HTTPS | Nginx/Caddy as reverse proxy |
+| **Critical** | Set SESSION_SECRET | Your own secret key |
+| **Critical** | Change admin password | Don't use default password |
+| **High** | Configure firewall | Only open ports 80/443 publicly |
+| **Medium** | Create backups | Regular backup of `data.json` |
+| **Medium** | Monitor logging | Check logs for suspicious activity |
 
-### Performance-Optimierung
+### Performance Optimization
 
-| Maßnahme | Beschreibung |
+| Measure | Description |
 |-----------|-------------|
-| **Debounced Saving** | Verzögertes Speichern zur Reduzierung der I/O-Last |
-| **Atomisches Schreiben** | Verhindert Datenkorruption bei Abstürzen |
-| **In-Memory Caching** | Sessions und Rate Limits im Speicher |
-| **Body Limit** | Maximale Request-Größe: 1 MB |
+| **Debounced Saving** | Delayed saving to reduce I/O load |
+| **Atomic Writing** | Prevents data corruption on crashes |
+| **In-Memory Caching** | Sessions and rate limits in memory |
+| **Body Limit** | Maximum request size: 1 MB |
 
-### Monitoring und Logging
+### Monitoring and Logging
 
-#### Log-Level
+#### Log Levels
 
-| Level | Beschreibung | Verwendung |
+| Level | Description | Usage |
 |-------|-------------|------------|
-| **INFO** | Allgemeine Informationen | Server-Start, API-Aufrufe |
-| **WARN** | Warnungen | Fehlgeschlagene Login-Versuche |
-| **ERROR** | Fehler | Server-Fehler, Exceptions |
-| **DEBUG** | Debug-Informationen | Nur in Entwicklung |
+| **INFO** | General information | Server start, API calls |
+| **WARN** | Warnings | Failed login attempts |
+| **ERROR** | Errors | Server errors, exceptions |
+| **DEBUG** | Debug information | Only in development |
 
-#### Health-Check
+#### Health Check
 
-Der Health-Check Endpunkt (`/api/health`) liefert:
+The health check endpoint (`/api/health`) returns:
 
 ```json
 {

@@ -38,51 +38,51 @@ The Recipe Website is a complete solution for managing your cooking recipes. The
 
 ## Features
 
-### Rezeptverwaltung
+### Recipe Management
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **CRUD-Operationen** | Rezepte anlegen, bearbeiten, löschen |
-| **Bild-Upload** | Fotos zu Rezepten hinzufügen |
-| **Kategorien** | Rezepte organisieren (Frühstück, Mittagessen, Abendessen, Dessert) |
-| **Suche & Filter** | Rezepte nach Name, Zutaten oder Kategorie finden |
-| **Zutatenliste** | Detaillierte Zutaten mit Mengenangaben |
-| **Kochanleitung** | Schritt-für-Schritt Anleitungen |
+| **CRUD Operations** | Create, edit, delete recipes |
+| **Image Upload** | Add photos to recipes |
+| **Categories** | Organize recipes (breakfast, lunch, dinner, dessert) |
+| **Search & Filter** | Find recipes by name, ingredients or category |
+| **Ingredient List** | Detailed ingredients with quantities |
+| **Cooking Instructions** | Step-by-step instructions |
 
-### Benutzerinterface
+### User Interface
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Responsive Design** | Funktioniert auf Desktop, Tablet und Mobile |
-| **Moderne UI** | Sauberes, intuitives Design mit Tailwind CSS |
-| **Schnelle Ladezeiten** | Optimiert für Raspberry Pi Hardware |
-| **Offline-Fähig** | Grundfunktionen auch ohne Internet |
-| **Druckansicht** | Rezepte druckbar für Küchennutzung |
+| **Responsive Design** | Works on desktop, tablet and mobile |
+| **Modern UI** | Clean, intuitive design with Tailwind CSS |
+| **Fast Loading** | Optimized for Raspberry Pi hardware |
+| **Offline Capable** | Basic functions work without internet |
+| **Print View** | Recipes printable for kitchen use |
 
-### Datenverwaltung
+### Data Management
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **SQLite Datenbank** | Leichte, serverlose Datenbank |
-| **Automatische Backups** | Einfache Datensicherung |
-| **Daten-Export** | Rezepte als CSV oder JSON exportieren |
-| **Bild-Optimierung** | Automatische Bildkomprimierung |
-| **Daten-Integrität** | Validierung und Fehlerbehandlung |
+| **SQLite Database** | Lightweight, serverless database |
+| **Automatic Backups** | Easy data backup |
+| **Data Export** | Export recipes as CSV or JSON |
+| **Image Optimization** | Automatic image compression |
+| **Data Integrity** | Validation and error handling |
 
-## Technologie-Stack
+## Technology Stack
 
-| Komponente | Technologie | Version | Zweck |
+| Component | Technology | Version | Purpose |
 |------------|-------------|---------|-------|
 | **Backend** | Node.js | 18+ | JavaScript Runtime |
 | **Backend** | Express.js | 4+ | Web Framework |
-| **Datenbank** | SQLite3 | 3+ | Datenspeicherung |
+| **Database** | SQLite3 | 3+ | Data Storage |
 | **Frontend** | React | 18+ | User Interface |
 | **Frontend** | Tailwind CSS | 3+ | Styling Framework |
 | **Icons** | Lucide React | Latest | Icon Library |
-| **File Upload** | Multer | 1+ | Bild-Upload |
-| **Image Processing** | Sharp | Latest | Bild-Optimierung |
+| **File Upload** | Multer | 1+ | Image Upload |
+| **Image Processing** | Sharp | Latest | Image Optimization |
 
-### Architektur
+### Architecture
 
 ```text
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -95,263 +95,263 @@ The Recipe Website is a complete solution for managing your cooking recipes. The
 
 ## Installation
 
-### Systemvoraussetzungen
+### System Requirements
 
-| Komponente | Mindestanforderung | Empfohlen |
+| Component | Minimum Requirement | Recommended |
 |------------|-------------------|------------|
 | **Node.js** | 18.x LTS | 20.x LTS |
 | **RAM** | 1 GB | 2 GB |
-| **Speicher** | 512 MB | 1 GB |
-| **Betriebssystem** | Linux/macOS/Windows | Raspberry Pi OS |
+| **Storage** | 512 MB | 1 GB |
+| **Operating System** | Linux/macOS/Windows | Raspberry Pi OS |
 
-### Schnellinstallation
+### Quick Installation
 
 ```bash
-# 1. Repository klonen
+# 1. Clone repository
 git clone <repository-url>
 cd Rezepte
 
-# 2. Abhängigkeiten installieren
+# 2. Install dependencies
 npm install
 
-# 3. Frontend bauen
+# 3. Build frontend
 cd client
 npm install
 npm run build
 cd ..
 
-# 4. Server starten
+# 4. Start server
 npm start
 ```
 
-**Zugriff:** http://localhost:3001
+**Access:** http://localhost:3001
 
 ## Raspberry Pi Setup
 
-### Detaillierte Installation auf Raspberry Pi 4
+### Detailed Installation on Raspberry Pi 4
 
-Für diejenigen, die die Recipe Website auf einem Raspberry Pi 4 betreiben möchten, habe ich eine detaillierte Anleitung erstellt. Diese ist besonders nützlich für den Heimgebrauch oder kleine Küchen-Setups.
+For those who want to run the Recipe Website on a Raspberry Pi 4, I have created a detailed guide. This is particularly useful for home use or small kitchen setups.
 
-**Hinweis:** Die vollständige Setup-Anleitung finden Sie in der Datei `README_PI_SETUP.md` im selben Verzeichnis. Dort finden Sie auch detaillierte Anleitungen für PM2, Monitoring und Fehlerbehebung speziell für den Raspberry Pi.
+**Note:** The complete setup guide can be found in the file `README_PI_SETUP.md` in the same directory. There you will also find detailed instructions for PM2, monitoring and troubleshooting specifically for the Raspberry Pi.
 
-### Warum Raspberry Pi?
+### Why Raspberry Pi?
 
-Der Raspberry Pi 4 ist ideal für dieses Projekt, weil:
-- **Kostengünstig**: Geringe Anschaffungs- und Betriebskosten
-- **Energieeffizient**: Verbraucht nur wenige Watt
-- **Kompakt**: Passt perfekt in die Küche
-- **24/7 Betrieb**: Läuft zuverlässig rund um die Uhr
-- **Netzwerkfähig**: Alle Geräte im Heimnetz können zugreifen
+The Raspberry Pi 4 is ideal for this project because:
+- **Cost-effective**: Low acquisition and operating costs
+- **Energy efficient**: Consumes only a few watts
+- **Compact**: Fits perfectly in the kitchen
+- **24/7 operation**: Runs reliably around the clock
+- **Network capable**: All devices in the home network can access it
 
-### Kurzanleitung für Pi-Setup
+### Quick Guide for Pi Setup
 
 ```bash
-# 1. System aktualisieren
+# 1. Update system
 sudo apt update && sudo apt upgrade -y
 
-# 2. Node.js installieren
+# 2. Install Node.js
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install -y nodejs
 
-# 3. Projekt kopieren und installieren
+# 3. Copy and install project
 mkdir -p ~/recipe-website
-cp -r /pfad/zum/projekt/* ~/recipe-website/
+cp -r /path/to/project/* ~/recipe-website/
 cd ~/recipe-website
 npm install
 
-# 4. Frontend bauen
+# 4. Build frontend
 cd client
 npm install
 npm run build
 cd ..
 
-# 5. Server starten
+# 5. Start server
 npm start
 ```
 
-### Pi-Optimierungen
+### Pi Optimizations
 
-Für beste Performance auf dem Raspberry Pi:
+For best performance on the Raspberry Pi:
 
 ```bash
-# Swap-Speicher erhöhen (wichtig bei 1GB Modellen)
+# Increase swap memory (important for 1GB models)
 sudo dphys-swapfile swapoff
 sudo dphys-swapfile --size 2048
 sudo dphys-swapfile swapon
 
-# GPU-Speicher reduzieren
+# Reduce GPU memory
 sudo raspi-config
 # Advanced Options → Memory Split → 16
 ```
 
-## Konfiguration
+## Configuration
 
-### Anpassungsmöglichkeiten
+### Customization Options
 
-Die Recipe Website ist flexibel konfigurierbar. Hier sind die wichtigsten Anpassungen:
+The Recipe Website is flexibly configurable. Here are the most important customizations:
 
-#### Port ändern
+#### Change Port
 
-Standardmäßig läuft die Anwendung auf Port 3001. Dies können Sie auf zwei Weisen ändern:
+By default, the application runs on port 3001. You can change this in two ways:
 
-**Methode 1: Umgebungsvariable**
+**Method 1: Environment Variable**
 ```bash
 PORT=8080 npm start
 ```
 
-**Methode 2: Server.js anpassen**
+**Method 2: Modify server.js**
 ```javascript
-// In server.js die Port-Zeile ändern
+// In server.js change the port line
 const PORT = process.env.PORT || 8080;
 ```
 
-#### Datenbank-Verwaltung
+#### Database Management
 
-Die SQLite-Datenbank (`recipes.db`) wird automatisch im Projektverzeichnis erstellt. Für Backups:
+The SQLite database (`recipes.db`) is automatically created in the project directory. For backups:
 
 ```bash
-# Backup erstellen
+# Create backup
 cp recipes.db recipes_backup_$(date +%Y%m%d).db
 
-# Backup wiederherstellen
+# Restore backup
 cp recipes_backup_20231201.db recipes.db
 ```
 
-#### Bild-Upload-Einstellungen
+#### Image Upload Settings
 
-Standardmäßig sind Bilder auf 5MB beschränkt. Dies können Sie in `server.js` anpassen:
+By default, images are limited to 5MB. You can adjust this in `server.js`:
 
 ```javascript
-// Multer-Konfiguration anpassen
+// Adjust Multer configuration
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB statt 5MB
+    fileSize: 10 * 1024 * 1024 // 10MB instead of 5MB
   }
 });
 ```
 
-## API-Dokumentation
+## API Documentation
 
-### REST-API Endpunkte
+### REST API Endpoints
 
-Die Recipe Website bietet eine vollständige REST-API für die Integration mit anderen Anwendungen:
+The Recipe Website offers a complete REST API for integration with other applications:
 
-| Methode | Endpunkt | Beschreibung | Parameter |
+| Method | Endpoint | Description | Parameters |
 |--------|----------|-------------|------------|
-| GET | `/api/recipes` | Alle Rezepte abrufen | `?search=`, `?category=` |
-| GET | `/api/recipes/:id` | Einzelnes Rezept | `id` (Path) |
-| POST | `/api/recipes` | Neues Rezept erstellen | Multipart Form |
-| PUT | `/api/recipes/:id` | Rezept aktualisieren | Multipart Form |
-| DELETE | `/api/recipes/:id` | Rezept löschen | `id` (Path) |
-| GET | `/api/categories` | Alle Kategorien | - |
+| GET | `/api/recipes` | Get all recipes | `?search=`, `?category=` |
+| GET | `/api/recipes/:id` | Get single recipe | `id` (Path) |
+| POST | `/api/recipes` | Create new recipe | Multipart Form |
+| PUT | `/api/recipes/:id` | Update recipe | Multipart Form |
+| DELETE | `/api/recipes/:id` | Delete recipe | `id` (Path) |
+| GET | `/api/categories` | Get all categories | - |
 
-### Beispiele für API-Aufrufe
+### API Call Examples
 
-**Rezept suchen:**
+**Search recipe:**
 ```bash
 curl "http://localhost:3001/api/recipes?search=pasta"
 ```
 
-**Nach Kategorie filtern:**
+**Filter by category:**
 ```bash
 curl "http://localhost:3001/api/recipes?category=dessert"
 ```
 
-**Neues Rezept erstellen:**
+**Create new recipe:**
 ```bash
-curl -X POST -F "title=Apfelkuchen" \
-  -F "ingredients=3 Äpfel,200g Mehl" \
-  -F "instructions=Äpfel schälen..." \
+curl -X POST -F "title=Apple Cake" \
+  -F "ingredients=3 apples,200g flour" \
+  -F "instructions=Peel apples..." \
   -F "category=dessert" \
-  -F "image=@apfelkuchen.jpg" \
+  -F "image=@apple_cake.jpg" \
   http://localhost:3001/api/recipes
 ```
 
 ## Troubleshooting
 
-### Häufige Probleme und Lösungen
+### Common Problems and Solutions
 
-Hier sind die häufigsten Probleme, auf die ich bei der Entwicklung gestoßen bin, und wie man sie behebt:
+Here are the most common problems I encountered during development and how to fix them:
 
-#### Berechtigungsprobleme
+#### Permission Issues
 
-Wenn Sie Fehler wie "Permission denied" erhalten, meistens nach dem Kopieren der Projektdateien:
+If you receive errors like "Permission denied", usually after copying project files:
 
 ```bash
-# Besitz korrigieren
+# Correct ownership
 sudo chown -R $USER:$USER ~/recipe-website
 
-# Schreibrechte sicherstellen
+# Ensure write permissions
 chmod -R 755 ~/recipe-website
 ```
 
-#### Port bereits belegt
+#### Port Already in Use
 
-Falls Port 3001 bereits von einer anderen Anwendung verwendet wird:
+If port 3001 is already used by another application:
 
 ```bash
-# Prozess finden, der den Port verwendet
+# Find process using the port
 sudo lsof -i :3001
 
-# Prozess beenden (PID aus vorherigem Befehl)
+# Kill process (PID from previous command)
 sudo kill -9 <PID>
 
-# Oder anderen Port verwenden
+# Or use different port
 PORT=8080 npm start
 ```
 
-#### Datenbank gesperrt
+#### Database Locked
 
-Wenn Sie Fehler wie "database is locked" erhalten:
+If you receive errors like "database is locked":
 
 ```bash
-# Alle Node-Prozesse finden
+# Find all Node processes
 ps aux | grep node
 
-# Prozesse beenden
+# Kill processes
 sudo pkill -f node
 
-# Warten Sie ein paar Sekunden und starten Sie erneut
+# Wait a few seconds and restart
 npm start
 ```
 
-#### Frontend wird nicht geladen
+#### Frontend Not Loading
 
-Wenn die Website lädt aber keine Rezepte anzeigt:
+If the website loads but doesn't display recipes:
 
 ```bash
-# Frontend neu bauen
+# Rebuild frontend
 cd client
 npm run build
 cd ..
 
-# Server neu starten
+# Restart server
 npm start
 ```
 
-#### Bilder werden nicht hochgeladen
+#### Images Not Uploading
 
-Wenn Bild-Uploads nicht funktionieren:
+If image uploads don't work:
 
 ```bash
-# Upload-Verzeichnis prüfen
+# Check upload directory
 ls -la uploads/
-# Falls nicht vorhanden:
+# If not present:
 mkdir -p uploads
 chmod 755 uploads/
 ```
 
-## Lizenz
+## License
 
 MIT License - Feel free to modify and use for personal projects!
 
-Ich habe dieses Projekt entwickelt, um die Rezeptverwaltung zu Hause zu vereinfachen. Sie dürfen es frei verwenden, anpassen und für Ihre eigenen Zwecke einsetzen.
+I developed this project to simplify recipe management at home. You are free to use, adapt, and deploy it for your own purposes.
 
-### Was ich mir wünsche
-- **Attribution**: Ein kurzer Hinweis auf das ursprüngliche Projekt wäre nett
-- **Verbesserungen**: Wenn Sie nützliche Verbesserungen machen, lassen Sie es mich gerne wissen
-- **Feedback**: Ich freue mich immer über Feedback und Anregungen
+### What I'd Appreciate
+- **Attribution**: A brief mention of the original project would be nice
+- **Improvements**: If you make useful improvements, please let me know
+- **Feedback**: I always appreciate feedback and suggestions
 
-### Keine Garantie
-Dies ist ein Hobby-Projekt. Ich bemühe mich um Qualität, kann aber keine Garantie für fehlerfreie Funktion geben.
+### No Guarantee
+This is a hobby project. I strive for quality but cannot guarantee error-free functionality.

@@ -83,26 +83,26 @@ All messages follow the MQTT-like format:
 
 ## Sensor-Topics
 
-### Übersicht
+### Overview
 
-| Topic | Einheit | Beschreibung |
+| Topic | Unit | Description |
 |-------|---------|--------------|
-| `sensors/temperature` | °C | Lufttemperatur |
-| `sensors/humidity` | % | Luftfeuchtigkeit |
-| `sensors/soil_moisture` | % | Bodenfeuchtigkeit |
-| `sensors/water_tank` | Objekt | Wassertank-Status |
-| `sensors/water_level` | Liter | Wasserstand |
-| `sensors/water_temperature` | °C | Wassertemperatur |
+| `sensors/temperature` | °C | Air temperature |
+| `sensors/humidity` | % | Air humidity |
+| `sensors/soil_moisture` | % | Soil moisture |
+| `sensors/water_tank` | Object | Water tank status |
+| `sensors/water_level` | Liters | Water level |
+| `sensors/water_temperature` | °C | Water temperature |
 
-### Detaillierte Beschreibung
+### Detailed Description
 
-### Temperatur
+### Temperature
 
-Lufttemperatur im Gewächshaus.
+Air temperature in the greenhouse.
 
-| Feld | Typ | Beispiel |
+| Field | Type | Example |
 |------|-----|----------|
-| `payload` | Number oder Object | `22.5` oder `{ "value": 22.5 }` |
+| `payload` | Number or Object | `22.5` or `{ "value": 22.5 }` |
 
 ```json
 { "topic": "sensors/temperature", "payload": 22.5 }
@@ -110,13 +110,13 @@ Lufttemperatur im Gewächshaus.
 
 ---
 
-### Luftfeuchtigkeit
+### Humidity
 
-Relative Luftfeuchtigkeit.
+Relative air humidity.
 
-| Feld | Typ | Beispiel |
+| Field | Type | Example |
 |------|-----|----------|
-| `payload` | Number oder Object | `65` oder `{ "value": 65 }` |
+| `payload` | Number or Object | `65` or `{ "value": 65 }` |
 
 ```json
 { "topic": "sensors/humidity", "payload": 65 }
@@ -124,13 +124,13 @@ Relative Luftfeuchtigkeit.
 
 ---
 
-### Bodenfeuchtigkeit
+### Soil Moisture
 
-Bodenfeuchtigkeit (0% = trocken, 100% = nass).
+Soil moisture (0% = dry, 100% = wet).
 
-| Feld | Typ | Beispiel |
+| Field | Type | Example |
 |------|-----|----------|
-| `payload` | Number oder Object | `42` oder `{ "value": 42 }` |
+| `payload` | Number or Object | `42` or `{ "value": 42 }` |
 
 ```json
 { "topic": "sensors/soil_moisture", "payload": 42 }
@@ -138,15 +138,15 @@ Bodenfeuchtigkeit (0% = trocken, 100% = nass).
 
 ---
 
-### Wassertank
+### Water Tank
 
-Kompletter Wassertank-Status.
+Complete water tank status.
 
-| Feld | Typ | Beschreibung |
+| Field | Type | Description |
 |------|-----|--------------|
-| `level` | Number | Aktueller Füllstand (Liter) |
-| `temperature` | Number | Wassertemperatur (°C) |
-| `capacity` | Number | Maximale Kapazität (Liter) |
+| `level` | Number | Current fill level (liters) |
+| `temperature` | Number | Water temperature (°C) |
+| `capacity` | Number | Maximum capacity (liters) |
 
 ```json
 {
@@ -161,9 +161,9 @@ Kompletter Wassertank-Status.
 
 ---
 
-### Wasserstand
+### Water Level
 
-Nur der Wasserstand (alternative zu water_tank).
+Water level only (alternative to water_tank).
 
 ```json
 { "topic": "sensors/water_level", "payload": 720 }
@@ -171,9 +171,9 @@ Nur der Wasserstand (alternative zu water_tank).
 
 ---
 
-### Wassertemperatur
+### Water Temperature
 
-Nur die Wassertemperatur.
+Water temperature only.
 
 ```json
 { "topic": "sensors/water_temperature", "payload": 18.3 }
@@ -181,23 +181,23 @@ Nur die Wassertemperatur.
 
 ---
 
-## Payload-Formate
+## Payload Formats
 
-Die Webapp akzeptiert verschiedene Payload-Formate:
+The webapp accepts various payload formats:
 
-### Format 1: Einfacher Wert
+### Format 1: Simple Value
 
 ```json
 { "topic": "sensors/temperature", "payload": 22.5 }
 ```
 
-### Format 2: Objekt mit `value`
+### Format 2: Object with `value`
 
 ```json
 { "topic": "sensors/temperature", "payload": { "value": 22.5 } }
 ```
 
-### Format 3: Komplexes Objekt
+### Format 3: Complex Object
 
 ```json
 {
@@ -211,20 +211,20 @@ Die Webapp akzeptiert verschiedene Payload-Formate:
 }
 ```
 
-> Tipp: Die Webapp erkennt automatisch das Format und extrahiert den Wert.
+> Tip: The webapp automatically detects the format and extracts the value.
 
 ---
 
-## Aktor-Steuerung
+## Actuator Control
 
-Wenn in der Webapp **Dünger angewendet** wird, sendet sie Befehle an Node-RED.
+When **fertilizer is applied** in the webapp, it sends commands to Node-RED.
 
 ### Topics
 
-| Topic | Beschreibung |
+| Topic | Description |
 |-------|--------------|
-| `actuators/valve` | Ventil öffnen/schließen |
-| `actuators/pump` | Pumpe starten/stoppen |
+| `actuators/valve` | Open/close valve |
+| `actuators/pump` | Start/stop pump |
 
 ### Payload-Format
 
@@ -260,73 +260,73 @@ Wenn in der Webapp **Dünger angewendet** wird, sendet sie Befehle an Node-RED.
 }
 ```
 
-### Felder
+### Fields
 
-| Feld | Typ | Beschreibung |
+| Field | Type | Description |
 |------|-----|--------------|
-| `beds` | Array | Ausgewählte Hochbeete |
-| `beds[].id` | Number | ID des Hochbeets |
-| `beds[].name` | String | Name des Hochbeets |
-| `beds[].fertilizer` | Object | NPK-Werte |
-| `totalBeds` | Number | Anzahl der Hochbeete |
-| `fertilizer` | Object | Gesamt-NPK-Werte |
-| `timestamp` | String | ISO 8601 Zeitstempel |
+| `beds` | Array | Selected raised beds |
+| `beds[].id` | Number | ID of the raised bed |
+| `beds[].name` | String | Name of the raised bed |
+| `beds[].fertilizer` | Object | NPK values |
+| `totalBeds` | Number | Number of raised beds |
+| `fertilizer` | Object | Total NPK values |
+| `timestamp` | String | ISO 8601 timestamp |
 
 ---
 
-## Alarme & E-Mail
+## Alarms & E-Mail
 
-### Schwellwerte konfigurieren
+### Configure Thresholds
 
-Im **Admin Panel** unter **Einstellungen → Sensor Alarme**:
+In the **Admin Panel** under **Settings → Sensor Alarms**:
 
 | Sensor | Min | Max |
 |--------|-----|-----|
-| Temperatur | 5°C | 35°C |
-| Luftfeuchtigkeit | 30% | 90% |
-| Bodenfeuchtigkeit | 20% | 80% |
+| Temperature | 5°C | 35°C |
+| Humidity | 30% | 90% |
+| Soil Moisture | 20% | 80% |
 
-### Alarm-Logik
+### Alarm Logic
 
 ```
 ┌─────────────────────────────────────────────────┐
-│         Sensorwert empfangen                    │
+│         Sensor value received                    │
 └─────────────────────────────────────────────────┘
                       │
                       ▼
               ┌───────────────┐
-              │  Wert < Min   │──── Ja ────► Alarm (zu niedrig)
-              │  oder         │
-              │  Wert > Max?  │
+              │  Value < Min   │──── Yes ────► Alarm (too low)
+              │  or         │
+              │  Value > Max?  │
               └───────────────┘
                       │
-                     Nein
+                     No
                       │
                       ▼
                ✅ Status OK
 ```
 
-### E-Mail-Versand
+### Email Delivery
 
-Wenn ein Alarm ausgelöst wird:
+When an alarm is triggered:
 
-1. **Zustandswechsel** erkennen (OK → Alarm)
-2. **Template** auswählen
-3. **Platzhalter** ersetzen
-4. **E-Mail senden** an konfigurierte Empfänger
+1. **State change** detection (OK → Alarm)
+2. **Template** selection
+3. **Placeholder** replacement
+4. **Email send** to configured recipients
 
-> Hinweis: E-Mails werden nur beim **Zustandswechsel** gesendet, nicht bei jedem Messwert.
+> Note: Emails are only sent on **state change**, not for every measurement.
 
 ---
 
 ## Node-RED Setup
 
-### Voraussetzungen
+### Prerequisites
 
-- Node-RED installiert und läuft auf Port 1880
-- `node-red-contrib-websocket` Node (optional, meist integriert)
+- Node-RED installed and running on port 1880
+- `node-red-contrib-websocket` node (optional, usually integrated)
 
-### Beispiel-Flow: DHT22 Sensor
+### Example Flow: DHT22 Sensor
 
 ```json
 [
@@ -356,7 +356,7 @@ Wenn ein Alarm ausgelöst wird:
 ]
 ```
 
-### Beispiel-Flow: Bodenfeuchtigkeit
+### Example Flow: Soil Moisture
 
 ```json
 [
@@ -381,7 +381,7 @@ Wenn ein Alarm ausgelöst wird:
 ]
 ```
 
-### Beispiel-Flow: Wassertank
+### Example Flow: Water Tank
 
 ```json
 [
@@ -396,7 +396,7 @@ Wenn ein Alarm ausgelöst wird:
     "id": "calculate-liters",
     "type": "function",
     "name": "Calculate Liters",
-    "func": "const tankHeight = 100; // cm\nconst sensorHeight = msg.payload; // cm\nconst waterLevel = tankHeight - sensorHeight;\nconst liters = Math.round(waterLevel * 10); // Annahme: 1cm = 10 Liter\nmsg.payload = {\n  level: liters,\n  temperature: 20, // Optional: Temperatur-Sensor\n  capacity: 1000\n};\nmsg.topic = 'sensors/water_tank';\nreturn msg;"
+    "func": "const tankHeight = 100; // cm\nconst sensorHeight = msg.payload; // cm\nconst waterLevel = tankHeight - sensorHeight;\nconst liters = Math.round(waterLevel * 10); // Assumption: 1cm = 10 Liters\nmsg.payload = {\n  level: liters,\n  temperature: 20, // Optional: Temperature sensor\n  capacity: 1000\n};\nmsg.topic = 'sensors/water_tank';\nreturn msg;"
   },
   {
     "id": "ws-out",
@@ -406,12 +406,12 @@ Wenn ein Alarm ausgelöst wird:
 ]
 ```
 
-### Fehlerbehandlung
+### Error Handling
 
-#### Verbindungstests
+#### Connection Tests
 
 ```javascript
-// Test-Node für Verbindung
+// Test Node for connection
 msg.topic = 'test/connection';
 msg.payload = {
   timestamp: new Date().toISOString(),
@@ -420,43 +420,43 @@ msg.payload = {
 return msg;
 ```
 
-#### Debug-Output
+#### Debug Output
 
 ```javascript
-// Debug-Function Node
+// Debug Function Node
 console.log('Received message:', msg);
 console.log('Topic:', msg.topic);
 console.log('Payload:', msg.payload);
 return msg;
 ```
 
-### Häufige Probleme
+### Common Problems
 
-| Problem | Ursache | Lösung |
+| Problem | Cause | Solution |
 |--------|---------|---------|
-| **Keine Verbindung** | WebSocket-Port falsch | Port 1880 und Path `/ws` prüfen |
-| **Daten nicht angezeigt** | Falsches Topic | Topic-Format überprüfen |
-| **Sensor-Werte unplausibel** | Kalibrierung | Sensor-Kalibrierung anpassen |
-| **Verbindung bricht ab** | Network-Timeout | Keep-Alive implementieren |
+| **No connection** | Wrong WebSocket port | Check port 1880 and path `/ws` |
+| **Data not displayed** | Wrong topic | Check topic format |
+| **Sensor values implausible** | Calibration | Adjust sensor calibration |
+| **Connection drops** | Network timeout | Implement keep-alive |
 
 ### Best Practices
 
-1. **Regelmäßige Updates**: Intervall von 30-60 Sekunden für Sensoren
-2. **Fehlerbehandlung**: Try-Catch Blocks in Function Nodes
-3. **Logging**: Debug-Nodes für Troubleshooting
-4. **Sicherheit**: WebSocket-Authentifizierung in Produktion
-5. **Performance**: Batch-Updates für mehrere Sensoren
+1. **Regular Updates**: Interval of 30-60 seconds for sensors
+2. **Error Handling**: Try-Catch blocks in Function nodes
+3. **Logging**: Debug nodes for troubleshooting
+4. **Security**: WebSocket authentication in production
+5. **Performance**: Batch updates for multiple sensors
 
 ---
 
-## Nützliche Links
+## Useful Links
 
-| Ressource | Link |
+| Resource | Link |
 |-----------|------|
-| Node-RED Dokumentation | [nodered.org/docs](https://nodered.org/docs/) |
+| Node-RED Documentation | [nodered.org/docs](https://nodered.org/docs/) |
 | DHT22 Node | [node-red-contrib-dht-sensor](https://flows.nodered.org/node/node-red-contrib-dht-sensor) |
 | GPIO Nodes | [node-red-node-pi-gpio](https://flows.nodered.org/node/node-red-node-pi-gpio) |
-| WebSocket Nodes | Integriert in Node-RED |
+| WebSocket Nodes | Integrated in Node-RED |
 
 ---
 

@@ -19,152 +19,152 @@
 - [Setup Autostart](#setup-autostart)
 - [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
-- [Systemüberwachung](#systemüberwachung)
+- [System Monitoring](#system-monitoring)
 
 ---
 
-## Voraussetzungen
+## Prerequisites
 
 ### Hardware
 
-| Komponente | Empfehlung |
+| Component | Recommendation |
 |------------|------------|
-| **Raspberry Pi** | Model 4B, 3B+ oder Zero 2 W |
-| **RAM** | Mindestens 1 GB |
-| **SD-Karte** | 16 GB+ (Class 10) |
-| **Netzteil** | 5V/3A (USB-C für Pi 4) |
-| **Netzwerk** | Ethernet oder WLAN |
+| **Raspberry Pi** | Model 4B, 3B+ or Zero 2 W |
+| **RAM** | Minimum 1 GB |
+| **SD Card** | 16 GB+ (Class 10) |
+| **Power Supply** | 5V/3A (USB-C for Pi 4) |
+| **Network** | Ethernet or WiFi |
 
 ### Software
 
 | Software | Version |
 |----------|---------|
-| **Raspberry Pi OS** | Lite oder Desktop (64-bit empfohlen) |
-| **Node.js** | 18 LTS oder höher |
+| **Raspberry Pi OS** | Lite or Desktop (64-bit recommended) |
+| **Node.js** | 18 LTS or higher |
 
 ---
 
 ## Installation
 
-### Schritt 1: System aktualisieren
+### Step 1: Update System
 
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
 
-### Schritt 2: Node.js installieren
+### Step 2: Install Node.js
 
 ```bash
-# Node.js 20 LTS Repository hinzufügen (empfohlen)
+# Add Node.js 20 LTS repository (recommended)
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 
 # Alternative: Node.js 18 LTS
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 
-# Node.js installieren
+# Install Node.js
 sudo apt install -y nodejs
 
-# Version prüfen
-node --version  # Sollte v18.x.x oder v20.x.x zeigen
-npm --version   # Sollte 9.x.x oder 10.x.x zeigen
+# Check version
+node --version  # Should show v18.x.x or v20.x.x
+npm --version   # Should show 9.x.x or 10.x.x
 ```
 
-> Hinweis: Für Raspberry Pi Zero oder ältere Modelle wird Node.js 18 empfohlen.
+> Note: For Raspberry Pi Zero or older models, Node.js 18 is recommended.
 
-### Schritt 3: Projekt klonen/kopieren
+### Step 3: Clone/Copy Project
 
 ```bash
-# Projekt-Verzeichnis erstellen
+# Create project directory
 mkdir -p ~/gewachshaus
 cd ~/gewachshaus
 
 # Option A: Git Clone
 git clone https://github.com/yourname/gewachshaus.git .
 
-# Option B: SCP vom eigenen Rechner
-# scp -r /pfad/zum/projekt pi@raspberry-pi-ip:~/gewachshaus
+# Option B: SCP from your own machine
+# scp -r /path/to/project pi@raspberry-pi-ip:~/gewachshaus
 
-# Option C: ZIP-Datei entpacken
+# Option C: Extract ZIP file
 # wget https://github.com/yourname/gewachshaus/archive/main.zip
 # unzip main.zip
 # mv gewachshaus-main/* .
 # rm -rf gewachshaus-main main.zip
 ```
 
-### Schritt 4: Abhängigkeiten installieren
+### Step 4: Install Dependencies
 
 ```bash
 cd ~/gewachshaus
 npm install --production
 ```
 
-> Hinweis: Die Installation kann auf einem Pi Zero mehrere Minuten dauern. Das `--production` Flag installiert nur Produktionsabhängigkeiten.
+> Note: Installation may take several minutes on a Pi Zero. The `--production` flag installs only production dependencies.
 
 ---
 
 ## Start
 
-### Manueller Start
+### Manual Start
 
 ```bash
 cd ~/gewachshaus
 node server-simple.js
 ```
 
-### Mit Startskript
+### With Start Script
 
 ```bash
-# Skript ausführbar machen
+# Make script executable
 chmod +x start.sh
 
-# Server starten
+# Start server
 ./start.sh start
 
-# Status prüfen
+# Check status
 ./start.sh status
 
-# Logs anzeigen
+# Show logs
 ./start.sh logs
 
-# Server stoppen
+# Stop server
 ./start.sh stop
 ```
 
-### Zugriff
+### Access
 
-| Beschreibung | URL |
+| Description | URL |
 |--------------|-----|
-| **Lokal** | `http://localhost:3001` |
-| **Im Netzwerk** | `http://raspberry-pi-ip:3001` |
+| **Local** | `http://localhost:3001` |
+| **In Network** | `http://raspberry-pi-ip:3001` |
 
-> Tipp: IP-Adresse herausfinden: `hostname -I`
+> Tip: Find IP address: `hostname -I`
 
-### Standard-Login
+### Default Login
 
-| Feld | Wert |
+| Field | Value |
 |------|------|
-| **Benutzer** | `admin` |
-| **Passwort** | `admin123` |
+| **User** | `admin` |
+| **Password** | `admin123` |
 
-> Wichtig: Passwort nach dem ersten Login ändern!
+> Important: Change password after first login!
 
 ---
 
-## Autostart einrichten
+## Setup Autostart
 
-### Option A: systemd Service (Empfohlen)
+### Option A: systemd Service (Recommended)
 
-#### 1. Service-Datei erstellen
+#### 1. Create Service File
 
 ```bash
 sudo nano /etc/systemd/system/gewachshaus.service
 ```
 
-#### 2. Inhalt einfügen
+#### 2. Insert Content
 
 ```ini
 [Unit]
-Description=Gewächshaus Webapp
+Description=Greenhouse Webapp
 After=network.target
 
 [Service]
@@ -178,40 +178,40 @@ StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=gewachshaus
 
-# Umgebungsvariablen
+# Environment variables
 Environment=PORT=3001
 Environment=NODE_ENV=production
-# Environment=SESSION_SECRET=dein_geheimer_schluessel
+# Environment=SESSION_SECRET=your_secret_key
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-#### 3. Service aktivieren
+#### 3. Enable Service
 
 ```bash
-# Konfiguration neu laden
+# Reload configuration
 sudo systemctl daemon-reload
 
-# Autostart aktivieren
+# Enable autostart
 sudo systemctl enable gewachshaus
 
-# Service starten
+# Start service
 sudo systemctl start gewachshaus
 
-# Status prüfen
+# Check status
 sudo systemctl status gewachshaus
 ```
 
-### Service-Befehle
+### Service Commands
 
-| Befehl | Beschreibung |
+| Command | Description |
 |--------|-------------|
-| `sudo systemctl start gewachshaus` | Starten |
-| `sudo systemctl stop gewachshaus` | Stoppen |
-| `sudo systemctl restart gewachshaus` | Neustarten |
-| `sudo systemctl status gewachshaus` | Status anzeigen |
-| `journalctl -u gewachshaus -f` | Logs live anzeigen |
+| `sudo systemctl start gewachshaus` | Start |
+| `sudo systemctl stop gewachshaus` | Stop |
+| `sudo systemctl restart gewachshaus` | Restart |
+| `sudo systemctl status gewachshaus` | Show status |
+| `journalctl -u gewachshaus -f` | Show live logs |
 
 ### Option B: PM2 Process Manager
 

@@ -18,14 +18,14 @@
 - [Sensors & Alarms](#sensors--alarms)
 - [E-Mail System](#e-mail-system)
 - [Security](#security)
-- [UI-Komponenten](#ui-komponenten)
-- [Dateistruktur](#dateistruktur)
+- [UI Components](#ui-components)
+- [File Structure](#file-structure)
 
 ---
 
-## Architektur
+## Architecture
 
-### Übersicht
+### Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -38,7 +38,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    server-simple.js                             │
 ├─────────────────────────────────────────────────────────────────┤
-│  • HTTP Server (Node.js, kein Framework)                        │
+│  • HTTP Server (Node.js, no framework)                        │
 │  • REST API Endpoints                                           │
 │  • Session Management (In-Memory)                               │
 │  • Rate Limiting                                                │
@@ -48,56 +48,56 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                      data.json                                  │
 ├─────────────────────────────────────────────────────────────────┤
-│  Persistente Speicherung (atomisches Schreiben)                 │
+│  Persistent storage (atomic writing)                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Designentscheidungen
+### Design Decisions
 
-| Entscheidung | Begründung |
+| Decision | Reason |
 |--------------|-----------|
-| **Kein Express.js** | Minimale Abhängigkeiten, volle Kontrolle |
-| **JSON-Datei statt DB** | Einfachheit, keine separate DB nötig |
-| **Vanilla JS Frontend** | Kein Build-Prozess, schnelle Ladezeit |
-| **In-Memory Sessions** | Einfachheit (Nachteil: verloren bei Neustart) |
+| **No Express.js** | Minimal dependencies, full control |
+| **JSON file instead of DB** | Simplicity, no separate DB needed |
+| **Vanilla JS Frontend** | No build process, fast loading |
+| **In-Memory Sessions** | Simplicity (disadvantage: lost on restart) |
 
-### Server-Komponenten
+### Server Components
 
-| Komponente | Datei | Beschreibung |
+| Component | File | Description |
 |------------|-------|--------------|
-| **HTTP Server** | `server-simple.js` | Haupt-Server-Logik |
-| **Statische Dateien** | `server-simple.js` | Automatisches Serving |
-| **API Routes** | `server-simple.js` | REST-Endpunkte |
-| **Session Store** | In-Memory Map | Session-Verwaltung |
+| **HTTP Server** | `server-simple.js` | Main server logic |
+| **Static Files** | `server-simple.js` | Automatic serving |
+| **API Routes** | `server-simple.js` | REST endpoints |
+| **Session Store** | In-Memory Map | Session management |
 
 ---
 
-## Rollen & Berechtigungen
+## Roles & Permissions
 
-### Rollenübersicht
+### Role Overview
 
-| Rolle | Beschreibung |
+| Role | Description |
 |-------|-------------|
-| **ADMIN** | Voller Zugriff, Admin Panel |
-| **NORMAL_USER** | Eingeschränkter Zugriff (geplant) |
-| **Gast** | Nur Lesen + Forum posten |
+| **ADMIN** | Full access, Admin Panel |
+| **NORMAL_USER** | Restricted access (planned) |
+| **Guest** | Read only + Forum posting |
 
-### Berechtigungsmatrix
+### Permission Matrix
 
-| Aktion | Gast | User | Admin |
+| Action | Guest | User | Admin |
 |--------|------|------|-------|
-| **Sensordaten anzeigen** | ✅ | ✅ | ✅ |
-| **Pflanzen anzeigen** | ✅ | ✅ | ✅ |
-| **Forum lesen** | ✅ | ✅ | ✅ |
-| **Forum posten** | ✅* | ✅ | ✅ |
-| **Pflanzen bearbeiten** | ❌ | ✅ | ✅ |
-| **Düngung ausführen** | ❌ | ✅ | ✅ |
-| **Benutzerverwaltung** | ❌ | ❌ | ✅ |
-| **E-Mail-Konfiguration** | ❌ | ❌ | ✅ |
-| **Audit-Logs** | ❌ | ❌ | ✅ |
-| **Farbschema ändern** | ❌ | ❌ | ✅ |
+| **Display sensor data** | ✅ | ✅ | ✅ |
+| **Display plants** | ✅ | ✅ | ✅ |
+| **Read forum** | ✅ | ✅ | ✅ |
+| **Post in forum** | ✅* | ✅ | ✅ |
+| **Edit plants** | ❌ | ✅ | ✅ |
+| **Execute fertilization** | ❌ | ✅ | ✅ |
+| **User management** | ❌ | ❌ | ✅ |
+| **Email configuration** | ❌ | ❌ | ✅ |
+| **Audit logs** | ❌ | ❌ | ✅ |
+| **Change color scheme** | ❌ | ❌ | ✅ |
 
-> *Gäste posten mit Autor "Gast"
+> *Guests post with author "Guest"
 
 ---
 

@@ -50,35 +50,35 @@ The LAPS Portal provides a secure, audited solution for managing local administr
 
 ### Admin-Portal
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Anfragen-Queue** | Alle offenen Anfragen übersichtlich |
-| **Genehmigungs-Workflow** | Akzeptieren/Ablehnen mit Kommentar |
-| **Detail-Prüfung** | User, Hostname, Zeitpunkt, Begründung |
-| **AD-Validierung** | Computer gefunden, LAPS verfügbar |
-| **Massenaktionen** | Mehrere Anfragen gleichzeitig bearbeiten |
+| **Request Queue** | All open requests clearly displayed |
+| **Approval Workflow** | Accept/Reject with comment |
+| **Detail Review** | User, hostname, time, justification |
+| **AD Validation** | Computer found, LAPS available |
+| **Bulk Actions** | Process multiple requests simultaneously |
 
 ### Audit & Logging
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| **Vollständiger Audit-Trail** | Alle Aktionen protokolliert |
-| **Erweiterte Filter** | Nach Event-Typ, User, Hostname, Zeitraum |
-| **CSV-Export** | Externe Auswertung und Reporting |
-| **Integritäts-Logs** | Systemereignisse und Fehler |
+| **Complete Audit Trail** | All actions logged |
+| **Advanced Filters** | By event type, user, hostname, time period |
+| **CSV Export** | External analysis and reporting |
+| **Integrity Logs** | System events and errors |
 
-### Sicherheit
+### Security
 
-| Feature | Implementierung |
+| Feature | Implementation |
 |---------|----------------|
-| **AD-basierte Authentifizierung** | Integration mit Active Directory |
-| **JWT-Token-Sessions** | Sichere Session-Verwaltung |
-| **Rate Limiting** | Schutz vor Missbrauch |
-| **Verschlüsselte Speicherung** | Temporäre Passwörter verschlüsselt |
-| **Log-Sicherheit** | Keine Passwörter in Logs |
-| **HTTPS-Ready** | SSL/TLS Unterstützung
+| **AD-based Authentication** | Integration with Active Directory |
+| **JWT Token Sessions** | Secure session management |
+| **Rate Limiting** | Protection against abuse |
+| **Encrypted Storage** | Temporary passwords encrypted |
+| **Log Security** | No passwords in logs |
+| **HTTPS Ready** | SSL/TLS support |
 
-## Architektur
+## Architecture
 
 ```text
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -89,9 +89,9 @@ The LAPS Portal provides a secure, audited solution for managing local administr
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-### Technologiestack
+### Technology Stack
 
-| Komponente | Technologie | Version | Zweck |
+| Component | Technology | Version | Purpose |
 |------------|-------------|---------|-------|
 | **Frontend** | React | 18+ | User Interface |
 | **Frontend** | TypeScript | 5+ | Type Safety |
@@ -99,178 +99,178 @@ The LAPS Portal provides a secure, audited solution for managing local administr
 | **Backend** | Node.js | 18+ | Runtime |
 | **Backend** | Express | 4+ | Web Framework |
 | **Backend** | TypeScript | 5+ | Type Safety |
-| **Datenbank** | SQLite | 3+ | Datenspeicherung |
+| **Database** | SQLite | 3+ | Data Storage |
 | **Auth** | JWT | - | Session Management |
 | **LDAP** | ldapjs | 3+ | AD Integration |
 
-### Datenfluss
+### Data Flow
 
-1. **User Login** → AD-Authentifizierung → JWT-Token
-2. **Passwort-Anfrage** → Validierung → Queue-Eintrag
-3. **Admin Review** → AD-Prüfung → Entscheidung
-4. **Passwort-Freigabe** → Verschlüsselte Speicherung
-5. **Audit-Logging** → Alle Schritte protokolliert
+1. **User Login** → AD Authentication → JWT Token
+2. **Password Request** → Validation → Queue Entry
+3. **Admin Review** → AD Check → Decision
+4. **Password Release** → Encrypted Storage
+5. **Audit Logging** → All steps logged
 
-## Voraussetzungen
+## Prerequisites
 
-### Systemanforderungen
+### System Requirements
 
-| Komponente | Mindestanforderung | Empfohlen |
+| Component | Minimum Requirement | Recommended |
 |------------|-------------------|------------|
 | **Node.js** | 18.x LTS | 20.x LTS |
 | **RAM** | 2 GB | 4 GB |
-| **Speicher** | 1 GB | 2 GB |
-| **Betriebssystem** | Windows Server 2019+ | Windows Server 2022+ |
+| **Storage** | 1 GB | 2 GB |
+| **Operating System** | Windows Server 2019+ | Windows Server 2022+ |
 
-### Active Directory Anforderungen
+### Active Directory Requirements
 
-| Anforderung | Beschreibung |
+| Requirement | Description |
 |-------------|-------------|
-| **LAPS konfiguriert** | Microsoft LAPS auf Clients installiert |
-| **Service-Account** | Account mit LAPS-Leserechten |
-| **Admin-Gruppe** | AD-Gruppe für Admin-Rolle |
-| **LDAP-Zugriff** | Port 389/636 von Server erreichbar |
-| **Computer-Objekte** | LAPS-Attribute vorhanden |
+| **LAPS configured** | Microsoft LAPS installed on clients |
+| **Service Account** | Account with LAPS read rights |
+| **Admin Group** | AD group for admin role |
+| **LDAP Access** | Port 389/636 reachable from server |
+| **Computer Objects** | LAPS attributes present |
 
 ## Installation
 
-### 1. Repository klonen
+### 1. Clone Repository
 
 ```bash
-# Repository klonen
+# Clone repository
 git clone <repository-url>
 cd LAPS
 
-# Backend-Abhängigkeiten
+# Backend dependencies
 npm install
 
-# Frontend-Abhängigkeiten
+# Frontend dependencies
 cd frontend
 npm install
 cd ..
 ```
 
-### 3. Entwicklungsumgebung einrichten
+### 3. Set Up Development Environment
 
 ```bash
-# Umgebungsvariablen kopieren
+# Copy environment variables
 cd backend
 cp .env.example .env
 
-# .env Datei anpassen (siehe Konfiguration)
+# Adjust .env file (see configuration)
 nano .env
 ```
 
-### 4. Entwicklungsserver starten
+### 4. Start Development Server
 
 ```bash
-# Aus dem Hauptverzeichnis
+# From main directory
 npm run dev
 ```
 
-**Zugriff:**
+**Access:**
 - Backend: http://localhost:3001
 - Frontend: http://localhost:5173
 
-## Konfiguration
+## Configuration
 
-### Umgebungsvariablen (backend/.env)
+### Environment Variables (backend/.env)
 
-| Variable | Beschreibung | Standard |
+| Variable | Description | Default |
 |----------|-------------|----------|
-| `AD_URL` | LDAP-URL des Domain Controllers | `ldap://dc01.domain.local` |
-| `AD_BASE_DN` | Base DN der Domain | `DC=domain,DC=local` |
-| `AD_USERNAME` | Service-Account für LAPS-Zugriff | - |
-| `AD_PASSWORD` | Passwort des Service-Accounts | - |
-| `AD_ADMIN_GROUP` | AD-Gruppe für Admin-Rolle | `GG_LAPS_Request_Admins` |
-| `PASSWORD_DISPLAY_MINUTES` | Anzeigedauer des Passworts | `10` |
-| `RATE_LIMIT_MAX_REQUESTS` | Max. Anfragen pro Stunde | `10` |
+| `AD_URL` | LDAP URL of Domain Controller | `ldap://dc01.domain.local` |
+| `AD_BASE_DN` | Base DN of Domain | `DC=domain,DC=local` |
+| `AD_USERNAME` | Service account for LAPS access | - |
+| `AD_PASSWORD` | Password of service account | - |
+| `AD_ADMIN_GROUP` | AD group for admin role | `GG_LAPS_Request_Admins` |
+| `PASSWORD_DISPLAY_MINUTES` | Password display duration | `10` |
+| `RATE_LIMIT_MAX_REQUESTS` | Max requests per hour | `10` |
 
-### AD Service-Account Berechtigungen
+### AD Service-Account Permissions
 
-Der Service-Account benötigt:
-- Leserechte auf Computer-Objekte
-- Leserechte auf LAPS-Attribute (`ms-Mcs-AdmPwd`, `ms-Mcs-AdmPwdExpirationTime`)
+The service account needs:
+- Read rights on computer objects
+- Read rights on LAPS attributes (`ms-Mcs-AdmPwd`, `ms-Mcs-AdmPwdExpirationTime`)
 
 ```powershell
-# Beispiel: LAPS-Leserechte delegieren
+# Example: Delegate LAPS read rights
 Set-AdmPwdReadPasswordPermission -OrgUnit "OU=Workstations,DC=domain,DC=local" -AllowedPrincipals "svc_laps_reader"
 ```
 
-## API-Endpunkte
+## API Endpoints
 
-### Authentifizierung
-- `POST /api/auth/login` - Anmeldung
-- `GET /api/auth/me` - Aktueller Benutzer
-- `POST /api/auth/logout` - Abmeldung
+### Authentication
+- `POST /api/auth/login` - Login
+- `GET /api/auth/me` - Current user
+- `POST /api/auth/logout` - Logout
 
-### Passwort-Anfragen
-- `POST /api/requests` - Neue Anfrage erstellen
-- `GET /api/requests/my` - Eigene Anfragen
-- `GET /api/requests/:id/password` - Passwort abrufen (nur bei genehmigt)
-- `GET /api/requests/queue` - Admin: Offene Anfragen
-- `POST /api/requests/:id/review` - Admin: Genehmigen/Ablehnen
+### Password Requests
+- `POST /api/requests` - Create new request
+- `GET /api/requests/my` - Own requests
+- `GET /api/requests/:id/password` - Get password (only if approved)
+- `GET /api/requests/queue` - Admin: Open requests
+- `POST /api/requests/:id/review` - Admin: Approve/Reject
 
 ### Audit
-- `GET /api/audit` - Audit-Logs mit Filtern
-- `GET /api/audit/export` - CSV-Export
+- `GET /api/audit` - Audit logs with filters
+- `GET /api/audit/export` - CSV export
 
-## Sicherheitshinweise
+## Security Notes
 
-Wichtige Sicherheitsempfehlungen für den produktiven Einsatz:
+Important security recommendations for production use:
 
-1. **Produktionsumgebung**: Ändern Sie alle Secrets in der `.env` Datei - verwenden Sie niemals die Standardwerte!
-2. **HTTPS**: Verwenden Sie immer HTTPS in der Produktion. Ein Reverse Proxy wie Nginx oder IIS wird empfohlen.
-3. **Reverse Proxy**: Für Windows Auth/SSO Integration ist ein Reverse Proxy die beste Lösung.
-4. **Backup**: Erstellen Sie regelmäßige Backups der SQLite-Datenbank - am besten automatisiert.
-5. **Monitoring**: Überwachen Sie die Audit-Logs auf verdächtige Aktivitäten.
-6. **Network Security**: Beschränken Sie den Netzwerkzugriff auf vertrauenswürdige IPs.
+1. **Production Environment**: Change all secrets in the `.env` file - never use default values!
+2. **HTTPS**: Always use HTTPS in production. A reverse proxy like Nginx or IIS is recommended.
+3. **Reverse Proxy**: For Windows Auth/SSO integration, a reverse proxy is the best solution.
+4. **Backup**: Create regular backups of the SQLite database - preferably automated.
+5. **Monitoring**: Monitor audit logs for suspicious activity.
+6. **Network Security**: Limit network access to trusted IPs.
 
-### Produktionstipps
+### Production Tips
 
-- Setzen Sie starke JWT-Secrets (mindestens 32 Zeichen)
-- Konfigurieren Sie Rate Limiting entsprechend Ihrem Benutzerprofil
-- Aktivieren Sie die AD-Validierung für alle Computer-Anfragen
-- Dokumentieren Sie Ihre Berechtigungsstruktur
+- Set strong JWT secrets (minimum 32 characters)
+- Configure rate limiting according to your user profile
+- Enable AD validation for all computer requests
+- Document your permission structure
 
-## Datenbank-Schema
+## Database Schema
 
 ```sql
--- Passwort-Anfragen
+-- Password Requests
 password_requests (
   id, requester_id, requester_name, hostname,
   justification, status, created_at, reviewed_by,
   reviewer_comment, computer_found, laps_available
 )
 
--- Audit-Logs
+-- Audit Logs
 audit_logs (
   id, timestamp, event_type, user_id, user_name,
   hostname, request_id, details, client_ip, success
 )
 
--- Verschlüsselte Passwörter (temporär)
+-- Encrypted Passwords (temporary)
 encrypted_passwords (
   request_id, encrypted_password, iv,
   created_at, expires_at
 )
 ```
 
-## Lizenz
+## License
 
-Intern / Proprietär
+Internal / Proprietary
 
-Dieses Projekt ist für die interne Nutzung im Unternehmen bestimmt und unterliegt den internen Lizenzbedingungen.
+This project is intended for internal company use and is subject to internal license conditions.
 
 ## Support
 
-Bei Fragen oder Problemen wenden Sie sich bitte an das IT-Team:
+For questions or problems, please contact the IT team:
 
-- **Technische Probleme**: Systemadministratoren
-- **AD-Integration**: Identity Management Team
-- **Berechtigungsfragen**: Security Team
+- **Technical Problems**: System administrators
+- **AD Integration**: Identity Management Team
+- **Permission Questions**: Security Team
 
-**Kontaktinformationen:**
-- Internes Ticket-System: [Link zum Ticket-System]
-- E-Mail: it-support@unternehmen.de
-- Notfall-Hotline: [Telefonnummer]
+**Contact Information:**
+- Internal Ticket System: [Link to Ticket System]
+- Email: it-support@company.de
+- Emergency Hotline: [Phone Number]
