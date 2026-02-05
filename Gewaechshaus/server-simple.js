@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3001;
 const DB_FILE = path.join(__dirname, 'data.json');
 const SESSION_SECRET = process.env.SESSION_SECRET || 'gewachshaus-fixed-secret-key-2024';
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASS = process.env.ADMIN_PASS || 'admin123';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'admin';
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(o => o.trim())
@@ -1253,7 +1253,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log('╠════════════════════════════════════════════════════════╣');
     console.log(`║  Server:     http://localhost:${PORT}                     ║`);
     console.log(`║  API:        http://localhost:${PORT}/api                 ║`);
-    console.log('║  Admin:      admin / admin123                          ║');
+    console.log('║  Admin:      admin / admin                             ║');
     console.log('╚════════════════════════════════════════════════════════╝');
     console.log('');
     log('INFO', `Server gestartet auf Port ${PORT}`);

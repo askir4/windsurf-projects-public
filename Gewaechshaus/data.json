@@ -22,6 +22,81 @@
   ],
   "logs": [
     {
+      "timestamp": "2026-02-05T07:58:43.460Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-02-05T07:58:43.455Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-02-05T07:58:43.453Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-02-05T07:13:46.517Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-02-05T07:03:48.921Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-02-05T07:03:47.149Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-02-05T07:03:46.378Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-02-05T07:03:42.497Z",
+      "level": "WARN",
+      "message": "Login fehlgeschlagen: admin"
+    },
+    {
+      "timestamp": "2026-02-05T07:03:24.319Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-02-05T07:03:24.311Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-02-05T07:03:24.308Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-02-05T07:02:45.146Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-02-05T06:55:53.844Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-02-05T06:55:53.837Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-02-05T06:55:53.833Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
       "timestamp": "2026-01-29T10:36:34.136Z",
       "level": "INFO",
       "message": "Server gestartet auf Port 3001"
@@ -269,6 +344,16 @@
   ],
   "auditLogs": [
     {
+      "id": 4,
+      "actor_user_id": 1,
+      "actor_username": "admin",
+      "action": "FORUM_POST_CREATED",
+      "entity_type": "forum_post",
+      "entity_id": "2",
+      "metadata_json": null,
+      "created_at": "2026-02-05T07:10:48.780Z"
+    },
+    {
       "id": 3,
       "actor_user_id": 1,
       "actor_username": "admin",
@@ -300,6 +385,15 @@
     }
   ],
   "forumPosts": [
+    {
+      "id": 2,
+      "author_user_id": 1,
+      "author_username": "admin",
+      "content": "Du Hurensohn (dient Testzwecken)",
+      "tag": "allgemein",
+      "created_at": "2026-02-05T07:10:48.779Z",
+      "comments": []
+    },
     {
       "id": 1,
       "author_user_id": 1,

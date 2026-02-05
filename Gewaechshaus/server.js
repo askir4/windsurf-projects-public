@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3001;
 // Environment Variables mit Defaults
 const SESSION_SECRET = process.env.SESSION_SECRET || 'gewachshaus-secret-change-in-production-' + uuidv4();
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123!';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@gewachshaus.local';
 const BCRYPT_ROUNDS = 12;
 
