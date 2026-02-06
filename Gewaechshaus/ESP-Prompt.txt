@@ -59,14 +59,16 @@ zu oeffnen. Die Verwaltung erfolgt komplett ueber die bestehende Weboberflaeche.
 
 1.2 Netzwerkkommunikation:
     - WiFi-Verbindung zum lokalen Netzwerk
-    - HTTP-Client fuer REST-API-Kommunikation mit dem Gewaechshaus-Server
+    - AUSSCHLIESSLICH HTTP-Client (HTTPClient.h) fuer REST-API-Kommunikation
+      mit dem Gewaechshaus-Server. KEIN WebSocket verwenden (siehe 1.4).
     - Regelmaessiger Heartbeat/Ping an den Server (alle 30 Sekunden)
+      POST /api/rfid/heartbeat
     - Der ESP soll seinen Status (online/offline, letzte Aktivitaet,
       Firmware-Version, IP-Adresse, WLAN-Signalstaerke) an den Server melden
 
 1.3 RFID-Kartenverarbeitung:
     - Karte wird gescannt -> UID wird ausgelesen
-    - ZUERST lokale Pruefung gegen gespeicherte UIDs im EEPROM/NVS (Non-Volatile
+    - ZUERST lokale Pruefung gegen gespeicherte UIDs im NVS (Non-Volatile
       Storage) des ESP32 -> Damit die Tuer auch bei Server-Ausfall funktioniert
     - ZUSAETZLICH Validierung ueber HTTP-Request an den Server:
       POST /api/rfid/access {uid: "AA:BB:CC:DD", device_id: "esp32-door-01"}
@@ -75,24 +77,68 @@ zu oeffnen. Die Verwaltung erfolgt komplett ueber die bestehende Weboberflaeche.
     - Bei Zugang verweigert: Rote LED blinkt, langer Buzzer-Ton
     - Jeder Scan-Vorgang (erfolgreich oder nicht) wird an den Server gemeldet
 
+    OFFLINE-FIRST KONFLIKTAUFLOESUNG:
+    - Im Normalfall wird die Tuer per lokaler Kartenliste geoeffnet und der
+      Zugang parallel per HTTP an den Server gemeldet. Die Server-Antwort wird
+      NICHT abgewartet, um Latenz zu vermeiden.
+    - Ist der Server nicht erreichbar, funktioniert die Tuer trotzdem anhand
+      der lokalen Kartenliste. Die Scan-Events werden in einem lokalen
+      Ringpuffer (max 50 Eintraege) zwischengespeichert und beim naechsten
+      erfolgreichen Server-Kontakt nachgemeldet (POST /api/rfid/access-bulk).
+    - Bei JEDER erfolgreichen Serververbindung (Heartbeat, Access, Polling)
+      gleicht der ESP seine lokale Kartenliste mit dem Server ab:
+      GET /api/rfid/device/{id}/cards liefert die aktuelle Kartenliste.
+      Der ESP ueberschreibt seine lokale Liste vollstaendig mit der
+      Server-Antwort. So werden serverseitig deaktivierte oder geloeschte
+      Karten sofort auch lokal entfernt.
+    - Wurde eine Karte serverseitig deaktiviert waehrend der ESP offline war,
+      kann diese Karte bis zum naechsten Server-Abgleich noch lokal Zugang
+      erhalten. Dies ist eine bewusste Design-Entscheidung zugunsten der
+      Verfuegbarkeit (Tuer funktioniert immer) gegenueber der absoluten
+      Konsistenz. Im Access-Log wird dies ueber method: "local" kenntlich
+      gemacht.
+
 1.4 Anlernmodus:
-    - Der Server kann den ESP32 in einen "Anlernmodus" versetzen via:
-      - HTTP-Polling: ESP fragt regelmaessig GET /api/rfid/device/{id}/mode ab
-      - ODER WebSocket-Verbindung fuer Echtzeit-Kommunikation
+    - Der Server kann den ESP32 in einen "Anlernmodus" versetzen.
+    - KOMMUNIKATIONSWEG: Ausschliesslich HTTP-Polling. Der ESP fragt alle
+      2 Sekunden GET /api/rfid/device/{id}/mode ab, um Modus-Aenderungen
+      zu erkennen. KEIN WebSocket verwenden - die bestehende WebSocket-
+      Verbindung ueber Node-RED dient ausschliesslich den Sensor-ESPs.
+      Eine Mischung beider Ansaetze wuerde die Komplexitaet unnoetig erhoehen.
+      HTTP-Polling ist einfacher, robuster und fuer diesen Anwendungsfall
+      (Latenz von 2 Sekunden ist akzeptabel) voellig ausreichend.
     - Im Anlernmodus: Naechste gescannte Karte wird als neue Karte registriert
     - Die UID wird sowohl lokal gespeichert als auch an den Server gesendet:
-      POST /api/rfid/cards {uid: "AA:BB:CC:DD", device_id: "esp32-door-01"}
+      POST /api/rfid/device/{id}/register-card {uid: "AA:BB:CC:DD"}
     - Anlernmodus laeuft nach konfigurierbarem Timeout automatisch ab (Standard:
       60 Sekunden)
     - Visuelles Feedback: Gelbe/blaue LED blinkt waehrend des Anlernmodus
+    - Im Normalmodus (kein Anlernmodus aktiv) reduziert der ESP die Polling-
+      Frequenz auf alle 5 Sekunden, um Ressourcen zu schonen.
 
 1.5 Kartensynchronisation:
     - Beim Start des ESP32: Alle Karten vom Server laden und lokal speichern
-      GET /api/rfid/cards?device_id=esp32-door-01
-    - Server kann Kartenliste per Push aktualisieren (bei WebSocket) oder
-      ESP pollt in regelmaessigen Abstaenden (alle 5 Minuten)
-    - Bei Aenderungen auf dem Server (Karte hinzugefuegt/entfernt):
-      ESP bekommt aktualisierte Kartenliste
+      GET /api/rfid/device/{id}/cards
+    - ESP pollt die Kartenliste in regelmaessigen Abstaenden (alle 5 Minuten)
+      per HTTP-Request. Aenderungen auf dem Server (Karte hinzugefuegt,
+      entfernt oder deaktiviert) werden so innerhalb von 5 Minuten uebernommen.
+    - Zusaetzlich wird bei jedem Heartbeat (alle 30 Sekunden) ein kompakter
+      Hash/Versionszaehler der Kartenliste mitgesendet. Aendert sich der Hash,
+      laedt der ESP die vollstaendige Kartenliste sofort nach.
+
+    NVS-SPEICHERLIMIT:
+    - Der NVS (Non-Volatile Storage) des ESP32 bietet nur ca. 15-20 KB
+      nutzbaren Speicher. Pro RFID-Karte werden ca. 7 Bytes UID + 1 Byte
+      Status gespeichert, plus NVS-Overhead (~40 Bytes pro Eintrag).
+    - Maximales Limit: 50 Karten pro ESP32-Geraet. Dieses Limit muss sowohl
+      in der ESP32-Firmware als auch im Backend erzwungen werden.
+    - Im Backend: Beim Zuordnen von Karten zu einem Geraet pruefen, ob das
+      Limit von 50 Karten erreicht ist. Falls ja, Fehlermeldung zurueckgeben.
+    - Im Frontend: Anzeige der aktuellen Kartenanzahl pro Geraet mit Warnung
+      ab 40 Karten ("80% Speicher belegt") und Blockade bei 50.
+    - In der ESP32-Firmware: Karten werden in der NVS-Partition gespeichert
+      ueber die Preferences-Bibliothek. Bei Ueberschreitung des Limits wird
+      die aelteste unbenutzte Karte verdraengt.
 
 1.6 Konfiguration auf dem ESP:
     - WiFi-SSID und Passwort (ueber seriellen Monitor oder WiFiManager
@@ -397,16 +443,45 @@ zu oeffnen. Die Verwaltung erfolgt komplett ueber die bestehende Weboberflaeche.
 --------------------------------------------------------------------------------
 
 5.1 API-Key-Sicherheit:
-    - API-Keys werden serverseitig mit crypto.randomBytes generiert
+    - API-Keys werden serverseitig mit crypto.randomBytes(32) generiert
+      und als Hex-String (64 Zeichen) ausgegeben
     - Keys werden nur einmal bei der Erstellung im Klartext angezeigt
-    - In data.json werden die Keys als Hash gespeichert (scrypt)
+    - In data.json werden die Keys als SHA-256-Hash mit Salt gespeichert.
+      BEWUSST KEIN scrypt verwenden: Bei jedem Heartbeat (alle 30 Sekunden)
+      und jedem Kartenscan muss der Server den Hash berechnen. scrypt ist
+      dafuer auf einem Raspberry Pi zu rechenintensiv. SHA-256 mit Salt
+      bietet fuer einen Prototyp im lokalen Netzwerk ausreichend Sicherheit
+      bei deutlich besserer Performance.
+      Implementierung:
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hash = crypto.createHash('sha256')
+          .update(salt + apiKey).digest('hex');
+        // Gespeichert als: "sha256$<salt>$<hash>"
+      Verifikation:
+        const [algo, salt, storedHash] = device.apiKey.split('$');
+        const checkHash = crypto.createHash('sha256')
+          .update(salt + providedKey).digest('hex');
+        return checkHash === storedHash;
     - ESP32 sendet den Key im Header: "X-API-Key: <key>"
 
 5.2 Eingabevalidierung:
     - UID-Format validieren (hexadezimal, korrekte Laenge)
     - Device-ID: Nur alphanumerisch + Bindestriche, 3-50 Zeichen
     - Name: Max 100 Zeichen, kein HTML
-    - Rate-Limiting auf ESP-Endpunkten (max 60 Requests/Minute pro Device)
+
+5.2b Rate-Limiting (ESP-Endpunkte):
+    - Max 60 Requests pro Minute pro Device-ID
+    - Mechanismus: Einfacher In-Memory-Counter pro Device-ID mit Zeitfenster-
+      Reset. Implementierung als Object/Map im Server:
+        const rateLimits = {};  // { "esp32-door-01": { count: 12, resetAt: timestamp } }
+      Bei jedem ESP-Request:
+        1. Device-ID aus dem Request lesen
+        2. Wenn kein Eintrag oder resetAt < Date.now(): neuen Counter starten
+           mit count=1 und resetAt = Date.now() + 60000 (1 Minute)
+        3. Wenn count >= 60: HTTP 429 "Too Many Requests" zurueckgeben
+        4. Sonst: count um 1 erhoehen und Request verarbeiten
+    - Dieses einfache Verfahren reicht fuer den Prototyp voellig aus und
+      benoetigt keine externe Bibliothek.
 
 5.3 Zugriffskontrolle:
     - Alle Verwaltungsendpunkte nur fuer ADMIN-Rolle
@@ -426,19 +501,68 @@ zu oeffnen. Die Verwaltung erfolgt komplett ueber die bestehende Weboberflaeche.
 6. ESP32-FIRMWARE DATEISTRUKTUR
 --------------------------------------------------------------------------------
 
-Erstelle den ESP32-Code als PlatformIO-Projekt oder als Arduino-Sketch im
-Verzeichnis: Gewaechshaus/esp32-rfid-door/
+Erstelle den ESP32-Code als Arduino-Sketch im Verzeichnis:
+Gewaechshaus/esp32-rfid-door/
 
-Vorgeschlagene Dateistruktur:
+6.1 Vorgeschlagene Dateistruktur:
     esp32-rfid-door/
-    ├── esp32-rfid-door.ino      // Haupt-Sketch (oder main.cpp bei PlatformIO)
+    ├── esp32-rfid-door.ino      // Haupt-Sketch
     ├── config.h                  // Konfigurationsdatei (WiFi, Server-URL, etc.)
     ├── rfid_handler.h/.cpp       // RFID-Lese/Schreib-Logik
     ├── api_client.h/.cpp         // HTTP-Client fuer Server-Kommunikation
-    ├── card_storage.h/.cpp       // NVS/EEPROM Kartenspeicherung
+    ├── card_storage.h/.cpp       // NVS Kartenspeicherung (Preferences)
     ├── door_control.h/.cpp       // Relais/Tuer-Steuerung
     ├── led_buzzer.h/.cpp         // LED- und Buzzer-Feedback
     └── README.md                 // Verkabelungsanleitung, Setup-Instruktionen
+
+6.2 Verwendete Libraries (explizit festgelegt):
+    Die folgenden Libraries sollen verwendet werden. KEINE Alternativen
+    waehlen, um Konsistenz und Eindeutigkeit sicherzustellen:
+
+    RFID-Reader:
+    - Library: MFRC522 von Miguel Balboa (miguelbalboa/MFRC522)
+      GitHub: https://github.com/miguelbalboa/rfid
+      Installation: Arduino Library Manager -> "MFRC522" suchen
+      #include <MFRC522.h>
+      Begruendung: De-facto-Standard fuer MFRC522 mit Arduino/ESP32,
+      umfangreiche Dokumentation, aktive Community.
+
+    HTTP-Client:
+    - Library: HTTPClient (im ESP32-Arduino-Core enthalten)
+      #include <HTTPClient.h>
+      Begruendung: Keine zusaetzliche Installation noetig, bereits im
+      ESP32-Core integriert, unterstuetzt GET/POST/PUT/DELETE.
+
+    NVS-Kartenspeicherung:
+    - Library: Preferences (im ESP32-Arduino-Core enthalten)
+      #include <Preferences.h>
+      Begruendung: Einfache Key-Value-API fuer den NVS-Speicher,
+      keine zusaetzliche Installation noetig, persistiert ueber Resets.
+
+    WiFi:
+    - Library: WiFi (im ESP32-Arduino-Core enthalten)
+      #include <WiFi.h>
+      Optional fuer Captive-Portal-Setup: WiFiManager von tzapu
+      #include <WiFiManager.h>
+
+    SPI (fuer MFRC522):
+    - Library: SPI (Built-in)
+      #include <SPI.h>
+
+    JSON-Verarbeitung:
+    - Library: ArduinoJson von Benoit Blanchon (bblanchon/ArduinoJson)
+      #include <ArduinoJson.h>
+      Installation: Arduino Library Manager -> "ArduinoJson" suchen
+      Begruendung: Effizientes JSON-Parsing und -Serialisierung,
+      speziell optimiert fuer Mikrocontroller mit begrenztem RAM.
+
+    ZUSAMMENFASSUNG der #include-Direktiven im Haupt-Sketch:
+    #include <SPI.h>             // Built-in: SPI-Bus fuer MFRC522
+    #include <MFRC522.h>         // Extern: RFID-Reader
+    #include <WiFi.h>            // Built-in: WiFi-Verbindung
+    #include <HTTPClient.h>      // Built-in: HTTP-Requests
+    #include <Preferences.h>     // Built-in: NVS-Speicher
+    #include <ArduinoJson.h>     // Extern: JSON-Verarbeitung
 
 
 --------------------------------------------------------------------------------
@@ -484,12 +608,29 @@ Vorgeschlagene Dateistruktur:
     11. Integration & Tests
     12. Audit-Log-Integration
 
-7.5 Testbarkeit:
+7.5 Testbarkeit & Simulationsmodus:
     - Die Backend-API sollte mit curl oder Postman testbar sein, auch ohne
       echten ESP32
-    - Im Frontend sollte es eine Moeglichkeit geben, einen "simulierten"
-      Kartenscan auszuloesen (z.B. Button "Scan simulieren" im Dev-Modus)
     - Device-Status kann manuell ueber die API gesetzt werden
+
+    SIMULATIONSMODUS IM FRONTEND:
+    - In der Geraete-Verwaltung soll pro Geraet ein aufklappbarer Bereich
+      "Scan simulieren" vorhanden sein (nur sichtbar im Admin-Panel).
+    - Dieser Bereich enthaelt:
+      a) Ein Textfeld zur Eingabe einer UID (Platzhalter: "AA:BB:CC:DD",
+         Validierung auf hexadezimales Format mit Doppelpunkt-Trennung)
+      b) Einen Button "Scan ausfuehren", der den eingegebenen Wert per
+         POST /api/rfid/access {uid: "<eingegebene-uid>", device_id: "<geraet-id>"}
+         an die API sendet
+      c) Einen Button "Zufaellige UID", der eine zufaellige 4-Byte-UID
+         generiert und ins Textfeld eintraegt (zum schnellen Testen
+         unbekannter Karten)
+      d) Ein Ergebnis-Feld, das die Server-Antwort anzeigt:
+         - Gruen: "Zugang gewaehrt fuer <Kartenname>"
+         - Rot: "Zugang verweigert - Karte unbekannt/deaktiviert"
+         - Blau: "Karte registriert" (wenn Geraet im Anlernmodus)
+    - Dieser Simulationsmodus erlaubt vollstaendiges Testen des gesamten
+      Flows (Zugang, Ablehnung, Anlernmodus) ohne physische RFID-Hardware.
 
 
 --------------------------------------------------------------------------------
