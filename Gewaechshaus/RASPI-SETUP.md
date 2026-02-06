@@ -233,152 +233,157 @@ pm2 logs gewachshaus
 
 ---
 
-## Konfiguration
+## Configuration
 
-### Umgebungsvariablen
+### Environment Variables
 
-Entweder in der systemd Service-Datei oder als `.env` Datei:
-
-```bash
-nano ~/gewachshaus/.env
-```
-
-### Beispiel: `.env` Datei
+Either in the systemd service file or as `.env` file:
 
 ```bash
 nano ~/gewachshaus/.env
 ```
+
+### Example: `.env` file
 
 ```env
-# Server-Konfiguration
+# Server configuration
 PORT=3001
 NODE_ENV=production
 
-# Admin-Account (ändern Sie dies!)
+# Admin account (change this!)
 ADMIN_USER=admin
-ADMIN_PASS=ihr_sicheres_passwort
+ADMIN_PASS=your_secure_password
 
-# Sicherheit (wichtig!)
+# Security (important!)
 SESSION_SECRET=$(openssl rand -hex 32)
 
-# Optional: CORS für externe Zugriffe
+# Optional: CORS for external access
 ALLOWED_ORIGINS=http://192.168.1.100:3001
 ```
 
-### SMTP-Konfiguration
+### SMTP Configuration
 
-Die E-Mail-Einstellungen werden im **Admin Panel** unter **E-Mail → SMTP-Einstellungen** konfiguriert:
+The email settings are configured in the **Admin Panel** under **E-Mail → SMTP Settings**:
 
-1. Browser öffnen: `http://raspberry-pi-ip:3001`
-2. Als Admin anmelden
-3. Modus → Admin
-4. E-Mail → SMTP-Einstellungen
+1. Open browser: `http://raspberry-pi-ip:3001`
+2. Login as admin
+3. Mode → Admin
+4. E-Mail → SMTP Settings
+
+### RFID Door Access
+
+To set up RFID door access control:
+
+1. Connect ESP32 hardware as described in [esp32-rfid-door/README.md](esp32-rfid-door/README.md)
+2. Register device in Admin Panel under **RFID Door Access**
+3. Copy the generated API key to `config.h` in the ESP32 firmware
+4. Upload firmware to ESP32
 
 ---
 
 ## Troubleshooting
 
-### Häufige Probleme
+### Common Problems
 
-#### Node.js Version zu alt
+#### Node.js Version too old
 
 ```bash
 node --version
-# Falls < v18:
+# If < v18:
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-#### Server startet nicht
+#### Server does not start
 
 ```bash
-# Logs prüfen
+# Check logs
 ./start.sh logs
-# oder
+# or
 journalctl -u gewachshaus -n 50
 
-# Port bereits belegt?
+# Port already in use?
 sudo lsof -i :3001
 ```
 
-#### Keine Verbindung aus dem Netzwerk
+#### No connection from the network
 
 ```bash
-# Firewall prüfen
+# Check firewall
 sudo ufw status
 
-# Port freigeben
+# Open port
 sudo ufw allow 3001
 
-# IP-Adresse prüfen
+# Check IP address
 hostname -I
 ```
 
-#### Berechtigungsprobleme
+#### Permission problems
 
 ```bash
-# Dateiberechtigungen reparieren
+# Fix file permissions
 sudo chown -R pi:pi ~/gewachshaus
 chmod 755 ~/gewachshaus
 chmod 644 ~/gewachshaus/data.json
 ```
 
-### Diagnose-Befehle
+### Diagnostic Commands
 
-| Befehl | Beschreibung |
+| Command | Description |
 |--------|-------------|
 | `node --version` | Node.js Version |
 | `npm --version` | npm Version |
-| `hostname -I` | IP-Adresse |
-| `free -h` | RAM-Nutzung |
-| `df -h` | Speicherplatz |
-| `top` | CPU-Nutzung |
-| `journalctl -u gewachshaus -f` | Live-Logs |
+| `hostname -I` | IP address |
+| `free -h` | RAM usage |
+| `df -h` | Disk space |
+| `top` | CPU usage |
+| `journalctl -u gewachshaus -f` | Live logs |
 
 ---
 
-## Systemüberwachung
+## System Monitoring
 
-### Performance-Optimierung
+### Performance Optimization
 
-#### RAM-Nutzung optimieren
+#### Optimize RAM usage
 
-Für Raspberry Pi mit wenig RAM (1 GB):
+For Raspberry Pi with little RAM (1 GB):
 
 ```bash
-# Swap vergrößern
+# Increase swap
 sudo dphys-swapfile swapoff
 sudo nano /etc/dphys-swapfile
-# CONF_SWAPSIZE=1024 setzen (statt 512)
+# Set CONF_SWAPSIZE=1024 (instead of 512)
 sudo dphys-swapfile setup
 sudo dphys-swapfile swapon
 ```
 
-#### Node.js Optimierung
+#### Node.js Optimization
 
 ```bash
-# Umgebungsvariable für geringeren Speicherverbrauch
+# Environment variable for lower memory usage
 echo 'export NODE_OPTIONS="--max-old-space-size=256"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
-#### System-Überwachung
+#### System Monitoring
 
 ```bash
-# System-Monitoring Tools installieren
+# Install system monitoring tools
 sudo apt install -y htop iotop
 
-# Prozess-Überwachung
+# Process monitoring
 htop
 
-# I/O-Überwachung
+# I/O monitoring
 sudo iotop
 ```
 
-### Automatisches Backup
+### Automatic Backup
 
 ```bash
-# Backup-Skript erstellen
+# Create backup script
 nano ~/backup-gewachshaus.sh
 ```
 
@@ -388,46 +393,46 @@ DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR=~/backups
 SOURCE_DIR=~/gewachshaus
 
-# Verzeichnisse erstellen
+# Create directories
 mkdir -p $BACKUP_DIR
 
-# Daten sichern
+# Backup data
 cp $SOURCE_DIR/data.json $BACKUP_DIR/data_$DATE.json
 
-# Konfiguration sichern (falls vorhanden)
+# Backup configuration (if exists)
 if [ -f "$SOURCE_DIR/.env" ]; then
     cp $SOURCE_DIR/.env $BACKUP_DIR/env_$DATE.backup
 fi
 
-# Alte Backups aufräumen (älter als 30 Tage)
+# Clean old backups (older than 30 days)
 find $BACKUP_DIR -name "data_*.json" -mtime +30 -delete
 find $BACKUP_DIR -name "env_*.backup" -mtime +30 -delete
 
-# Log-Eintrag
-echo "Backup erstellt: $DATE" >> $BACKUP_DIR/backup.log
+# Log entry
+echo "Backup created: $DATE" >> $BACKUP_DIR/backup.log
 ```
 
 ```bash
-# Ausführbar machen
+# Make executable
 chmod +x ~/backup-gewachshaus.sh
 
-# Cron-Job einrichten (täglich um 3 Uhr)
+# Setup cron job (daily at 3 AM)
 crontab -e
-# Folgende Zeile hinzufügen:
+# Add this line:
 0 3 * * * /home/pi/backup-gewachshaus.sh
 ```
 
 ---
 
-## Sicherheitsempfehlungen
+## Security Recommendations
 
-| Empfehlung | Befehl / Anleitung |
+| Recommendation | Command / Instructions |
 |------------|-------------------|
-| **SSH-Key statt Passwort** | `ssh-copy-id pi@raspberry-pi-ip` |
-| **Standard-Passwort ändern** | `passwd` |
-| **Firewall aktivieren** | `sudo ufw enable && sudo ufw allow 22 && sudo ufw allow 3001` |
-| **Automatische Updates** | `sudo apt install unattended-upgrades` |
-| **HTTPS (optional)** | Nginx + Let's Encrypt als Reverse Proxy |
+| **SSH key instead of password** | `ssh-copy-id pi@raspberry-pi-ip` |
+| **Change default password** | `passwd` |
+| **Enable firewall** | `sudo ufw enable && sudo ufw allow 22 && sudo ufw allow 3001` |
+| **Automatic updates** | `sudo apt install unattended-upgrades` |
+| **HTTPS (optional)** | Nginx + Let's Encrypt as reverse proxy |
 
 ---
 

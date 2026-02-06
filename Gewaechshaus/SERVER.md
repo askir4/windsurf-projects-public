@@ -75,16 +75,19 @@ The server uses a simple JSON file as database.
 
 ```text
 data.json
-├── users          # Benutzerkonten
-├── zones          # Hochbeete/Zonen
-├── plants         # Pflanzen
-├── forumPosts     # Forum-Beiträge
-├── settings       # Allgemeine Einstellungen
-├── colorScheme    # Farbschema
-├── emailConfig    # E-Mail-Konfiguration
-├── emailLogs      # Versandprotokoll
-├── logs           # System-Logs
-└── auditLogs      # Audit-Logs
+├── users          # User accounts
+├── zones          # Raised beds/Zones
+├── plants         # Plants
+├── forumPosts     # Forum posts
+├── settings       # General settings
+├── colorScheme    # Color scheme
+├── emailConfig    # Email configuration
+├── emailLogs      # Delivery log
+├── logs           # System logs
+├── auditLogs      # Audit logs
+├── rfidDevices    # RFID door controllers
+├── rfidCards      # RFID cards
+└── rfidAccessLogs # Access history
 ```
 
 ### Security Features
@@ -176,6 +179,55 @@ data.json
 | `GET` | `/api/health` | Health check |
 | `GET` | `/api/logs` | System logs (Admin) |
 | `GET` | `/api/audit-logs` | Audit logs (Admin) |
+
+### RFID Door Access (Admin & ESP32)
+
+#### Device Management (Admin)
+
+| Method | Endpoint | Description | Auth |
+|---------|----------|--------------|------|
+| `GET` | `/api/rfid/devices` | All devices | Admin |
+| `POST` | `/api/rfid/devices` | Register device | Admin |
+| `GET` | `/api/rfid/devices/:id` | Single device | Admin |
+| `PUT` | `/api/rfid/devices/:id` | Update device | Admin |
+| `DELETE` | `/api/rfid/devices/:id` | Delete device | Admin |
+| `POST` | `/api/rfid/devices/:id/mode` | Set mode (normal/learning) | Admin |
+| `POST` | `/api/rfid/devices/:id/regenerate-key` | New API key | Admin |
+
+#### Card Management (Admin)
+
+| Method | Endpoint | Description | Auth |
+|---------|----------|--------------|------|
+| `GET` | `/api/rfid/cards` | All cards | Admin |
+| `POST` | `/api/rfid/cards` | Register card | Admin |
+| `GET` | `/api/rfid/cards/:id` | Single card | Admin |
+| `PUT` | `/api/rfid/cards/:id` | Update card | Admin |
+| `DELETE` | `/api/rfid/cards/:id` | Delete card | Admin |
+
+#### ESP32 Endpoints (API Key)
+
+| Method | Endpoint | Description | Auth |
+|---------|----------|--------------|------|
+| `POST` | `/api/rfid/access` | Check card access | API Key |
+| `POST` | `/api/rfid/access-bulk` | Report offline events | API Key |
+| `POST` | `/api/rfid/heartbeat` | Device heartbeat | API Key |
+| `GET` | `/api/rfid/device/:id/mode` | Get current mode | API Key |
+| `GET` | `/api/rfid/device/:id/cards` | Get card list | API Key |
+| `POST` | `/api/rfid/device/:id/register-card` | Register via learning mode | API Key |
+
+#### Access Logs (Admin)
+
+| Method | Endpoint | Description | Auth |
+|---------|----------|--------------|------|
+| `GET` | `/api/rfid/access-logs` | Access history | Admin |
+
+Query parameters for access logs:
+- `limit` - Number of entries (default: 100, max: 2000)
+- `device_id` - Filter by device
+- `uid` - Filter by card UID
+- `action` - Filter by action (ACCESS_GRANTED, ACCESS_DENIED, CARD_REGISTERED, CARD_UNKNOWN)
+- `from` - Start date (ISO 8601)
+- `to` - End date (ISO 8601)
 
 ---
 

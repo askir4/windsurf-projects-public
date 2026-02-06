@@ -40,6 +40,7 @@ The Greenhouse Webapp is a comprehensive solution for intelligent management of 
 - **Sensor Integration**: Real-time data from temperature, humidity, soil moisture, and water tank
 - **Alarm System**: Automatic email notification for threshold violations
 - **Community Forum**: Exchange platform for users with tags and search
+- **RFID Door Access**: Secure door control with ESP32 and RFID cards, learning mode, offline support
 - **Admin Panel**: Comprehensive management interface for users, settings, and logs
 
 ## Features
@@ -62,6 +63,19 @@ The Greenhouse Webapp is a comprehensive solution for intelligent management of 
 | **Full-text Search** | Search by user or content |
 | **Highlighting** | Matches are highlighted |
 | **Comments** | Collapsible discussions |
+
+### RFID Door Access
+
+Secure access control for greenhouse doors with ESP32 and RFID cards.
+
+| Feature | Description |
+|---------|-------------|
+| **Device Management** | Register and manage ESP32 door controllers |
+| **Card Management** | Add, edit, and assign RFID cards to devices |
+| **Learning Mode** | Automatic card registration via physical scan |
+| **Offline Support** | Local card storage on ESP32 for offline access |
+| **Access Logs** | Complete audit trail of all access attempts |
+| **Simulation** | Test access without hardware via web interface |
 
 ### Sensors & Monitoring
 
@@ -185,7 +199,11 @@ gewachshaus/
 ├── color-manager.js   # Color scheme management
 ├── log-utils.js       # Logging utilities
 ├── data.json          # Persistent data
-└── assets/            # Icons and images
+├── assets/            # Icons and images
+└── esp32-rfid-door/   # ESP32 firmware for RFID access control
+    ├── esp32-rfid-door.ino
+    ├── config.h
+    └── ...
 ```
 
 ### Technology Stack
