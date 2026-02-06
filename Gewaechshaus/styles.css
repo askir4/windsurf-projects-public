@@ -195,6 +195,14 @@ body.dark-mode .btn-success:hover {
     background: #229954;
 }
 
+body.dark-mode .btn-warning {
+    background: #f39c12;
+}
+
+body.dark-mode .btn-warning:hover {
+    background: #e67e22;
+}
+
 body.dark-mode .btn-danger {
     background: #e74c3c;
 }
@@ -1811,6 +1819,17 @@ body.dark-mode .mode-btn:not(.active):hover {
     background: #229954;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.btn-warning {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #e67e22;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
 }
 
 .btn-secondary {
@@ -5607,4 +5626,599 @@ body.dark-mode .color-input-wrapper input[type="color"] {
 
 body.dark-mode .color-preview-box {
     border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ============== RFID MANAGEMENT STYLES ============== */
+
+.rfid-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid var(--border-color, rgba(17, 24, 39, 0.12));
+    padding-bottom: 0;
+}
+
+.rfid-tab-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #6b7280);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rfid-tab-btn:hover {
+    color: var(--text-color, #1f2937);
+    background: rgba(0,0,0,0.03);
+}
+
+.rfid-tab-btn.active {
+    color: var(--primary-color, #3498db);
+    border-bottom-color: var(--primary-color, #3498db);
+}
+
+.rfid-tab-content {
+    display: none;
+}
+
+.rfid-tab-content.active {
+    display: block;
+}
+
+.rfid-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.rfid-section-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.rfid-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.rfid-search-input,
+.rfid-filter-select,
+.rfid-filter-input {
+    padding: 6px 10px;
+    border: 1px solid var(--border-color, rgba(17, 24, 39, 0.12));
+    border-radius: var(--radius-sm, 6px);
+    font-size: 0.82rem;
+    background: var(--bg-surface, #fff);
+    color: var(--text-color, #1f2937);
+}
+
+.rfid-search-input {
+    flex: 1;
+    min-width: 140px;
+}
+
+.rfid-filter-select {
+    min-width: 120px;
+}
+
+.rfid-filter-input {
+    min-width: 130px;
+}
+
+.rfid-empty-state {
+    text-align: center;
+    color: var(--text-muted, #6b7280);
+    padding: 20px;
+    font-size: 0.85rem;
+}
+
+/* Device Cards */
+.rfid-device-card {
+    border: 1px solid var(--border-color, rgba(17, 24, 39, 0.12));
+    border-radius: var(--radius-sm, 6px);
+    padding: 12px;
+    margin-bottom: 10px;
+    background: var(--bg-surface, #fff);
+    transition: box-shadow 0.2s;
+}
+
+.rfid-device-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.rfid-device-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.rfid-device-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.rfid-device-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-muted, #6b7280);
+    margin-bottom: 10px;
+}
+
+.rfid-device-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rfid-device-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.rfid-device-actions .btn {
+    font-size: 0.78rem;
+    padding: 4px 10px;
+}
+
+/* Status Badges */
+.rfid-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.rfid-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.rfid-status-badge.online {
+    background: rgba(39, 174, 96, 0.12);
+    color: #27ae60;
+}
+
+.rfid-status-badge.online .rfid-status-dot {
+    background: #27ae60;
+    animation: rfid-pulse 2s infinite;
+}
+
+.rfid-status-badge.offline {
+    background: rgba(231, 76, 60, 0.12);
+    color: #e74c3c;
+}
+
+.rfid-status-badge.offline .rfid-status-dot {
+    background: #e74c3c;
+}
+
+.rfid-status-badge.learning {
+    background: rgba(243, 156, 18, 0.12);
+    color: #f39c12;
+}
+
+.rfid-status-badge.learning .rfid-status-dot {
+    background: #f39c12;
+    animation: rfid-blink 1s infinite;
+}
+
+@keyframes rfid-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+@keyframes rfid-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Card Table */
+.rfid-card-item {
+    border: 1px solid var(--border-color, rgba(17, 24, 39, 0.12));
+    border-radius: var(--radius-sm, 6px);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--bg-surface, #fff);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rfid-card-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.rfid-card-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.rfid-card-uid {
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: var(--text-muted, #6b7280);
+    background: rgba(0,0,0,0.04);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.rfid-card-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--text-muted, #6b7280);
+    flex-wrap: wrap;
+}
+
+.rfid-card-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.rfid-card-actions .btn {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+}
+
+.rfid-device-chip {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    background: rgba(52, 152, 219, 0.12);
+    color: var(--primary-color, #3498db);
+    font-weight: 500;
+}
+
+/* Access Log Badges */
+.rfid-action-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.rfid-action-badge.ACCESS_GRANTED {
+    background: rgba(39, 174, 96, 0.12);
+    color: #27ae60;
+}
+
+.rfid-action-badge.ACCESS_DENIED {
+    background: rgba(231, 76, 60, 0.12);
+    color: #e74c3c;
+}
+
+.rfid-action-badge.CARD_REGISTERED {
+    background: rgba(52, 152, 219, 0.12);
+    color: #3498db;
+}
+
+.rfid-action-badge.CARD_UNKNOWN {
+    background: rgba(243, 156, 18, 0.12);
+    color: #f39c12;
+}
+
+/* Access Log Table */
+.rfid-log-item {
+    display: grid;
+    grid-template-columns: 140px 1fr 100px 100px 80px;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color, rgba(17, 24, 39, 0.08));
+    font-size: 0.8rem;
+    align-items: center;
+}
+
+.rfid-log-item:last-child {
+    border-bottom: none;
+}
+
+.rfid-log-time {
+    color: var(--text-muted, #6b7280);
+    font-size: 0.78rem;
+}
+
+.rfid-log-card {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rfid-log-card-name {
+    font-weight: 500;
+}
+
+.rfid-log-card-uid {
+    font-family: monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.rfid-log-device {
+    font-size: 0.78rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.rfid-log-method {
+    font-size: 0.72rem;
+    color: var(--text-muted, #6b7280);
+    text-transform: uppercase;
+}
+
+/* API Key Display */
+.rfid-api-key-display {
+    margin-top: 16px;
+    padding: 12px;
+    border: 2px solid #f39c12;
+    border-radius: var(--radius-sm, 6px);
+    background: rgba(243, 156, 18, 0.06);
+}
+
+.rfid-api-key-warning {
+    color: #f39c12;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rfid-api-key-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.rfid-api-key-value code {
+    flex: 1;
+    padding: 8px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    word-break: break-all;
+    font-family: monospace;
+}
+
+/* Device Checkboxes in Card Modal */
+.rfid-device-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rfid-device-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color, rgba(17, 24, 39, 0.12));
+    border-radius: var(--radius-sm, 6px);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.15s;
+}
+
+.rfid-device-checkboxes label:hover {
+    background: rgba(0,0,0,0.03);
+}
+
+/* Simulation Area */
+.rfid-sim-area {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px dashed var(--border-color, rgba(17, 24, 39, 0.2));
+    border-radius: var(--radius-sm, 6px);
+    background: rgba(0,0,0,0.02);
+}
+
+.rfid-sim-area h5 {
+    margin: 0 0 8px 0;
+    font-size: 0.82rem;
+    color: var(--text-muted, #6b7280);
+}
+
+.rfid-sim-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.rfid-sim-row input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid var(--border-color, rgba(17, 24, 39, 0.12));
+    border-radius: var(--radius-sm, 6px);
+    font-family: monospace;
+    font-size: 0.82rem;
+}
+
+.rfid-sim-result {
+    padding: 8px;
+    border-radius: var(--radius-sm, 6px);
+    font-size: 0.82rem;
+    font-weight: 500;
+    display: none;
+}
+
+.rfid-sim-result.granted {
+    display: block;
+    background: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+}
+
+.rfid-sim-result.denied {
+    display: block;
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+}
+
+.rfid-sim-result.registered {
+    display: block;
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+}
+
+/* Learning Mode Countdown */
+.rfid-learning-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(243, 156, 18, 0.12);
+    color: #f39c12;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* Card count warning */
+.rfid-card-count-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.08);
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.rfid-card-count-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+
+.rfid-card-count-fill.ok { background: #27ae60; }
+.rfid-card-count-fill.warn { background: #f39c12; }
+.rfid-card-count-fill.full { background: #e74c3c; }
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #ccc;
+    border-radius: 24px;
+    transition: 0.3s;
+}
+
+.toggle-slider:before {
+    content: "";
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--primary-color, #3498db);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .rfid-log-item {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+    .rfid-device-meta {
+        grid-template-columns: 1fr 1fr;
+    }
+    .rfid-tabs {
+        overflow-x: auto;
+    }
+    .rfid-filters {
+        flex-direction: column;
+    }
+}
+
+/* Dark Mode RFID */
+body.dark-mode .rfid-device-card,
+body.dark-mode .rfid-card-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .rfid-card-uid {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .rfid-sim-area {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-mode .rfid-search-input,
+body.dark-mode .rfid-filter-select,
+body.dark-mode .rfid-filter-input {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+}
+
+body.dark-mode .rfid-api-key-value code {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+
+body.dark-mode .rfid-device-checkboxes label {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .rfid-device-checkboxes label:hover {
+    background: rgba(255, 255, 255, 0.05);
 }

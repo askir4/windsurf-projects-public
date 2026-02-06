@@ -385,6 +385,91 @@
         </div>
     </div>
 
+    <!-- RFID: Gerät hinzufügen/bearbeiten Modal -->
+    <div class="modal-overlay hidden" id="rfidDeviceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="rfidDeviceModalTitle"><i class="fas fa-microchip"></i> Neues Gerät</h2>
+                <button class="modal-close" data-close="rfidDeviceModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="rfidDeviceId">Device-ID</label>
+                    <input type="text" id="rfidDeviceId" placeholder="z.B. esp32-door-01" pattern="[a-zA-Z0-9\-]{3,50}">
+                    <small class="form-hint">3-50 Zeichen, alphanumerisch + Bindestriche</small>
+                </div>
+                <div class="form-group">
+                    <label for="rfidDeviceName">Name</label>
+                    <input type="text" id="rfidDeviceName" placeholder="z.B. Gewächshaus Tür" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="rfidDeviceDoorDuration">Tür-Öffnungsdauer (Sekunden)</label>
+                    <input type="number" id="rfidDeviceDoorDuration" min="1" max="30" value="3">
+                </div>
+                <div class="form-group">
+                    <label for="rfidDeviceLearningTimeout">Anlernmodus-Timeout (Sekunden)</label>
+                    <input type="number" id="rfidDeviceLearningTimeout" min="15" max="300" value="60">
+                </div>
+                <div class="rfid-api-key-display hidden" id="rfidApiKeyDisplay">
+                    <div class="rfid-api-key-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Diesen API-Key jetzt kopieren! Er wird nur einmal angezeigt.
+                    </div>
+                    <div class="rfid-api-key-value">
+                        <code id="rfidApiKeyValue"></code>
+                        <button class="btn btn-secondary btn-sm" id="rfidCopyApiKey" title="Kopieren"><i class="fas fa-copy"></i></button>
+                    </div>
+                    <small>Diesen API-Key in die ESP32-Konfiguration (config.h) eintragen.</small>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" data-close="rfidDeviceModal">Abbrechen</button>
+                <button class="btn btn-primary" id="rfidSaveDeviceBtn"><i class="fas fa-save"></i> Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RFID: Karte hinzufügen/bearbeiten Modal -->
+    <div class="modal-overlay hidden" id="rfidCardModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="rfidCardModalTitle"><i class="fas fa-credit-card"></i> Neue Karte</h2>
+                <button class="modal-close" data-close="rfidCardModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="rfidCardUid">Karten-UID</label>
+                    <input type="text" id="rfidCardUid" placeholder="z.B. AA:BB:CC:DD" style="font-family: monospace;">
+                    <small class="form-hint">Hexadezimales Format mit Doppelpunkt-Trennung. Alternativ im Anlernmodus die Karte am Leser vorhalten.</small>
+                </div>
+                <div class="form-group">
+                    <label for="rfidCardName">Name</label>
+                    <input type="text" id="rfidCardName" placeholder="z.B. Max Mustermann" maxlength="100">
+                </div>
+                <div class="form-group">
+                    <label for="rfidCardNotes">Notizen</label>
+                    <textarea id="rfidCardNotes" rows="2" maxlength="500" placeholder="Optionale Notizen..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Karte aktiv</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="rfidCardEnabled" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Geräte-Zuordnung</label>
+                    <div id="rfidCardDeviceCheckboxes" class="rfid-device-checkboxes">
+                        <p class="rfid-empty-state"><i class="fas fa-info-circle"></i> Keine Geräte verfügbar.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" data-close="rfidCardModal">Abbrechen</button>
+                <button class="btn btn-primary" id="rfidSaveCardBtn"><i class="fas fa-save"></i> Speichern</button>
+            </div>
+        </div>
+    </div>
+
     <main>
         <div class="container">
             <aside class="control-panel">
@@ -707,6 +792,75 @@
                                 <button id="resetColors" class="btn btn-secondary">
                                     <i class="fas fa-undo"></i> Zurücksetzen
                                 </button>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="accordion-card" id="rfidManagementCard">
+                        <summary class="accordion-summary"><i class="fas fa-id-card"></i> Türzugangskontrolle (RFID)</summary>
+                        <div class="accordion-body">
+                            <div class="rfid-tabs">
+                                <button class="rfid-tab-btn active" data-rfid-tab="devices"><i class="fas fa-microchip"></i> Geräte</button>
+                                <button class="rfid-tab-btn" data-rfid-tab="cards"><i class="fas fa-credit-card"></i> Karten</button>
+                                <button class="rfid-tab-btn" data-rfid-tab="access-logs"><i class="fas fa-list-alt"></i> Zugangs-Logs</button>
+                            </div>
+
+                            <!-- Geräte Tab -->
+                            <div class="rfid-tab-content active" id="rfid-tab-devices">
+                                <div class="rfid-section-header">
+                                    <h4>ESP32-Geräte</h4>
+                                    <button class="btn btn-primary btn-sm" id="rfidAddDeviceBtn"><i class="fas fa-plus"></i> Gerät hinzufügen</button>
+                                </div>
+                                <div id="rfidDevicesList" class="rfid-devices-list">
+                                    <p class="rfid-empty-state"><i class="fas fa-info-circle"></i> Keine Geräte registriert.</p>
+                                </div>
+                            </div>
+
+                            <!-- Karten Tab -->
+                            <div class="rfid-tab-content" id="rfid-tab-cards">
+                                <div class="rfid-section-header">
+                                    <h4>RFID-Karten</h4>
+                                    <button class="btn btn-primary btn-sm" id="rfidAddCardBtn"><i class="fas fa-plus"></i> Karte hinzufügen</button>
+                                </div>
+                                <div class="rfid-filters">
+                                    <input type="text" id="rfidCardSearch" placeholder="Name oder UID suchen..." class="rfid-search-input">
+                                    <select id="rfidCardStatusFilter" class="rfid-filter-select">
+                                        <option value="">Alle Status</option>
+                                        <option value="true">Aktiv</option>
+                                        <option value="false">Deaktiviert</option>
+                                    </select>
+                                    <select id="rfidCardDeviceFilter" class="rfid-filter-select">
+                                        <option value="">Alle Geräte</option>
+                                    </select>
+                                </div>
+                                <div id="rfidCardsList" class="rfid-cards-list">
+                                    <p class="rfid-empty-state"><i class="fas fa-info-circle"></i> Keine Karten registriert.</p>
+                                </div>
+                            </div>
+
+                            <!-- Access Logs Tab -->
+                            <div class="rfid-tab-content" id="rfid-tab-access-logs">
+                                <div class="rfid-section-header">
+                                    <h4>Zugangs-Protokoll</h4>
+                                    <button class="btn btn-secondary btn-sm" id="rfidRefreshLogsBtn"><i class="fas fa-sync-alt"></i> Aktualisieren</button>
+                                </div>
+                                <div class="rfid-filters">
+                                    <select id="rfidLogDeviceFilter" class="rfid-filter-select">
+                                        <option value="">Alle Geräte</option>
+                                    </select>
+                                    <select id="rfidLogActionFilter" class="rfid-filter-select">
+                                        <option value="">Alle Aktionen</option>
+                                        <option value="ACCESS_GRANTED">Zugang gewährt</option>
+                                        <option value="ACCESS_DENIED">Zugang verweigert</option>
+                                        <option value="CARD_REGISTERED">Karte registriert</option>
+                                        <option value="CARD_UNKNOWN">Unbekannte Karte</option>
+                                    </select>
+                                    <input type="date" id="rfidLogFromDate" class="rfid-filter-input" title="Von Datum">
+                                    <input type="date" id="rfidLogToDate" class="rfid-filter-input" title="Bis Datum">
+                                </div>
+                                <div id="rfidAccessLogsList" class="rfid-access-logs-list">
+                                    <p class="rfid-empty-state"><i class="fas fa-info-circle"></i> Keine Zugangs-Logs vorhanden.</p>
+                                </div>
                             </div>
                         </div>
                     </details>

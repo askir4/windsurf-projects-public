@@ -45,7 +45,10 @@ function createEmptyData() {
             defaultTemplateId: null,
             recipients: []
         },
-        emailLogs: []
+        emailLogs: [],
+        rfidDevices: [],
+        rfidCards: [],
+        rfidAccessLogs: []
     };
 }
 
@@ -64,7 +67,10 @@ function normalizeData(loaded) {
         forumPosts: Array.isArray(merged.forumPosts) ? merged.forumPosts : base.forumPosts,
         settings: merged.settings && typeof merged.settings === 'object' ? merged.settings : base.settings,
         emailConfig: normalizeEmailConfig(merged.emailConfig),
-        emailLogs: Array.isArray(merged.emailLogs) ? merged.emailLogs : base.emailLogs
+        emailLogs: Array.isArray(merged.emailLogs) ? merged.emailLogs : base.emailLogs,
+        rfidDevices: Array.isArray(merged.rfidDevices) ? merged.rfidDevices : base.rfidDevices,
+        rfidCards: Array.isArray(merged.rfidCards) ? merged.rfidCards : base.rfidCards,
+        rfidAccessLogs: Array.isArray(merged.rfidAccessLogs) ? merged.rfidAccessLogs.slice(0, 2000) : base.rfidAccessLogs
     };
 }
 
@@ -446,7 +452,7 @@ function sendJson(res, data, status = 200, req = null) {
         'Content-Type': 'application/json; charset=utf-8',
         ...(currentRequestOrigin ? { 'Access-Control-Allow-Origin': currentRequestOrigin } : {}),
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
         ...(currentRequestOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {})
     });
     res.end(JSON.stringify(data));
@@ -528,6 +534,114 @@ setInterval(() => {
         }
     }
 }, 5 * 60 * 1000);
+
+// ============== RFID HELPERS ==============
+const rfidRateLimits = {};
+
+function checkRfidRateLimit(deviceId) {
+    const now = Date.now();
+    const record = rfidRateLimits[deviceId];
+    if (!record || now > record.resetAt) {
+        rfidRateLimits[deviceId] = { count: 1, resetAt: now + 60000 };
+        return true;
+    }
+    if (record.count >= 60) return false;
+    record.count++;
+    return true;
+}
+
+// Cleanup RFID rate limits
+setInterval(() => {
+    const now = Date.now();
+    for (const id of Object.keys(rfidRateLimits)) {
+        if (now > rfidRateLimits[id].resetAt) delete rfidRateLimits[id];
+    }
+}, 60000);
+
+function generateApiKey() {
+    const raw = crypto.randomBytes(32).toString('hex');
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.createHash('sha256').update(salt + raw).digest('hex');
+    return { raw, stored: `sha256$${salt}$${hash}` };
+}
+
+function verifyApiKey(providedKey, storedKey) {
+    if (!providedKey || !storedKey) return false;
+    const parts = storedKey.split('$');
+    if (parts.length !== 3 || parts[0] !== 'sha256') return false;
+    const salt = parts[1];
+    const storedHash = parts[2];
+    const checkHash = crypto.createHash('sha256').update(salt + providedKey).digest('hex');
+    return checkHash === storedHash;
+}
+
+function authenticateDevice(req) {
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey) return null;
+    return data.rfidDevices.find(d => verifyApiKey(apiKey, d.apiKey));
+}
+
+function validateUid(uid) {
+    if (!uid || typeof uid !== 'string') return false;
+    return /^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){2,6}$/.test(uid.trim());
+}
+
+function validateDeviceId(id) {
+    if (!id || typeof id !== 'string') return false;
+    return /^[a-zA-Z0-9-]{3,50}$/.test(id);
+}
+
+function sanitizeName(name, maxLen = 100) {
+    if (!name || typeof name !== 'string') return '';
+    return name.replace(/<[^>]*>/g, '').trim().substring(0, maxLen);
+}
+
+function addRfidAccessLog(entry) {
+    if (!data.rfidAccessLogs) data.rfidAccessLogs = [];
+    const newId = data.rfidAccessLogs.length > 0 ? Math.max(...data.rfidAccessLogs.map(l => l.id || 0)) + 1 : 1;
+    data.rfidAccessLogs.unshift({ id: newId, timestamp: new Date().toISOString(), ...entry });
+    if (data.rfidAccessLogs.length > 2000) data.rfidAccessLogs = data.rfidAccessLogs.slice(0, 2000);
+    dataChanged = true;
+}
+
+function getCardVersionHash() {
+    const cards = data.rfidCards || [];
+    const str = cards.map(c => `${c.uid}:${c.enabled}:${(c.deviceIds||[]).join(',')}`).join('|');
+    return crypto.createHash('md5').update(str).digest('hex').substring(0, 8);
+}
+
+// Device offline detection & learning mode expiry (every 60 seconds)
+setInterval(() => {
+    const now = new Date();
+    let changed = false;
+    (data.rfidDevices || []).forEach(device => {
+        // Offline detection: lastSeen older than 90 seconds
+        if (device.status !== 'offline' && device.lastSeen) {
+            const lastSeen = new Date(device.lastSeen);
+            if (now - lastSeen > 90000) {
+                const wasOnline = device.status;
+                device.status = 'offline';
+                device.updated_at = now.toISOString();
+                changed = true;
+                if (wasOnline === 'online') {
+                    log('INFO', `RFID-Gerät ${device.id} ist offline`);
+                }
+            }
+        }
+        // Learning mode expiry
+        if (device.mode === 'learning' && device.modeExpiresAt) {
+            if (now >= new Date(device.modeExpiresAt)) {
+                device.mode = 'normal';
+                device.modeExpiresAt = null;
+                device.updated_at = now.toISOString();
+                if (device.status === 'learning') device.status = 'online';
+                changed = true;
+                log('INFO', `RFID-Gerät ${device.id} Anlernmodus abgelaufen`);
+            }
+        }
+    });
+    if (changed) dataChanged = true;
+}, 60000);
 
 // ============== API ROUTES ==============
 async function handleAPI(req, res, urlPath, method) {
@@ -1125,7 +1239,465 @@ async function handleAPI(req, res, urlPath, method) {
             sessions: sessions.size
         }, 200, req);
     }
-    
+
+    // ============== RFID DEVICE MANAGEMENT (Admin-only) ==============
+
+    // GET /api/rfid/devices - Alle Geräte auflisten
+    if (urlPath === '/api/rfid/devices' && method === 'GET') {
+        if (!requireAdmin()) return;
+        const devices = (data.rfidDevices || []).map(d => ({
+            ...d,
+            apiKey: undefined, // Niemals API-Key zurückgeben
+            cardCount: (data.rfidCards || []).filter(c => (c.deviceIds || []).includes(d.id)).length
+        }));
+        return sendJson(res, devices, 200, req);
+    }
+
+    // POST /api/rfid/devices - Neues Gerät registrieren
+    if (urlPath === '/api/rfid/devices' && method === 'POST') {
+        if (!requireAdmin()) return;
+        const body = await parseBody(req);
+        const deviceId = (body.id || '').trim();
+        const name = sanitizeName(body.name);
+        if (!validateDeviceId(deviceId)) return sendError(res, 'Ungültige Device-ID (3-50 Zeichen, alphanumerisch + Bindestriche)', 400, req);
+        if (!name) return sendError(res, 'Name erforderlich', 400, req);
+        if (data.rfidDevices.find(d => d.id === deviceId)) return sendError(res, 'Device-ID bereits vergeben', 409, req);
+
+        const key = generateApiKey();
+        const now = new Date().toISOString();
+        const device = {
+            id: deviceId,
+            name,
+            apiKey: key.stored,
+            status: 'offline',
+            lastSeen: null,
+            lastActivity: null,
+            firmwareVersion: null,
+            ipAddress: null,
+            wifiSignal: null,
+            doorOpenDuration: Number.isFinite(parseInt(body.doorOpenDuration)) ? Math.min(Math.max(parseInt(body.doorOpenDuration), 1), 30) : 3,
+            learningTimeout: Number.isFinite(parseInt(body.learningTimeout)) ? Math.min(Math.max(parseInt(body.learningTimeout), 15), 300) : 60,
+            mode: 'normal',
+            modeExpiresAt: null,
+            created_at: now,
+            updated_at: now
+        };
+        data.rfidDevices.push(device);
+        dataChanged = true;
+        addAuditLog(session, 'RFID_DEVICE_CREATED', 'rfid_device', deviceId, { name });
+        log('INFO', `RFID-Gerät erstellt: ${deviceId} (${name})`);
+        return sendJson(res, { success: true, device: { ...device, apiKey: undefined }, apiKey: key.raw }, 200, req);
+    }
+
+    // GET /api/rfid/devices/:id - Einzelnes Gerät
+    if (urlPath.match(/^\/api\/rfid\/devices\/[a-zA-Z0-9-]+$/) && method === 'GET') {
+        if (!requireAdmin()) return;
+        const id = urlPath.split('/')[4];
+        const device = data.rfidDevices.find(d => d.id === id);
+        if (!device) return sendError(res, 'Gerät nicht gefunden', 404, req);
+        const cardCount = (data.rfidCards || []).filter(c => (c.deviceIds || []).includes(id)).length;
+        return sendJson(res, { ...device, apiKey: undefined, cardCount }, 200, req);
+    }
+
+    // PUT /api/rfid/devices/:id - Gerät bearbeiten
+    if (urlPath.match(/^\/api\/rfid\/devices\/[a-zA-Z0-9-]+$/) && method === 'PUT') {
+        if (!requireAdmin()) return;
+        const id = urlPath.split('/')[4];
+        const device = data.rfidDevices.find(d => d.id === id);
+        if (!device) return sendError(res, 'Gerät nicht gefunden', 404, req);
+        const body = await parseBody(req);
+        if (body.name !== undefined) device.name = sanitizeName(body.name);
+        if (body.doorOpenDuration !== undefined) device.doorOpenDuration = Math.min(Math.max(parseInt(body.doorOpenDuration) || 3, 1), 30);
+        if (body.learningTimeout !== undefined) device.learningTimeout = Math.min(Math.max(parseInt(body.learningTimeout) || 60, 15), 300);
+        device.updated_at = new Date().toISOString();
+        dataChanged = true;
+        addAuditLog(session, 'RFID_DEVICE_UPDATED', 'rfid_device', id);
+        return sendJson(res, { success: true, device: { ...device, apiKey: undefined } }, 200, req);
+    }
+
+    // DELETE /api/rfid/devices/:id - Gerät löschen
+    if (urlPath.match(/^\/api\/rfid\/devices\/[a-zA-Z0-9-]+$/) && method === 'DELETE') {
+        if (!requireAdmin()) return;
+        const id = urlPath.split('/')[4];
+        const idx = data.rfidDevices.findIndex(d => d.id === id);
+        if (idx === -1) return sendError(res, 'Gerät nicht gefunden', 404, req);
+        data.rfidDevices.splice(idx, 1);
+        // Remove device from all cards
+        (data.rfidCards || []).forEach(c => {
+            if (c.deviceIds) c.deviceIds = c.deviceIds.filter(did => did !== id);
+        });
+        dataChanged = true;
+        addAuditLog(session, 'RFID_DEVICE_DELETED', 'rfid_device', id);
+        log('INFO', `RFID-Gerät gelöscht: ${id}`);
+        return sendJson(res, { success: true }, 200, req);
+    }
+
+    // POST /api/rfid/devices/:id/mode - Modus ändern
+    if (urlPath.match(/^\/api\/rfid\/devices\/[a-zA-Z0-9-]+\/mode$/) && method === 'POST') {
+        if (!requireAdmin()) return;
+        const id = urlPath.split('/')[4];
+        const device = data.rfidDevices.find(d => d.id === id);
+        if (!device) return sendError(res, 'Gerät nicht gefunden', 404, req);
+        const body = await parseBody(req);
+        const newMode = body.mode;
+        if (!['normal', 'learning'].includes(newMode)) return sendError(res, 'Ungültiger Modus', 400, req);
+        device.mode = newMode;
+        if (newMode === 'learning') {
+            const timeout = device.learningTimeout || 60;
+            device.modeExpiresAt = new Date(Date.now() + timeout * 1000).toISOString();
+            device.status = 'learning';
+            addAuditLog(session, 'RFID_LEARNING_MODE_STARTED', 'rfid_device', id, { timeout });
+        } else {
+            device.modeExpiresAt = null;
+            if (device.status === 'learning') device.status = device.lastSeen && (Date.now() - new Date(device.lastSeen).getTime() < 90000) ? 'online' : 'offline';
+            addAuditLog(session, 'RFID_LEARNING_MODE_STOPPED', 'rfid_device', id);
+        }
+        device.updated_at = new Date().toISOString();
+        dataChanged = true;
+        return sendJson(res, { success: true, device: { ...device, apiKey: undefined } }, 200, req);
+    }
+
+    // POST /api/rfid/devices/:id/regenerate-key - Neuen API-Key generieren
+    if (urlPath.match(/^\/api\/rfid\/devices\/[a-zA-Z0-9-]+\/regenerate-key$/) && method === 'POST') {
+        if (!requireAdmin()) return;
+        const id = urlPath.split('/')[4];
+        const device = data.rfidDevices.find(d => d.id === id);
+        if (!device) return sendError(res, 'Gerät nicht gefunden', 404, req);
+        const key = generateApiKey();
+        device.apiKey = key.stored;
+        device.updated_at = new Date().toISOString();
+        dataChanged = true;
+        addAuditLog(session, 'RFID_DEVICE_UPDATED', 'rfid_device', id, { action: 'regenerate-key' });
+        log('INFO', `RFID API-Key neu generiert für: ${id}`);
+        return sendJson(res, { success: true, apiKey: key.raw }, 200, req);
+    }
+
+    // ============== RFID CARD MANAGEMENT (Admin-only) ==============
+
+    // GET /api/rfid/cards - Alle Karten
+    if (urlPath === '/api/rfid/cards' && method === 'GET') {
+        if (!requireAdmin()) return;
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        let cards = data.rfidCards || [];
+        const deviceFilter = url.searchParams.get('device_id');
+        const enabledFilter = url.searchParams.get('enabled');
+        if (deviceFilter) cards = cards.filter(c => (c.deviceIds || []).includes(deviceFilter));
+        if (enabledFilter !== null && enabledFilter !== undefined && enabledFilter !== '') cards = cards.filter(c => String(c.enabled) === enabledFilter);
+        return sendJson(res, cards, 200, req);
+    }
+
+    // POST /api/rfid/cards - Neue Karte manuell registrieren
+    if (urlPath === '/api/rfid/cards' && method === 'POST') {
+        if (!requireAdmin()) return;
+        const body = await parseBody(req);
+        const uid = (body.uid || '').trim().toUpperCase();
+        if (!validateUid(uid)) return sendError(res, 'Ungültiges UID-Format (z.B. AA:BB:CC:DD)', 400, req);
+        const name = sanitizeName(body.name);
+        if (!name) return sendError(res, 'Name erforderlich', 400, req);
+        if (data.rfidCards.find(c => c.uid === uid)) return sendError(res, 'Karte mit dieser UID bereits registriert', 409, req);
+        const deviceIds = Array.isArray(body.deviceIds) ? body.deviceIds.filter(id => data.rfidDevices.find(d => d.id === id)) : [];
+        // Check card limit per device
+        for (const did of deviceIds) {
+            const count = data.rfidCards.filter(c => (c.deviceIds || []).includes(did)).length;
+            if (count >= 50) return sendError(res, `Kartenlimit (50) für Gerät ${did} erreicht`, 400, req);
+        }
+        const newId = data.rfidCards.length > 0 ? Math.max(...data.rfidCards.map(c => c.id || 0)) + 1 : 1;
+        const card = {
+            id: newId,
+            uid,
+            name,
+            enabled: true,
+            deviceIds,
+            registered_at: new Date().toISOString(),
+            registered_by: session.username,
+            last_used: null,
+            use_count: 0,
+            notes: sanitizeName(body.notes, 500) || ''
+        };
+        data.rfidCards.push(card);
+        dataChanged = true;
+        addAuditLog(session, 'RFID_CARD_REGISTERED', 'rfid_card', newId, { uid, name });
+        log('INFO', `RFID-Karte registriert: ${uid} (${name})`);
+        return sendJson(res, { success: true, card }, 200, req);
+    }
+
+    // GET /api/rfid/cards/:id - Einzelne Karte
+    if (urlPath.match(/^\/api\/rfid\/cards\/\d+$/) && method === 'GET') {
+        if (!requireAdmin()) return;
+        const id = parseInt(urlPath.split('/')[4]);
+        const card = data.rfidCards.find(c => c.id === id);
+        if (!card) return sendError(res, 'Karte nicht gefunden', 404, req);
+        return sendJson(res, card, 200, req);
+    }
+
+    // PUT /api/rfid/cards/:id - Karte bearbeiten
+    if (urlPath.match(/^\/api\/rfid\/cards\/\d+$/) && method === 'PUT') {
+        if (!requireAdmin()) return;
+        const id = parseInt(urlPath.split('/')[4]);
+        const card = data.rfidCards.find(c => c.id === id);
+        if (!card) return sendError(res, 'Karte nicht gefunden', 404, req);
+        const body = await parseBody(req);
+        if (body.name !== undefined) card.name = sanitizeName(body.name);
+        if (body.notes !== undefined) card.notes = sanitizeName(body.notes, 500);
+        if (body.enabled !== undefined) {
+            const wasEnabled = card.enabled;
+            card.enabled = Boolean(body.enabled);
+            if (wasEnabled !== card.enabled) {
+                addAuditLog(session, card.enabled ? 'RFID_CARD_ENABLED' : 'RFID_CARD_DISABLED', 'rfid_card', id, { uid: card.uid });
+            }
+        }
+        if (body.deviceIds !== undefined) {
+            const newDeviceIds = Array.isArray(body.deviceIds) ? body.deviceIds.filter(did => data.rfidDevices.find(d => d.id === did)) : card.deviceIds;
+            // Check card limit per device for newly added devices
+            for (const did of newDeviceIds) {
+                if (!(card.deviceIds || []).includes(did)) {
+                    const count = data.rfidCards.filter(c => c.id !== id && (c.deviceIds || []).includes(did)).length;
+                    if (count >= 50) return sendError(res, `Kartenlimit (50) für Gerät ${did} erreicht`, 400, req);
+                }
+            }
+            card.deviceIds = newDeviceIds;
+        }
+        card.updated_at = new Date().toISOString();
+        dataChanged = true;
+        addAuditLog(session, 'RFID_CARD_UPDATED', 'rfid_card', id, { uid: card.uid });
+        return sendJson(res, { success: true, card }, 200, req);
+    }
+
+    // DELETE /api/rfid/cards/:id - Karte löschen
+    if (urlPath.match(/^\/api\/rfid\/cards\/\d+$/) && method === 'DELETE') {
+        if (!requireAdmin()) return;
+        const id = parseInt(urlPath.split('/')[4]);
+        const idx = data.rfidCards.findIndex(c => c.id === id);
+        if (idx === -1) return sendError(res, 'Karte nicht gefunden', 404, req);
+        const card = data.rfidCards[idx];
+        data.rfidCards.splice(idx, 1);
+        dataChanged = true;
+        addAuditLog(session, 'RFID_CARD_DELETED', 'rfid_card', id, { uid: card.uid, name: card.name });
+        log('INFO', `RFID-Karte gelöscht: ${card.uid} (${card.name})`);
+        return sendJson(res, { success: true }, 200, req);
+    }
+
+    // ============== RFID ESP32 ENDPOINTS (API-Key Auth) ==============
+
+    // POST /api/rfid/access - Zugangsprüfung
+    if (urlPath === '/api/rfid/access' && method === 'POST') {
+        const device = authenticateDevice(req);
+        // Also allow admin session for simulation
+        if (!device && !session) return sendError(res, 'Nicht authentifiziert', 401, req);
+        const body = await parseBody(req);
+        const uid = (body.uid || '').trim().toUpperCase();
+        const deviceId = body.device_id || (device ? device.id : '');
+        if (!validateUid(uid)) return sendError(res, 'Ungültige UID', 400, req);
+        const targetDevice = data.rfidDevices.find(d => d.id === deviceId);
+        if (!targetDevice) return sendError(res, 'Gerät nicht gefunden', 404, req);
+        if (device && !checkRfidRateLimit(deviceId)) return sendError(res, 'Zu viele Anfragen', 429, req);
+
+        // Check if device is in learning mode
+        if (targetDevice.mode === 'learning' && targetDevice.modeExpiresAt && new Date() < new Date(targetDevice.modeExpiresAt)) {
+            // Register new card
+            let card = data.rfidCards.find(c => c.uid === uid);
+            if (card) {
+                // Card already exists, just add device if not already assigned
+                if (!(card.deviceIds || []).includes(deviceId)) {
+                    const count = data.rfidCards.filter(c => (c.deviceIds || []).includes(deviceId)).length;
+                    if (count < 50) {
+                        card.deviceIds = [...(card.deviceIds || []), deviceId];
+                        card.updated_at = new Date().toISOString();
+                    }
+                }
+                addRfidAccessLog({ uid, cardName: card.name, deviceId, deviceName: targetDevice.name, action: 'CARD_REGISTERED', method: 'server', details: 'Karte bereits vorhanden, Gerät zugeordnet' });
+                addAuditLog(session || { username: 'esp32' }, 'RFID_CARD_REGISTERED', 'rfid_card', card.id, { uid, deviceId });
+                dataChanged = true;
+                return sendJson(res, { granted: true, card_name: card.name, message: 'Karte bereits registriert, Gerät zugeordnet', action: 'CARD_REGISTERED' }, 200, req);
+            } else {
+                // New card
+                const count = data.rfidCards.filter(c => (c.deviceIds || []).includes(deviceId)).length;
+                if (count >= 50) return sendJson(res, { granted: false, message: 'Kartenlimit erreicht', action: 'CARD_LIMIT' }, 200, req);
+                const newId = data.rfidCards.length > 0 ? Math.max(...data.rfidCards.map(c => c.id || 0)) + 1 : 1;
+                card = {
+                    id: newId,
+                    uid,
+                    name: `Karte ${uid}`,
+                    enabled: true,
+                    deviceIds: [deviceId],
+                    registered_at: new Date().toISOString(),
+                    registered_by: 'esp32',
+                    last_used: null,
+                    use_count: 0,
+                    notes: ''
+                };
+                data.rfidCards.push(card);
+                addRfidAccessLog({ uid, cardName: card.name, deviceId, deviceName: targetDevice.name, action: 'CARD_REGISTERED', method: 'server', details: 'Neue Karte im Anlernmodus registriert' });
+                addAuditLog(session || { username: 'esp32' }, 'RFID_CARD_REGISTERED', 'rfid_card', newId, { uid, deviceId });
+                dataChanged = true;
+                return sendJson(res, { granted: true, card_name: card.name, message: 'Neue Karte registriert', action: 'CARD_REGISTERED', card_id: newId }, 200, req);
+            }
+        }
+
+        // Normal access check
+        const card = data.rfidCards.find(c => c.uid === uid);
+        if (!card) {
+            addRfidAccessLog({ uid, cardName: null, deviceId, deviceName: targetDevice.name, action: 'CARD_UNKNOWN', method: 'server', details: 'Unbekannte Karte' });
+            addAuditLog(session || { username: 'esp32' }, 'RFID_ACCESS_DENIED', 'rfid_card', null, { uid, deviceId, reason: 'unknown' });
+            return sendJson(res, { granted: false, card_name: null, message: 'Karte unbekannt' }, 200, req);
+        }
+        if (!card.enabled) {
+            addRfidAccessLog({ uid, cardName: card.name, deviceId, deviceName: targetDevice.name, action: 'ACCESS_DENIED', method: 'server', details: 'Karte deaktiviert' });
+            addAuditLog(session || { username: 'esp32' }, 'RFID_ACCESS_DENIED', 'rfid_card', card.id, { uid, deviceId, reason: 'disabled' });
+            return sendJson(res, { granted: false, card_name: card.name, message: 'Karte deaktiviert' }, 200, req);
+        }
+        if (!(card.deviceIds || []).includes(deviceId)) {
+            addRfidAccessLog({ uid, cardName: card.name, deviceId, deviceName: targetDevice.name, action: 'ACCESS_DENIED', method: 'server', details: 'Karte nicht für dieses Gerät berechtigt' });
+            addAuditLog(session || { username: 'esp32' }, 'RFID_ACCESS_DENIED', 'rfid_card', card.id, { uid, deviceId, reason: 'wrong_device' });
+            return sendJson(res, { granted: false, card_name: card.name, message: 'Karte nicht für dieses Gerät berechtigt' }, 200, req);
+        }
+
+        // Access granted
+        card.last_used = new Date().toISOString();
+        card.use_count = (card.use_count || 0) + 1;
+        targetDevice.lastActivity = new Date().toISOString();
+        addRfidAccessLog({ uid, cardName: card.name, deviceId, deviceName: targetDevice.name, action: 'ACCESS_GRANTED', method: body.method || 'server', details: '' });
+        addAuditLog(session || { username: 'esp32' }, 'RFID_ACCESS_GRANTED', 'rfid_card', card.id, { uid, deviceId });
+        dataChanged = true;
+        return sendJson(res, { granted: true, card_name: card.name, message: 'Zugang gewährt' }, 200, req);
+    }
+
+    // POST /api/rfid/access-bulk - Nachträgliche Meldung gepufferter Scans
+    if (urlPath === '/api/rfid/access-bulk' && method === 'POST') {
+        const device = authenticateDevice(req);
+        if (!device) return sendError(res, 'Nicht authentifiziert', 401, req);
+        if (!checkRfidRateLimit(device.id)) return sendError(res, 'Zu viele Anfragen', 429, req);
+        const body = await parseBody(req);
+        const events = Array.isArray(body.events) ? body.events : [];
+        let processed = 0;
+        events.forEach(evt => {
+            if (evt.uid && evt.timestamp) {
+                const card = data.rfidCards.find(c => c.uid === evt.uid.toUpperCase());
+                addRfidAccessLog({
+                    uid: evt.uid.toUpperCase(),
+                    cardName: card ? card.name : null,
+                    deviceId: device.id,
+                    deviceName: device.name,
+                    action: evt.action || (card ? 'ACCESS_GRANTED' : 'CARD_UNKNOWN'),
+                    method: 'local',
+                    details: 'Nachgemeldeter Offline-Scan'
+                });
+                processed++;
+            }
+        });
+        dataChanged = true;
+        return sendJson(res, { success: true, processed }, 200, req);
+    }
+
+    // POST /api/rfid/heartbeat - ESP32 Heartbeat
+    if (urlPath === '/api/rfid/heartbeat' && method === 'POST') {
+        const device = authenticateDevice(req);
+        if (!device) return sendError(res, 'Nicht authentifiziert', 401, req);
+        if (!checkRfidRateLimit(device.id)) return sendError(res, 'Zu viele Anfragen', 429, req);
+        const body = await parseBody(req);
+        const now = new Date().toISOString();
+        device.lastSeen = now;
+        if (body.firmware_version) device.firmwareVersion = String(body.firmware_version).substring(0, 20);
+        if (body.ip_address) device.ipAddress = String(body.ip_address).substring(0, 45);
+        if (body.wifi_signal !== undefined) device.wifiSignal = parseInt(body.wifi_signal) || null;
+        if (device.status === 'offline') device.status = device.mode === 'learning' ? 'learning' : 'online';
+        device.updated_at = now;
+        dataChanged = true;
+        // Return card version hash so ESP can detect changes
+        return sendJson(res, { success: true, card_hash: getCardVersionHash(), server_time: now }, 200, req);
+    }
+
+    // GET /api/rfid/device/:id/mode - Aktuellen Modus abfragen (ESP polling)
+    if (urlPath.match(/^\/api\/rfid\/device\/[a-zA-Z0-9-]+\/mode$/) && method === 'GET') {
+        const device = authenticateDevice(req);
+        if (!device) return sendError(res, 'Nicht authentifiziert', 401, req);
+        const id = urlPath.split('/')[4];
+        const targetDevice = data.rfidDevices.find(d => d.id === id);
+        if (!targetDevice) return sendError(res, 'Gerät nicht gefunden', 404, req);
+        return sendJson(res, {
+            mode: targetDevice.mode || 'normal',
+            expires_at: targetDevice.modeExpiresAt || null,
+            door_open_duration: targetDevice.doorOpenDuration || 3,
+            learning_timeout: targetDevice.learningTimeout || 60
+        }, 200, req);
+    }
+
+    // GET /api/rfid/device/:id/cards - Kartenliste für Gerät (ESP sync)
+    if (urlPath.match(/^\/api\/rfid\/device\/[a-zA-Z0-9-]+\/cards$/) && method === 'GET') {
+        const device = authenticateDevice(req);
+        if (!device) return sendError(res, 'Nicht authentifiziert', 401, req);
+        const id = urlPath.split('/')[4];
+        const cards = (data.rfidCards || [])
+            .filter(c => (c.deviceIds || []).includes(id))
+            .map(c => ({ uid: c.uid, enabled: c.enabled }));
+        return sendJson(res, { cards, hash: getCardVersionHash() }, 200, req);
+    }
+
+    // POST /api/rfid/device/:id/register-card - Karte im Anlernmodus registrieren
+    if (urlPath.match(/^\/api\/rfid\/device\/[a-zA-Z0-9-]+\/register-card$/) && method === 'POST') {
+        const device = authenticateDevice(req);
+        if (!device) return sendError(res, 'Nicht authentifiziert', 401, req);
+        const id = urlPath.split('/')[4];
+        const targetDevice = data.rfidDevices.find(d => d.id === id);
+        if (!targetDevice) return sendError(res, 'Gerät nicht gefunden', 404, req);
+        if (targetDevice.mode !== 'learning') return sendError(res, 'Gerät nicht im Anlernmodus', 400, req);
+        const body = await parseBody(req);
+        const uid = (body.uid || '').trim().toUpperCase();
+        if (!validateUid(uid)) return sendError(res, 'Ungültige UID', 400, req);
+
+        let card = data.rfidCards.find(c => c.uid === uid);
+        if (card) {
+            if (!(card.deviceIds || []).includes(id)) {
+                const count = data.rfidCards.filter(c => (c.deviceIds || []).includes(id)).length;
+                if (count >= 50) return sendError(res, 'Kartenlimit erreicht', 400, req);
+                card.deviceIds = [...(card.deviceIds || []), id];
+                card.updated_at = new Date().toISOString();
+            }
+        } else {
+            const count = data.rfidCards.filter(c => (c.deviceIds || []).includes(id)).length;
+            if (count >= 50) return sendError(res, 'Kartenlimit erreicht', 400, req);
+            const newId = data.rfidCards.length > 0 ? Math.max(...data.rfidCards.map(c => c.id || 0)) + 1 : 1;
+            card = {
+                id: newId,
+                uid,
+                name: `Karte ${uid}`,
+                enabled: true,
+                deviceIds: [id],
+                registered_at: new Date().toISOString(),
+                registered_by: 'esp32',
+                last_used: null,
+                use_count: 0,
+                notes: ''
+            };
+            data.rfidCards.push(card);
+        }
+        addRfidAccessLog({ uid, cardName: card.name, deviceId: id, deviceName: targetDevice.name, action: 'CARD_REGISTERED', method: 'server', details: 'Im Anlernmodus registriert' });
+        addAuditLog({ username: 'esp32' }, 'RFID_CARD_REGISTERED', 'rfid_card', card.id, { uid, deviceId: id });
+        dataChanged = true;
+        return sendJson(res, { success: true, card_name: card.name, card_id: card.id }, 200, req);
+    }
+
+    // ============== RFID ACCESS LOGS (Admin-only) ==============
+
+    // GET /api/rfid/access-logs
+    if (urlPath === '/api/rfid/access-logs' && method === 'GET') {
+        if (!requireAdmin()) return;
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const limit = Math.min(parseInt(url.searchParams.get('limit')) || 100, 2000);
+        let logs = data.rfidAccessLogs || [];
+        const deviceFilter = url.searchParams.get('device_id');
+        const uidFilter = url.searchParams.get('uid');
+        const actionFilter = url.searchParams.get('action');
+        const fromFilter = url.searchParams.get('from');
+        const toFilter = url.searchParams.get('to');
+        if (deviceFilter) logs = logs.filter(l => l.deviceId === deviceFilter);
+        if (uidFilter) logs = logs.filter(l => l.uid && l.uid.includes(uidFilter.toUpperCase()));
+        if (actionFilter) logs = logs.filter(l => l.action === actionFilter);
+        if (fromFilter) { const from = new Date(fromFilter); logs = logs.filter(l => new Date(l.timestamp) >= from); }
+        if (toFilter) { const to = new Date(toFilter); logs = logs.filter(l => new Date(l.timestamp) <= to); }
+        return sendJson(res, logs.slice(0, limit), 200, req);
+    }
+
     return sendError(res, 'Endpoint nicht gefunden', 404, req);
 }
 
@@ -1153,7 +1725,7 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(204, {
             ...(currentRequestOrigin ? { 'Access-Control-Allow-Origin': currentRequestOrigin } : {}),
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
             ...(currentRequestOrigin ? { 'Access-Control-Allow-Credentials': 'true' } : {}),
             'Access-Control-Max-Age': '86400'
         });

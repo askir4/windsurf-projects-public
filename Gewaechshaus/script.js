@@ -420,6 +420,9 @@ class FertilizerControlSystem {
         this.updateBedSelector();
         this.updateWaterTank();
         
+        // RFID-Verwaltung initialisieren
+        this.initRfid();
+
         // NodeRED-Verbindung starten
         this.connectNodeRed();
 
@@ -4228,6 +4231,497 @@ class FertilizerControlSystem {
         } catch {
             this.showToast('Kommentar konnte nicht erstellt werden', 'error');
         }
+    }
+
+    // ========== RFID MANAGEMENT ==========
+
+    initRfid() {
+        this.rfidDevices = [];
+        this.rfidCards = [];
+        this.rfidAccessLogs = [];
+        this.rfidEditingDeviceId = null;
+        this.rfidEditingCardId = null;
+        this.rfidLearningTimers = {};
+        this.rfidPollingInterval = null;
+
+        // Tab switching
+        document.querySelectorAll('.rfid-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.rfid-tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.rfid-tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.dataset.rfidTab;
+                document.getElementById(`rfid-tab-${tab}`)?.classList.add('active');
+                if (tab === 'devices') this.loadRfidDevices();
+                if (tab === 'cards') this.loadRfidCards();
+                if (tab === 'access-logs') this.loadRfidAccessLogs();
+            });
+        });
+
+        // Device modal
+        document.getElementById('rfidAddDeviceBtn')?.addEventListener('click', () => this.openRfidDeviceModal());
+        document.getElementById('rfidSaveDeviceBtn')?.addEventListener('click', () => this.saveRfidDevice());
+        document.getElementById('rfidCopyApiKey')?.addEventListener('click', () => {
+            const key = document.getElementById('rfidApiKeyValue')?.textContent;
+            if (key) { navigator.clipboard.writeText(key); this.showToast('API-Key kopiert!', 'success'); }
+        });
+
+        // Card modal
+        document.getElementById('rfidAddCardBtn')?.addEventListener('click', () => this.openRfidCardModal());
+        document.getElementById('rfidSaveCardBtn')?.addEventListener('click', () => this.saveRfidCard());
+
+        // Filters
+        document.getElementById('rfidCardSearch')?.addEventListener('input', () => this.renderRfidCards());
+        document.getElementById('rfidCardStatusFilter')?.addEventListener('change', () => this.renderRfidCards());
+        document.getElementById('rfidCardDeviceFilter')?.addEventListener('change', () => this.renderRfidCards());
+        document.getElementById('rfidRefreshLogsBtn')?.addEventListener('click', () => this.loadRfidAccessLogs());
+        document.getElementById('rfidLogDeviceFilter')?.addEventListener('change', () => this.loadRfidAccessLogs());
+        document.getElementById('rfidLogActionFilter')?.addEventListener('change', () => this.loadRfidAccessLogs());
+        document.getElementById('rfidLogFromDate')?.addEventListener('change', () => this.loadRfidAccessLogs());
+        document.getElementById('rfidLogToDate')?.addEventListener('change', () => this.loadRfidAccessLogs());
+
+        // Start polling for device status updates
+        this.rfidPollingInterval = setInterval(() => {
+            if (this.mode === 'admin' && document.getElementById('rfidManagementCard')?.open) {
+                this.loadRfidDevices();
+            }
+        }, 10000);
+    }
+
+    async loadRfidDevices() {
+        try {
+            const res = await fetch('/api/rfid/devices', { credentials: 'include' });
+            if (!res.ok) return;
+            this.rfidDevices = await res.json();
+            this.renderRfidDevices();
+            this.updateRfidDeviceFilters();
+        } catch { /* ignore */ }
+    }
+
+    renderRfidDevices() {
+        const container = document.getElementById('rfidDevicesList');
+        if (!container) return;
+        if (!this.rfidDevices.length) {
+            container.innerHTML = '<p class="rfid-empty-state"><i class="fas fa-info-circle"></i> Keine Geräte registriert.</p>';
+            return;
+        }
+        container.innerHTML = this.rfidDevices.map(d => {
+            const statusLabel = { online: 'Online', offline: 'Offline', learning: 'Anlernmodus' }[d.status] || d.status;
+            const lastSeen = d.lastSeen ? this.rfidTimeAgo(d.lastSeen) : 'Nie';
+            const cardPct = Math.round((d.cardCount || 0) / 50 * 100);
+            const barClass = cardPct >= 100 ? 'full' : cardPct >= 80 ? 'warn' : 'ok';
+            const isLearning = d.mode === 'learning' && d.modeExpiresAt;
+            let countdownHtml = '';
+            if (isLearning) {
+                const remaining = Math.max(0, Math.round((new Date(d.modeExpiresAt) - new Date()) / 1000));
+                countdownHtml = `<span class="rfid-learning-countdown" data-device-countdown="${d.id}"><i class="fas fa-broadcast-tower"></i> ${remaining}s</span>`;
+                this.startLearningCountdown(d.id, d.modeExpiresAt);
+            }
+            return `<div class="rfid-device-card">
+                <div class="rfid-device-header">
+                    <div class="rfid-device-title">
+                        <span>${this.escapeHtml(d.name)}</span>
+                        <span class="rfid-status-badge ${d.status}"><span class="rfid-status-dot"></span>${statusLabel}</span>
+                        ${countdownHtml}
+                    </div>
+                    <small style="color:var(--text-muted)">${this.escapeHtml(d.id)}</small>
+                </div>
+                <div class="rfid-device-meta">
+                    <span><i class="fas fa-clock"></i> ${lastSeen}</span>
+                    <span><i class="fas fa-network-wired"></i> ${d.ipAddress || '-'}</span>
+                    <span><i class="fas fa-signal"></i> ${d.wifiSignal ? d.wifiSignal + ' dBm' : '-'}</span>
+                    <span><i class="fas fa-code-branch"></i> ${d.firmwareVersion || '-'}</span>
+                    <span><i class="fas fa-credit-card"></i> ${d.cardCount || 0}/50 Karten</span>
+                </div>
+                <div class="rfid-card-count-bar"><div class="rfid-card-count-fill ${barClass}" style="width:${Math.min(cardPct, 100)}%"></div></div>
+                <div class="rfid-device-actions" style="margin-top:8px">
+                    ${d.mode === 'learning'
+                        ? `<button class="btn btn-warning btn-sm" onclick="system.setRfidDeviceMode('${d.id}','normal')"><i class="fas fa-stop"></i> Anlernmodus beenden</button>`
+                        : `<button class="btn btn-success btn-sm" onclick="system.setRfidDeviceMode('${d.id}','learning')"><i class="fas fa-broadcast-tower"></i> Anlernmodus</button>`
+                    }
+                    <button class="btn btn-secondary btn-sm" onclick="system.openRfidDeviceModal('${d.id}')"><i class="fas fa-edit"></i> Bearbeiten</button>
+                    <button class="btn btn-danger btn-sm" onclick="system.deleteRfidDevice('${d.id}')"><i class="fas fa-trash"></i></button>
+                    <details class="rfid-sim-area" style="margin-top:0;border:none;padding:0;background:none">
+                        <summary style="cursor:pointer;font-size:0.78rem;color:var(--text-muted)"><i class="fas fa-vial"></i> Scan simulieren</summary>
+                        <div style="margin-top:6px">
+                            <div class="rfid-sim-row">
+                                <input type="text" id="rfidSimUid-${d.id}" placeholder="AA:BB:CC:DD" style="font-family:monospace">
+                                <button class="btn btn-primary btn-sm" onclick="system.simulateRfidScan('${d.id}')"><i class="fas fa-play"></i> Scan</button>
+                                <button class="btn btn-secondary btn-sm" onclick="system.randomRfidUid('${d.id}')"><i class="fas fa-random"></i></button>
+                            </div>
+                            <div class="rfid-sim-result" id="rfidSimResult-${d.id}"></div>
+                        </div>
+                    </details>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    startLearningCountdown(deviceId, expiresAt) {
+        if (this.rfidLearningTimers[deviceId]) clearInterval(this.rfidLearningTimers[deviceId]);
+        this.rfidLearningTimers[deviceId] = setInterval(() => {
+            const el = document.querySelector(`[data-device-countdown="${deviceId}"]`);
+            if (!el) { clearInterval(this.rfidLearningTimers[deviceId]); return; }
+            const remaining = Math.max(0, Math.round((new Date(expiresAt) - new Date()) / 1000));
+            el.innerHTML = `<i class="fas fa-broadcast-tower"></i> ${remaining}s`;
+            if (remaining <= 0) {
+                clearInterval(this.rfidLearningTimers[deviceId]);
+                this.loadRfidDevices();
+            }
+        }, 1000);
+    }
+
+    updateRfidDeviceFilters() {
+        const selects = [document.getElementById('rfidCardDeviceFilter'), document.getElementById('rfidLogDeviceFilter')];
+        selects.forEach(sel => {
+            if (!sel) return;
+            const val = sel.value;
+            const opts = '<option value="">Alle Geräte</option>' + this.rfidDevices.map(d => `<option value="${d.id}">${this.escapeHtml(d.name)}</option>`).join('');
+            sel.innerHTML = opts;
+            sel.value = val;
+        });
+    }
+
+    openRfidDeviceModal(editId = null) {
+        this.rfidEditingDeviceId = editId;
+        const modal = document.getElementById('rfidDeviceModal');
+        const title = document.getElementById('rfidDeviceModalTitle');
+        const idInput = document.getElementById('rfidDeviceId');
+        const nameInput = document.getElementById('rfidDeviceName');
+        const doorInput = document.getElementById('rfidDeviceDoorDuration');
+        const timeoutInput = document.getElementById('rfidDeviceLearningTimeout');
+        const apiKeyDisplay = document.getElementById('rfidApiKeyDisplay');
+
+        apiKeyDisplay?.classList.add('hidden');
+
+        if (editId) {
+            const device = this.rfidDevices.find(d => d.id === editId);
+            if (!device) return;
+            title.innerHTML = '<i class="fas fa-microchip"></i> Gerät bearbeiten';
+            idInput.value = device.id;
+            idInput.disabled = true;
+            nameInput.value = device.name;
+            doorInput.value = device.doorOpenDuration || 3;
+            timeoutInput.value = device.learningTimeout || 60;
+        } else {
+            title.innerHTML = '<i class="fas fa-microchip"></i> Neues Gerät';
+            idInput.value = '';
+            idInput.disabled = false;
+            nameInput.value = '';
+            doorInput.value = 3;
+            timeoutInput.value = 60;
+        }
+        modal?.classList.remove('hidden');
+    }
+
+    async saveRfidDevice() {
+        const id = document.getElementById('rfidDeviceId')?.value?.trim();
+        const name = document.getElementById('rfidDeviceName')?.value?.trim();
+        const doorOpenDuration = parseInt(document.getElementById('rfidDeviceDoorDuration')?.value) || 3;
+        const learningTimeout = parseInt(document.getElementById('rfidDeviceLearningTimeout')?.value) || 60;
+
+        if (!name) { this.showToast('Name erforderlich', 'error'); return; }
+
+        try {
+            if (this.rfidEditingDeviceId) {
+                const res = await fetch(`/api/rfid/devices/${this.rfidEditingDeviceId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name, doorOpenDuration, learningTimeout })
+                });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+                this.showToast('Gerät aktualisiert', 'success');
+                document.getElementById('rfidDeviceModal')?.classList.add('hidden');
+            } else {
+                if (!id) { this.showToast('Device-ID erforderlich', 'error'); return; }
+                const res = await fetch('/api/rfid/devices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ id, name, doorOpenDuration, learningTimeout })
+                });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+                const data = await res.json();
+                // Show API key
+                document.getElementById('rfidApiKeyValue').textContent = data.apiKey;
+                document.getElementById('rfidApiKeyDisplay')?.classList.remove('hidden');
+                this.showToast('Gerät erstellt! API-Key jetzt kopieren!', 'success');
+            }
+            await this.loadRfidDevices();
+        } catch (e) {
+            this.showToast(e.message || 'Fehler beim Speichern', 'error');
+        }
+    }
+
+    async deleteRfidDevice(id) {
+        if (!confirm(`Gerät "${id}" wirklich löschen? Die Zuordnung zu allen Karten wird entfernt.`)) return;
+        try {
+            const res = await fetch(`/api/rfid/devices/${id}`, { method: 'DELETE', credentials: 'include' });
+            if (!res.ok) throw new Error('Fehler');
+            this.showToast('Gerät gelöscht', 'success');
+            await this.loadRfidDevices();
+        } catch { this.showToast('Fehler beim Löschen', 'error'); }
+    }
+
+    async setRfidDeviceMode(id, mode) {
+        try {
+            const res = await fetch(`/api/rfid/devices/${id}/mode`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ mode })
+            });
+            if (!res.ok) throw new Error('Fehler');
+            this.showToast(mode === 'learning' ? 'Anlernmodus gestartet' : 'Anlernmodus beendet', 'success');
+            await this.loadRfidDevices();
+        } catch { this.showToast('Fehler beim Modus-Wechsel', 'error'); }
+    }
+
+    async simulateRfidScan(deviceId) {
+        const input = document.getElementById(`rfidSimUid-${deviceId}`);
+        const resultEl = document.getElementById(`rfidSimResult-${deviceId}`);
+        const uid = input?.value?.trim();
+        if (!uid) { this.showToast('UID eingeben', 'error'); return; }
+        resultEl.className = 'rfid-sim-result';
+        resultEl.style.display = 'none';
+        try {
+            const res = await fetch('/api/rfid/access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ uid, device_id: deviceId })
+            });
+            const data = await res.json();
+            if (data.action === 'CARD_REGISTERED') {
+                resultEl.className = 'rfid-sim-result registered';
+                resultEl.textContent = `Karte registriert: ${data.card_name || uid}`;
+            } else if (data.granted) {
+                resultEl.className = 'rfid-sim-result granted';
+                resultEl.textContent = `Zugang gewährt für ${data.card_name}`;
+            } else {
+                resultEl.className = 'rfid-sim-result denied';
+                resultEl.textContent = `Zugang verweigert: ${data.message}`;
+            }
+            resultEl.style.display = 'block';
+            this.loadRfidAccessLogs();
+        } catch { this.showToast('Simulationsfehler', 'error'); }
+    }
+
+    randomRfidUid(deviceId) {
+        const bytes = Array.from({ length: 4 }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0').toUpperCase());
+        const input = document.getElementById(`rfidSimUid-${deviceId}`);
+        if (input) input.value = bytes.join(':');
+    }
+
+    // Cards
+    async loadRfidCards() {
+        try {
+            const res = await fetch('/api/rfid/cards', { credentials: 'include' });
+            if (!res.ok) return;
+            this.rfidCards = await res.json();
+            this.renderRfidCards();
+        } catch { /* ignore */ }
+    }
+
+    renderRfidCards() {
+        const container = document.getElementById('rfidCardsList');
+        if (!container) return;
+        let cards = [...this.rfidCards];
+
+        // Apply filters
+        const search = (document.getElementById('rfidCardSearch')?.value || '').toLowerCase();
+        const statusFilter = document.getElementById('rfidCardStatusFilter')?.value;
+        const deviceFilter = document.getElementById('rfidCardDeviceFilter')?.value;
+
+        if (search) cards = cards.filter(c => c.name.toLowerCase().includes(search) || c.uid.toLowerCase().includes(search));
+        if (statusFilter !== '' && statusFilter !== undefined && statusFilter !== null) cards = cards.filter(c => String(c.enabled) === statusFilter);
+        if (deviceFilter) cards = cards.filter(c => (c.deviceIds || []).includes(deviceFilter));
+
+        if (!cards.length) {
+            container.innerHTML = '<p class="rfid-empty-state"><i class="fas fa-info-circle"></i> Keine Karten gefunden.</p>';
+            return;
+        }
+
+        container.innerHTML = cards.map(c => {
+            const statusBadge = c.enabled
+                ? '<span class="rfid-status-badge online"><span class="rfid-status-dot"></span>Aktiv</span>'
+                : '<span class="rfid-status-badge offline"><span class="rfid-status-dot"></span>Deaktiviert</span>';
+            const devices = (c.deviceIds || []).map(did => {
+                const dev = this.rfidDevices.find(d => d.id === did);
+                return `<span class="rfid-device-chip">${this.escapeHtml(dev ? dev.name : did)}</span>`;
+            }).join(' ');
+            const lastUsed = c.last_used ? this.rfidTimeAgo(c.last_used) : 'Nie';
+            return `<div class="rfid-card-item">
+                <div class="rfid-card-info">
+                    ${statusBadge}
+                    <span class="rfid-card-name">${this.escapeHtml(c.name)}</span>
+                    <span class="rfid-card-uid">${c.uid}</span>
+                </div>
+                <div class="rfid-card-details">
+                    ${devices}
+                    <span><i class="fas fa-clock"></i> ${lastUsed}</span>
+                    <span><i class="fas fa-hashtag"></i> ${c.use_count || 0}x</span>
+                    <span><i class="fas fa-user"></i> ${this.escapeHtml(c.registered_by || '-')}</span>
+                </div>
+                <div class="rfid-card-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="system.openRfidCardModal(${c.id})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="system.deleteRfidCard(${c.id})"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    openRfidCardModal(editId = null) {
+        this.rfidEditingCardId = editId;
+        const modal = document.getElementById('rfidCardModal');
+        const title = document.getElementById('rfidCardModalTitle');
+        const uidInput = document.getElementById('rfidCardUid');
+        const nameInput = document.getElementById('rfidCardName');
+        const notesInput = document.getElementById('rfidCardNotes');
+        const enabledInput = document.getElementById('rfidCardEnabled');
+        const checkboxContainer = document.getElementById('rfidCardDeviceCheckboxes');
+
+        // Populate device checkboxes
+        if (this.rfidDevices.length) {
+            checkboxContainer.innerHTML = this.rfidDevices.map(d =>
+                `<label><input type="checkbox" value="${d.id}" class="rfid-card-device-cb"> ${this.escapeHtml(d.name)} (${d.id})</label>`
+            ).join('');
+        } else {
+            checkboxContainer.innerHTML = '<p class="rfid-empty-state"><i class="fas fa-info-circle"></i> Keine Geräte verfügbar.</p>';
+        }
+
+        if (editId) {
+            const card = this.rfidCards.find(c => c.id === editId);
+            if (!card) return;
+            title.innerHTML = '<i class="fas fa-credit-card"></i> Karte bearbeiten';
+            uidInput.value = card.uid;
+            uidInput.disabled = true;
+            nameInput.value = card.name;
+            notesInput.value = card.notes || '';
+            enabledInput.checked = card.enabled;
+            checkboxContainer.querySelectorAll('.rfid-card-device-cb').forEach(cb => {
+                cb.checked = (card.deviceIds || []).includes(cb.value);
+            });
+        } else {
+            title.innerHTML = '<i class="fas fa-credit-card"></i> Neue Karte';
+            uidInput.value = '';
+            uidInput.disabled = false;
+            nameInput.value = '';
+            notesInput.value = '';
+            enabledInput.checked = true;
+            checkboxContainer.querySelectorAll('.rfid-card-device-cb').forEach(cb => cb.checked = false);
+        }
+        modal?.classList.remove('hidden');
+    }
+
+    async saveRfidCard() {
+        const uid = document.getElementById('rfidCardUid')?.value?.trim();
+        const name = document.getElementById('rfidCardName')?.value?.trim();
+        const notes = document.getElementById('rfidCardNotes')?.value?.trim() || '';
+        const enabled = document.getElementById('rfidCardEnabled')?.checked;
+        const deviceIds = Array.from(document.querySelectorAll('.rfid-card-device-cb:checked')).map(cb => cb.value);
+
+        if (!name) { this.showToast('Name erforderlich', 'error'); return; }
+
+        try {
+            if (this.rfidEditingCardId) {
+                const res = await fetch(`/api/rfid/cards/${this.rfidEditingCardId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ name, notes, enabled, deviceIds })
+                });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+                this.showToast('Karte aktualisiert', 'success');
+            } else {
+                if (!uid) { this.showToast('UID erforderlich', 'error'); return; }
+                const res = await fetch('/api/rfid/cards', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ uid, name, notes, deviceIds })
+                });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
+                this.showToast('Karte registriert', 'success');
+            }
+            document.getElementById('rfidCardModal')?.classList.add('hidden');
+            await this.loadRfidCards();
+        } catch (e) {
+            this.showToast(e.message || 'Fehler beim Speichern', 'error');
+        }
+    }
+
+    async deleteRfidCard(id) {
+        const card = this.rfidCards.find(c => c.id === id);
+        if (!confirm(`Karte "${card?.name || id}" wirklich löschen? Sie wird auch von allen ESP32-Geräten entfernt.`)) return;
+        try {
+            const res = await fetch(`/api/rfid/cards/${id}`, { method: 'DELETE', credentials: 'include' });
+            if (!res.ok) throw new Error('Fehler');
+            this.showToast('Karte gelöscht', 'success');
+            await this.loadRfidCards();
+        } catch { this.showToast('Fehler beim Löschen', 'error'); }
+    }
+
+    // Access Logs
+    async loadRfidAccessLogs() {
+        try {
+            const params = new URLSearchParams();
+            params.set('limit', '200');
+            const deviceFilter = document.getElementById('rfidLogDeviceFilter')?.value;
+            const actionFilter = document.getElementById('rfidLogActionFilter')?.value;
+            const fromDate = document.getElementById('rfidLogFromDate')?.value;
+            const toDate = document.getElementById('rfidLogToDate')?.value;
+            if (deviceFilter) params.set('device_id', deviceFilter);
+            if (actionFilter) params.set('action', actionFilter);
+            if (fromDate) params.set('from', new Date(fromDate).toISOString());
+            if (toDate) params.set('to', new Date(toDate + 'T23:59:59').toISOString());
+
+            const res = await fetch(`/api/rfid/access-logs?${params}`, { credentials: 'include' });
+            if (!res.ok) return;
+            this.rfidAccessLogs = await res.json();
+            this.renderRfidAccessLogs();
+        } catch { /* ignore */ }
+    }
+
+    renderRfidAccessLogs() {
+        const container = document.getElementById('rfidAccessLogsList');
+        if (!container) return;
+        if (!this.rfidAccessLogs.length) {
+            container.innerHTML = '<p class="rfid-empty-state"><i class="fas fa-info-circle"></i> Keine Zugangs-Logs vorhanden.</p>';
+            return;
+        }
+        const actionLabels = { ACCESS_GRANTED: 'Gewährt', ACCESS_DENIED: 'Verweigert', CARD_REGISTERED: 'Registriert', CARD_UNKNOWN: 'Unbekannt' };
+        container.innerHTML = this.rfidAccessLogs.map(l => {
+            const time = new Date(l.timestamp).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return `<div class="rfid-log-item">
+                <span class="rfid-log-time">${time}</span>
+                <div class="rfid-log-card">
+                    <span class="rfid-log-card-name">${this.escapeHtml(l.cardName || 'Unbekannt')}</span>
+                    <span class="rfid-log-card-uid">${l.uid || '-'}</span>
+                </div>
+                <span class="rfid-log-device">${this.escapeHtml(l.deviceName || l.deviceId || '-')}</span>
+                <span class="rfid-action-badge ${l.action}">${actionLabels[l.action] || l.action}</span>
+                <span class="rfid-log-method">${l.method || '-'}</span>
+            </div>`;
+        }).join('');
+    }
+
+    rfidTimeAgo(dateStr) {
+        const diff = Date.now() - new Date(dateStr).getTime();
+        const secs = Math.floor(diff / 1000);
+        if (secs < 60) return 'gerade eben';
+        const mins = Math.floor(secs / 60);
+        if (mins < 60) return `vor ${mins} Min.`;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return `vor ${hours} Std.`;
+        const days = Math.floor(hours / 24);
+        return `vor ${days} Tag${days > 1 ? 'en' : ''}`;
+    }
+
+    escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 }
 
