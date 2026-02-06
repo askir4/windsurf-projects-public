@@ -1,0 +1,354 @@
+================================================================================
+  PERFORMANCE-OPTIMIERUNGS-PROMPT - Gewächshaus Steuerungssystem v3.0
+================================================================================
+
+Du bist ein erfahrener Performance-Ingenieur. Optimiere das Gewächshaus-Steuerungssystem
+(Smart Greenhouse) für maximale Geschwindigkeit, minimalen Speicherverbrauch und bessere
+Skalierbarkeit. Das System läuft auf einem Raspberry Pi 4B+ mit begrenzten Ressourcen
+(1 GB RAM empfohlen) und besteht aus einem Node.js-Backend, einem Vanilla-JS-Frontend
+und einer ESP32-RFID-Türsteuerung.
+
+================================================================================
+  PROJEKT-ÜBERBLICK
+================================================================================
+
+Technologie-Stack:
+- Backend:  Node.js 18+ (nativer HTTP-Server, KEIN Framework), 1 Dependency (nodemailer)
+- Frontend: Vanilla JavaScript (ES6-Klassen), HTML5, CSS3, Canvas-Graphen
+- Datenbank: Einzelne JSON-Datei (data.json) mit atomarem Schreiben
+- Hardware:  ESP32 mit MFRC522-RFID, Relay, LEDs, Buzzer
+- Sensoren:  Node-RED via WebSocket (Temperatur, Feuchtigkeit, Bodenfeuchtigkeit, Wassertank)
+- Deployment: Raspberry Pi 4B+, systemd/PM2, Port 3001
+
+Dateistruktur:
+- server-simple.js  (1.844 Zeilen) - HTTP-Server, 40+ API-Endpoints, Session-Management
+- script.js          (4.732 Zeilen) - Monolithische Frontend-Klasse FertilizerControlSystem
+- index.html         (1.607 Zeilen) - UI-Markup mit 5 Hauptpanels
+- styles.css         (6.224 Zeilen) - Komplettes Styling mit CSS-Variablen
+- auth.js            (300+ Zeilen)  - Authentifizierungs-Manager
+- color-manager.js   (309 Zeilen)   - Farbschema-Verwaltung
+- log-utils.js       (300+ Zeilen)  - Logging-Utilities
+- data.json                         - Persistente JSON-Datenbank (komplett im RAM)
+- esp32-rfid-door/                  - ESP32 C++-Firmware (6 Module)
+
+================================================================================
+  IDENTIFIZIERTE PERFORMANCE-PROBLEME
+================================================================================
+
+----- BACKEND (server-simple.js) -----
+
+1. SYNCHRONE DATEI-I/O (KRITISCH)
+   Problem: fs.readFileSync() und fs.writeFileSync() blockieren den Event-Loop.
+   Betroffen: loadData() und saveData() Funktionen.
+   Auswirkung: Während Datei-Operationen werden ALLE eingehenden Requests blockiert.
+   Alle 30 Sekunden (Speicher-Intervall) kann der Server kurzzeitig nicht reagieren.
+
+   Lösung:
+   - Ersetze fs.readFileSync() durch fs.promises.readFile() (async)
+   - Ersetze fs.writeFileSync() durch fs.promises.writeFile() (async)
+   - Ersetze fs.renameSync() durch fs.promises.rename() (async)
+   - Stelle sicher, dass saveData() als async-Funktion deklariert wird
+   - Verwende await in allen Aufrufstellen
+
+2. KOMPLETTE DATENBANK IM RAM (MITTEL)
+   Problem: Gesamte data.json wird beim Start in den Speicher geladen und dort gehalten.
+   Enthält: users[], logs[], auditLogs[], forumPosts[], rfidAccessLogs[],
+            rfidDevices[], rfidCards[], emailLogs[], zones[], plants[], slots[],
+            settings{}, colorScheme{}, emailConfig{}
+   Auswirkung: Bei wachsender Datenmenge steigt der RAM-Verbrauch linear.
+   Aktuell begrenzt durch Log-Rotation (500/500/200/2000 Einträge).
+
+   Lösung:
+   - Für den Raspberry Pi: Aktuelle Limits beibehalten (ausreichend)
+   - Optional: Logs in separate Dateien auslagern (logs.json, audit.json, rfid-logs.json)
+   - Optional: Alte Logs archivieren statt löschen (komprimiert auf Disk)
+   - Lazy Loading für selten genutzte Daten (z.B. Email-Logs nur bei Admin-Zugriff)
+
+3. INEFFIZIENTES ROUTING (MITTEL)
+   Problem: handleAPI() ist eine einzige 647-Zeilen-Funktion mit verschachtelten
+   if/else-if-Ketten für 40+ Endpoints.
+   Auswirkung: Jeder Request durchläuft im Worst-Case alle Bedingungen linear.
+
+   Lösung:
+   - Implementiere eine Route-Map (Object/Map) mit Method+Path als Key
+   - Lookup ist dann O(1) statt O(n)
+   - Beispiel:
+     const routes = new Map();
+     routes.set('GET:/api/health', handleHealth);
+     routes.set('POST:/api/auth/login', handleLogin);
+     // Für parametrisierte Routes: Regex-basiertes Matching mit Cache
+
+4. RATE-LIMITING OHNE CLEANUP-OPTIMIERUNG (NIEDRIG)
+   Problem: Rate-Limit Maps werden alle 5 Minuten komplett durchiteriert.
+   rateLimitMap und authRateLimitMap wachsen mit jeder einzigartigen IP.
+
+   Lösung:
+   - Verwende eine Map mit TTL (automatische Bereinigung)
+   - Oder: Setze maximale Map-Größe mit LRU-Eviction
+   - Reduziere Cleanup-Intervall auf 1 Minute bei vielen Clients
+
+5. SESSION-MANAGEMENT (NIEDRIG)
+   Problem: Sessions sind nur im RAM, gehen bei Neustart verloren.
+   Cleanup nur alle 10 Minuten (SESSION_TIMEOUT = 24h).
+
+   Lösung:
+   - Optional: Speichere Sessions in sessions.json (Datei existiert bereits)
+   - Setze kürzeren Session-Timeout (z.B. 8h statt 24h)
+   - Verwende schnelleres Cleanup-Intervall (5 Min statt 10 Min)
+
+6. BODY-PARSING FÜR JEDEN REQUEST (NIEDRIG)
+   Problem: parseBody() wird für jeden POST/PUT-Request aufgerufen,
+   auch wenn der Body nicht benötigt wird.
+
+   Lösung:
+   - Lazy Body Parsing: Nur parsen, wenn der Handler es anfordert
+   - Content-Type-Check vor dem Parsen
+   - Frühzeitiger Abbruch bei GET/DELETE-Requests
+
+7. JSON.stringify MIT PRETTY-PRINT (NIEDRIG)
+   Problem: JSON.stringify(data, null, 2) in saveData() erzeugt formatierten Output.
+   Auswirkung: Größere Datei, langsameres Schreiben, mehr I/O.
+
+   Lösung:
+   - Produktiv: JSON.stringify(data) ohne Formatierung verwenden
+   - Spart ca. 30-40% Dateigröße und Schreibzeit
+   - Nur in Development-Modus pretty-printen
+
+----- FRONTEND (script.js) -----
+
+8. MONOLITHISCHE KLASSE (KRITISCH - Wartbarkeit & Performance)
+   Problem: FertilizerControlSystem ist eine einzige Klasse mit 4.732 Zeilen
+   und 100+ Methoden. Alles wird beim Laden initialisiert.
+   Auswirkung: Langsamer Start, hoher Speicherverbrauch, kein Tree-Shaking möglich.
+
+   Lösung:
+   - Aufteilen in Module:
+     * SensorManager      - Sensordaten, Simulation, NodeRED-Verbindung
+     * GraphRenderer       - Canvas-Graphen-Rendering
+     * BedEditor           - Hochbeet-Editor mit Drag&Drop
+     * PlantManager        - Pflanzenverwaltung und Düngeplanung
+     * ForumManager        - Forum mit Suche und Tags
+     * RFIDManager         - RFID-Geräte und Karten
+     * EmailManager        - E-Mail-Konfiguration und Alarme
+     * WaterTankManager    - Wassertank-Überwachung
+     * UIController        - Tab-Steuerung, Modals, Navigation
+   - Verwende ES6-Module (import/export)
+   - Lazy Loading für selten genutzte Module (Forum, RFID, Admin)
+
+9. DOM-RE-RENDERING OHNE DIFFING (KRITISCH)
+   Problem: Die render()-Methode wird häufig aufgerufen und schreibt
+   komplette HTML-Abschnitte per innerHTML neu.
+   Auswirkung: Unnötige DOM-Neuberechnungen, Layout-Thrashing, Flackern.
+
+   Lösung:
+   - Implementiere selektives Rendering (nur geänderte Bereiche aktualisieren)
+   - Verwende DocumentFragment für Batch-DOM-Operationen
+   - Nutze requestAnimationFrame() für visuelle Updates
+   - Implementiere einen einfachen Dirty-Flag-Mechanismus:
+     * this._dirtyFlags = { beds: true, sensors: false, forum: false }
+     * render() prüft Flags und aktualisiert nur markierte Bereiche
+   - Verwende textContent statt innerHTML wo möglich (sicherer + schneller)
+
+10. MULTIPLE setInterval-TIMER (MITTEL)
+    Problem: Mindestens 5-6 gleichzeitige setInterval-Timer laufen:
+    - Sensor-Simulation (konfigurierbar)
+    - NodeRED Health-Check (alle 2 Sekunden!)
+    - Server-Synchronisation (alle 30 Sekunden)
+    - Graph-Updates
+    - Forum-Polling
+    Auswirkung: Hohe CPU-Last, besonders der 2-Sekunden-Health-Check.
+
+    Lösung:
+    - Konsolidiere Timer in einen einzigen Update-Loop:
+      setInterval(() => {
+        this.tick();  // Zentrale Update-Funktion
+      }, 1000);  // 1 Sekunde Basis-Intervall
+    - tick() entscheidet anhand von Zählern, was aktualisiert wird:
+      * Jeder Tick: Sensor-Display aktualisieren
+      * Alle 5 Ticks: NodeRED Health-Check
+      * Alle 30 Ticks: Server-Sync
+      * Alle 60 Ticks: Forum-Polling
+    - Verwende requestAnimationFrame() für UI-Updates
+    - NodeRED Health-Check von 2s auf 5-10s erhöhen (2s ist zu aggressiv)
+
+11. localStorage-OPERATIONEN (MITTEL)
+    Problem: Debounced auf 500ms, aber serialisiert den GESAMTEN App-State.
+    Auswirkung: Regelmäßige JSON.stringify() auf großem Objekt.
+
+    Lösung:
+    - Speichere nur geänderte Teilbereiche (delta-basiert)
+    - Erhöhe Debounce auf 2-3 Sekunden
+    - Verwende sessionStorage für temporäre Daten
+    - Komprimiere große Daten (z.B. Sensor-History) mit LZ-String
+
+12. EVENT-LISTENER OHNE DELEGATION (MITTEL)
+    Problem: Viele Event-Listener werden direkt auf dynamische Elemente gebunden.
+    Bei jedem Re-Render werden alte Listener nicht entfernt (Memory Leak).
+
+    Lösung:
+    - Implementiere Event-Delegation auf Container-Elementen:
+      document.querySelector('#main-content').addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action]');
+        if (target) this.handleAction(target.dataset.action, target);
+      });
+    - Reduziert Listener-Anzahl drastisch
+    - Verhindert Memory Leaks bei dynamischen Elementen
+
+13. CANVAS-GRAPH-RENDERING (NIEDRIG)
+    Problem: Graphen werden bei jedem Sensor-Update komplett neu gezeichnet.
+    100 Datenpunkte pro Sensor, 3 Graphen gleichzeitig.
+
+    Lösung:
+    - Rendere nur wenn der Graph-Tab sichtbar ist (Visibility-Check)
+    - Verwende Double-Buffering (Offscreen-Canvas)
+    - Begrenzte Update-Rate: maximal 1 FPS für Graphen
+    - Inkrementelles Zeichnen: Nur neuen Datenpunkt hinzufügen statt alles neu
+    - Verwende requestAnimationFrame() statt sofortigem Zeichnen
+
+14. FETCH-REQUESTS OHNE BATCHING (NIEDRIG)
+    Problem: 20+ verschiedene Fetch-Operationen ohne Koordination.
+    Auswirkung: Viele einzelne HTTP-Requests, kein Request-Deduplication.
+
+    Lösung:
+    - Implementiere einen API-Client mit Request-Queue
+    - Batch ähnliche Requests (z.B. alle Settings in einem Call)
+    - Request-Deduplication: Gleiche Requests innerhalb von 100ms zusammenfassen
+    - Implementiere einen einfachen Cache mit TTL:
+      const apiCache = new Map();
+      async function cachedFetch(url, ttl = 5000) { ... }
+
+----- CSS (styles.css) -----
+
+15. CSS-DATEIGRÖSSE (NIEDRIG)
+    Problem: 6.224 Zeilen CSS, nicht minifiziert, viele möglicherweise
+    ungenutzte Regeln.
+
+    Lösung:
+    - CSS-Minifizierung für Produktion
+    - Entferne ungenutzte CSS-Regeln (PurgeCSS oder manuell)
+    - Verwende CSS containment für isolierte Komponenten:
+      .panel { contain: layout style; }
+    - Lade unkritisches CSS asynchron (z.B. Forum-Styles, Admin-Styles)
+
+----- NETZWERK & KOMMUNIKATION -----
+
+16. WEBSOCKET-RECONNECT-STRATEGIE (MITTEL)
+    Problem: NodeRED-WebSocket hat festes Reconnect-Interval.
+    Auswirkung: Bei Verbindungsproblemen: zu viele oder zu wenige Versuche.
+
+    Lösung:
+    - Implementiere Exponential Backoff:
+      Versuch 1: 1 Sekunde
+      Versuch 2: 2 Sekunden
+      Versuch 3: 4 Sekunden
+      Maximum: 30 Sekunden
+    - Reset nach erfolgreicher Verbindung
+    - Maximal 10 Versuche, dann manueller Reconnect-Button
+
+17. SERVER-SYNC OPTIMIERUNG (MITTEL)
+    Problem: Server-Sync alle 30 Sekunden sendet/empfängt komplette Daten.
+
+    Lösung:
+    - Implementiere Delta-Sync (nur Änderungen senden)
+    - Verwende ETag/If-None-Match für bedingte Requests
+    - Server antwortet mit 304 Not Modified wenn keine Änderungen
+    - Timestamps für letzte Änderung pro Datenbereich
+
+----- ESP32 RFID-FIRMWARE -----
+
+18. HEARTBEAT-FREQUENZ (NIEDRIG)
+    Problem: Heartbeat alle 30 Sekunden, Karten-Sync alle 5 Minuten.
+    Bei vielen ESP32-Geräten: viele regelmäßige Requests.
+
+    Lösung:
+    - Heartbeat auf 60 Sekunden erhöhen (Offline-Erkennung auf 120s anpassen)
+    - Karten-Sync nur bei Bedarf (Push-basiert statt Polling)
+    - Bulk-Updates: Heartbeat + Karten-Sync kombinieren
+    - Offline-Events effizienter puffern (binäres Format statt JSON)
+
+================================================================================
+  PRIORISIERTE UMSETZUNGSREIHENFOLGE
+================================================================================
+
+Phase 1 - Quick Wins (sofort umsetzbar, großer Effekt):
+  [x] #7  - JSON.stringify ohne Pretty-Print in Produktion
+  [x] #10 - NodeRED Health-Check von 2s auf 5-10s erhöhen
+  [x] #11 - localStorage Debounce auf 2-3 Sekunden erhöhen
+  [x] #13 - Graphen nur rendern wenn sichtbar
+
+Phase 2 - Mittlere Optimierungen (Backend-Stabilität):
+  [x] #1  - Synchrone I/O durch asynchrone ersetzen
+  [x] #6  - Lazy Body Parsing implementieren
+  [x] #3  - Route-Map statt if/else-Ketten
+  [x] #17 - ETag-basierte Server-Synchronisation
+
+Phase 3 - Frontend-Architektur (größter Aufwand, größter Gewinn):
+  [x] #9  - Selektives Rendering mit Dirty-Flags
+  [x] #10 - Timer-Konsolidierung (ein Update-Loop)
+  [x] #12 - Event-Delegation implementieren
+  [x] #14 - API-Client mit Cache und Batching
+
+Phase 4 - Langfristige Verbesserungen:
+  [x] #8  - Frontend in Module aufteilen
+  [x] #2  - Logs in separate Dateien auslagern
+  [x] #15 - CSS-Optimierung und Lazy Loading
+  [x] #16 - WebSocket Exponential Backoff
+  [x] #18 - ESP32 Heartbeat-Optimierung
+
+================================================================================
+  MESSBARE PERFORMANCE-ZIELE
+================================================================================
+
+Backend:
+- API-Response-Zeit: < 50ms für einfache Reads (aktuell: nicht gemessen)
+- Speicherverbrauch: < 50MB RAM im Normalbetrieb (Warnung bei 100MB)
+- Datei-Speicherung: Kein Event-Loop-Blocking (async I/O)
+- Request-Durchsatz: > 200 Requests/Sekunde (aktuell: begrenzt durch sync I/O)
+
+Frontend:
+- Initiale Ladezeit: < 2 Sekunden (aktuell: abhängig von Dateigröße)
+- Time to Interactive: < 3 Sekunden
+- Render-Updates: < 16ms (60 FPS)
+- localStorage-Writes: Maximal alle 2 Sekunden
+- Memory: < 30MB Heap im Browser
+
+Netzwerk:
+- API-Calls pro Minute: < 10 im Idle-Zustand
+- WebSocket-Reconnect: Exponential Backoff, max 30s
+- Payload-Größe: Minimiert durch Delta-Sync
+
+ESP32:
+- Heartbeat: Alle 60 Sekunden (statt 30)
+- Card-Scan Response: < 500ms (lokal), < 2s (mit Server)
+- Offline-Buffer: Effizient bis 50 Events
+
+================================================================================
+  WICHTIGE EINSCHRÄNKUNGEN
+================================================================================
+
+- KEIN Framework-Wechsel (kein Express, kein React) - das System bleibt vanilla
+- Kompatibilität mit Node.js 14+ muss erhalten bleiben
+- Raspberry Pi 4B+ bleibt die Zielplattform (begrenzte Ressourcen)
+- Nur 1 npm-Dependency (nodemailer) - keine neuen Dependencies hinzufügen
+- ESP32-Firmware muss mit Arduino IDE kompatibel bleiben
+- Bestehende API-Endpoints dürfen sich nicht ändern (Rückwärtskompatibilität)
+- data.json-Format muss kompatibel bleiben (Migration bei Strukturänderungen)
+- Alle Texte/Kommentare auf Deutsch
+
+================================================================================
+  ANWENDUNG DIESES PROMPTS
+================================================================================
+
+Verwende diesen Prompt, um einem KI-Assistenten (z.B. Claude, ChatGPT) die
+Optimierung des Gewächshaus-Systems zu übergeben. Kopiere diesen Prompt und
+füge den relevanten Quellcode bei, z.B.:
+
+  "Hier ist der Performance-Optimierungs-Prompt: [dieser Text]
+   Bitte optimiere zuerst Phase 1 in server-simple.js: [Code einfügen]"
+
+Oder für spezifische Bereiche:
+
+  "Optimiere das Frontend-Rendering gemäß Punkt #9 in script.js: [Code einfügen]"
+  "Implementiere async I/O gemäß Punkt #1 in server-simple.js: [Code einfügen]"
+
+================================================================================
