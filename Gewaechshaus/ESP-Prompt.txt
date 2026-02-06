@@ -1,0 +1,516 @@
+================================================================================
+  FEATURE-PROMPT: RFID-Tuerzugangskontrolle fuer das Gewaechshaus-Projekt
+================================================================================
+
+KONTEXT & PROJEKTBESCHREIBUNG
+-----------------------------
+Das Gewaechshaus-Projekt ist eine Smart-Greenhouse-Webanwendung, die auf einem
+Raspberry Pi laeuft. Der Tech-Stack besteht aus:
+
+- Backend: Node.js (raw HTTP-Server, KEIN Express), Datei: server-simple.js
+- Frontend: Vanilla JavaScript (script.js, ~4200 Zeilen), HTML (index.html), CSS
+- Datenbank: JSON-Datei (data.json) - dateibasierte Persistenz
+- Authentifizierung: Session-basiert mit Cookies (scrypt-Hashing)
+- Bestehende ESP32-Anbindung: WebSocket via Node-RED (ws://localhost:1880/ws)
+- Bestehendes Logging: System-Logs (data.logs) + Audit-Logs (data.auditLogs)
+- Port: 3001
+- Sprache im Code: Deutsch/Englisch gemischt (UI ueberwiegend Deutsch)
+
+Bestehende Struktur der data.json:
+{
+  zones: [],          // Hochbeete
+  slots: [],          // Pflanzplaetze
+  plants: [],         // Pflanzen mit Metadaten
+  users: [],          // Benutzerkonten (id, username, password, role)
+  logs: [],           // System-Logs (max 500)
+  auditLogs: [],      // Audit-Trail (max 500)
+  forumPosts: [],     // Community-Forum
+  settings: {},       // Allgemeine Einstellungen
+  colorScheme: {},    // Theme-Farben
+  emailConfig: {},    // SMTP-Konfiguration
+  emailLogs: []       // E-Mail-Versandprotokoll
+}
+
+Es existiert bereits ein Side-Quest-Projekt unter side-quests/RFID-Lock/ mit
+einem Arduino-basierten RFID-Reader (read-rfid.ino) fuer den MFRC522-Sensor.
+Dieses Projekt soll nun auf ESP32 portiert und vollstaendig in die
+Gewaechshaus-Weboberflaeche integriert werden.
+
+
+================================================================================
+FEATURE-ANFORDERUNG: RFID-Tuerzugangskontrolle
+================================================================================
+
+Es soll ein vollstaendiges RFID-Tuerzugangssystem implementiert werden, das
+einen ESP32 mit RFID-Reader (MFRC522) steuert, um eine Tuer zum Gewaechshaus
+zu oeffnen. Die Verwaltung erfolgt komplett ueber die bestehende Weboberflaeche.
+
+
+--------------------------------------------------------------------------------
+1. ESP32 FIRMWARE (Arduino/PlatformIO - C++)
+--------------------------------------------------------------------------------
+
+1.1 Hardware-Setup:
+    - ESP32 DevKit V1 (oder kompatibel)
+    - MFRC522 RFID-Reader ueber SPI
+    - Relais-Modul oder elektrischer Tueroffner (GPIO-Steuerung)
+    - Optionale Status-LED (Gruen = Zugang gewaehrt, Rot = Abgelehnt)
+    - Optionaler Buzzer fuer akustisches Feedback
+
+1.2 Netzwerkkommunikation:
+    - WiFi-Verbindung zum lokalen Netzwerk
+    - HTTP-Client fuer REST-API-Kommunikation mit dem Gewaechshaus-Server
+    - Regelmaessiger Heartbeat/Ping an den Server (alle 30 Sekunden)
+    - Der ESP soll seinen Status (online/offline, letzte Aktivitaet,
+      Firmware-Version, IP-Adresse, WLAN-Signalstaerke) an den Server melden
+
+1.3 RFID-Kartenverarbeitung:
+    - Karte wird gescannt -> UID wird ausgelesen
+    - ZUERST lokale Pruefung gegen gespeicherte UIDs im EEPROM/NVS (Non-Volatile
+      Storage) des ESP32 -> Damit die Tuer auch bei Server-Ausfall funktioniert
+    - ZUSAETZLICH Validierung ueber HTTP-Request an den Server:
+      POST /api/rfid/access {uid: "AA:BB:CC:DD", device_id: "esp32-door-01"}
+    - Bei Zugang gewaehrt: Relais fuer konfigurierbare Zeit aktivieren (Standard:
+      3 Sekunden), gruene LED, kurzer Buzzer-Ton
+    - Bei Zugang verweigert: Rote LED blinkt, langer Buzzer-Ton
+    - Jeder Scan-Vorgang (erfolgreich oder nicht) wird an den Server gemeldet
+
+1.4 Anlernmodus:
+    - Der Server kann den ESP32 in einen "Anlernmodus" versetzen via:
+      - HTTP-Polling: ESP fragt regelmaessig GET /api/rfid/device/{id}/mode ab
+      - ODER WebSocket-Verbindung fuer Echtzeit-Kommunikation
+    - Im Anlernmodus: Naechste gescannte Karte wird als neue Karte registriert
+    - Die UID wird sowohl lokal gespeichert als auch an den Server gesendet:
+      POST /api/rfid/cards {uid: "AA:BB:CC:DD", device_id: "esp32-door-01"}
+    - Anlernmodus laeuft nach konfigurierbarem Timeout automatisch ab (Standard:
+      60 Sekunden)
+    - Visuelles Feedback: Gelbe/blaue LED blinkt waehrend des Anlernmodus
+
+1.5 Kartensynchronisation:
+    - Beim Start des ESP32: Alle Karten vom Server laden und lokal speichern
+      GET /api/rfid/cards?device_id=esp32-door-01
+    - Server kann Kartenliste per Push aktualisieren (bei WebSocket) oder
+      ESP pollt in regelmaessigen Abstaenden (alle 5 Minuten)
+    - Bei Aenderungen auf dem Server (Karte hinzugefuegt/entfernt):
+      ESP bekommt aktualisierte Kartenliste
+
+1.6 Konfiguration auf dem ESP:
+    - WiFi-SSID und Passwort (ueber seriellen Monitor oder WiFiManager
+      Captive Portal konfigurierbar)
+    - Server-URL (z.B. http://192.168.1.100:3001)
+    - Device-ID (eindeutige Kennung, z.B. "esp32-door-01")
+    - API-Key fuer Authentifizierung gegenueber dem Server
+    - Tuer-Oeffnungsdauer in Sekunden
+    - Anlernmodus-Timeout in Sekunden
+
+
+--------------------------------------------------------------------------------
+2. BACKEND API-ERWEITERUNGEN (server-simple.js)
+--------------------------------------------------------------------------------
+
+2.1 Neue Datenstrukturen in data.json:
+
+    rfidDevices: [
+      {
+        id: "esp32-door-01",         // Eindeutige Device-ID
+        name: "Gewaechshaus Tuer",   // Anzeigename
+        apiKey: "generated-api-key",  // API-Schluessel fuer ESP-Auth
+        status: "online",             // online | offline | learning
+        lastSeen: "ISO-8601",         // Letzter Heartbeat
+        lastActivity: "ISO-8601",     // Letzte Karten-Aktivitaet
+        firmwareVersion: "1.0.0",     // Firmware-Version
+        ipAddress: "192.168.1.50",    // IP-Adresse des ESP
+        wifiSignal: -45,              // RSSI in dBm
+        doorOpenDuration: 3,          // Tuer-Oeffnungsdauer (Sekunden)
+        learningTimeout: 60,          // Anlernmodus-Timeout (Sekunden)
+        mode: "normal",               // normal | learning
+        modeExpiresAt: null,          // Wann der Anlernmodus ablaeuft
+        created_at: "ISO-8601",
+        updated_at: "ISO-8601"
+      }
+    ],
+
+    rfidCards: [
+      {
+        id: 1,                        // Auto-Increment ID
+        uid: "AA:BB:CC:DD",           // RFID-Karten-UID
+        name: "Max Mustermann",       // Zugeordneter Name
+        enabled: true,                // Karte aktiv/deaktiviert
+        deviceIds: ["esp32-door-01"], // Welchen Geraeten zugeordnet
+        registered_at: "ISO-8601",    // Wann registriert
+        registered_by: "admin",       // Wer hat registriert
+        last_used: "ISO-8601",        // Letzte Benutzung
+        use_count: 42,                // Anzahl Nutzungen
+        notes: ""                     // Optionale Notizen
+      }
+    ],
+
+    rfidAccessLogs: [
+      {
+        id: 1,                        // Auto-Increment ID
+        timestamp: "ISO-8601",        // Zeitstempel
+        uid: "AA:BB:CC:DD",           // Gescannte Karten-UID
+        cardName: "Max Mustermann",   // Name (falls bekannt)
+        deviceId: "esp32-door-01",    // Welches Geraet
+        deviceName: "Gewaechshaus Tuer", // Geraetename
+        action: "ACCESS_GRANTED",     // ACCESS_GRANTED | ACCESS_DENIED |
+                                      // CARD_REGISTERED | CARD_UNKNOWN
+        method: "local",              // local | server (wie wurde validiert)
+        details: ""                   // Zusaetzliche Details
+      }
+    ]
+
+2.2 Neue API-Endpunkte:
+
+    AUTHENTIFIZIERUNG:
+    - Alle /api/rfid/* Endpunkte muessen entweder per Session-Cookie (fuer die
+      Weboberflaeche) ODER per API-Key Header (fuer den ESP32) authentifiziert
+      werden
+    - API-Key-Pruefung: Header "X-API-Key" gegen rfidDevices[].apiKey
+    - Admin-Rechte fuer Verwaltungsendpunkte (Geraete/Karten CRUD)
+    - ESP-Endpunkte (access, heartbeat) nur mit gueltigem API-Key
+
+    GERAETE-VERWALTUNG (Admin-only):
+    GET    /api/rfid/devices              - Alle Geraete auflisten
+    POST   /api/rfid/devices              - Neues Geraet registrieren
+                                            (generiert API-Key)
+    GET    /api/rfid/devices/:id          - Einzelnes Geraet abrufen
+    PUT    /api/rfid/devices/:id          - Geraet bearbeiten (Name,
+                                            Oeffnungsdauer, Timeout etc.)
+    DELETE /api/rfid/devices/:id          - Geraet loeschen
+    POST   /api/rfid/devices/:id/mode     - Modus aendern (z.B. auf "learning")
+                                            Body: {mode: "learning"} oder
+                                            {mode: "normal"}
+    POST   /api/rfid/devices/:id/regenerate-key - Neuen API-Key generieren
+
+    KARTEN-VERWALTUNG (Admin-only):
+    GET    /api/rfid/cards                - Alle Karten auflisten
+                                            (mit Filtern: ?device_id=...,
+                                             ?enabled=true)
+    POST   /api/rfid/cards               - Neue Karte manuell registrieren
+                                            Body: {uid, name, deviceIds}
+    GET    /api/rfid/cards/:id            - Einzelne Karte abrufen
+    PUT    /api/rfid/cards/:id            - Karte bearbeiten (Name, enabled,
+                                            deviceIds, notes)
+    DELETE /api/rfid/cards/:id            - Karte loeschen
+
+    ESP32-ENDPUNKTE (API-Key-Auth):
+    POST   /api/rfid/access              - Zugangspruefung
+                                            Body: {uid, device_id}
+                                            Response: {granted: true/false,
+                                            card_name: "...", message: "..."}
+    POST   /api/rfid/heartbeat           - Heartbeat/Status-Update
+                                            Body: {device_id, firmware_version,
+                                            ip_address, wifi_signal,
+                                            free_memory, uptime}
+    GET    /api/rfid/device/:id/mode     - Aktuellen Modus abfragen
+                                            Response: {mode: "normal|learning",
+                                            expires_at: "..."}
+    GET    /api/rfid/device/:id/cards    - Kartenliste fuer dieses Geraet
+                                            Response: [{uid: "AA:BB:CC:DD",
+                                            enabled: true}, ...]
+    POST   /api/rfid/device/:id/register-card  - Karte im Anlernmodus registrieren
+                                            Body: {uid: "AA:BB:CC:DD"}
+
+    ACCESS-LOGS (Admin-only):
+    GET    /api/rfid/access-logs         - Access-Logs abrufen
+                                            Query-Parameter:
+                                            ?limit=100 (Standard)
+                                            ?device_id=esp32-door-01
+                                            ?uid=AA:BB:CC:DD
+                                            ?action=ACCESS_GRANTED
+                                            ?from=ISO-8601
+                                            ?to=ISO-8601
+
+2.3 Automatische Geraete-Offline-Erkennung:
+    - Server prueft periodisch (alle 60 Sekunden), ob Geraete ihren Heartbeat
+      verpasst haben (lastSeen aelter als 90 Sekunden)
+    - Geraete-Status wird auf "offline" gesetzt, wenn kein Heartbeat kommt
+    - Anlernmodus laeuft automatisch ab: Wenn modeExpiresAt ueberschritten,
+      wird mode auf "normal" zurueckgesetzt
+    - Optional: Log-Eintrag bei Status-Wechsel online->offline
+
+2.4 Daten-Normalisierung:
+    - Die bestehende normalizeData()-Funktion muss erweitert werden, um die
+      neuen Arrays (rfidDevices, rfidCards, rfidAccessLogs) zu initialisieren
+    - Access-Logs sollen auf maximal 2000 Eintraege begrenzt werden
+    - Audit-Log-Integration: Wichtige RFID-Aktionen (Geraet erstellt, Karte
+      hinzugefuegt, Karte geloescht, Modus geaendert) sollen auch in den
+      bestehenden auditLogs erscheinen
+
+
+--------------------------------------------------------------------------------
+3. FRONTEND-ERWEITERUNGEN (index.html, script.js, styles.css)
+--------------------------------------------------------------------------------
+
+3.1 Neuer Abschnitt im Admin-Panel: "Tuerzugangskontrolle" / "RFID-Verwaltung"
+
+    Der Abschnitt soll als neuer Tab/Bereich im bestehenden Admin-Panel
+    erscheinen (neben den bestehenden Bereichen wie Benutzerverwaltung,
+    Audit-Logs, Node-RED-Konfiguration, E-Mail-Einstellungen).
+
+3.2 Geraete-Verwaltung (Tab/Unterbereich "Geraete"):
+
+    a) Geraeteuebersicht:
+       - Tabelle/Kartenlayout mit allen registrierten ESP32-Geraeten
+       - Pro Geraet anzeigen:
+         * Name und Device-ID
+         * Status-Badge: Online (gruen), Offline (rot), Anlernmodus (gelb)
+         * Letzte Aktivitaet (relative Zeitanzeige, z.B. "vor 5 Minuten")
+         * IP-Adresse
+         * WLAN-Signalstaerke (als Balken oder dBm)
+         * Firmware-Version
+         * Anzahl zugeordneter Karten
+       - "Anlernmodus starten"-Button pro Geraet (mit Countdown-Anzeige)
+       - "Bearbeiten"-Button
+       - "Loeschen"-Button (mit Bestaetigung)
+
+    b) Geraet hinzufuegen (Modal/Dialog):
+       - Name eingeben
+       - Device-ID eingeben (Vorschlag: "esp32-door-XX")
+       - Tuer-Oeffnungsdauer (Slider oder Zahleneingabe, 1-30 Sekunden)
+       - Anlernmodus-Timeout (Slider oder Zahleneingabe, 15-300 Sekunden)
+       - Nach Erstellung: API-Key anzeigen (nur einmal sichtbar!), mit
+         Kopier-Button
+       - Hinweis: "Diesen API-Key in die ESP32-Konfiguration eintragen"
+
+    c) Geraet bearbeiten (Modal/Dialog):
+       - Name aendern
+       - Oeffnungsdauer/Timeout anpassen
+       - API-Key neu generieren (mit Warnung: "Bestehende Verbindung wird
+         unterbrochen")
+       - Geraete-Details anzeigen (IP, Firmware, Uptime, etc.)
+
+    d) Anlernmodus:
+       - Button "Anlernmodus starten" mit sichtbarem Countdown-Timer
+       - Waehrend des Anlernmodus: Echtzeit-Anzeige "Warte auf Karte..."
+       - Bei erkannter neuer Karte: Dialog zum Eingeben des Namens
+       - Moeglichkeit den Anlernmodus manuell zu beenden
+
+3.3 Karten-Verwaltung (Tab/Unterbereich "Karten"):
+
+    a) Kartenuebersicht:
+       - Tabelle mit allen registrierten RFID-Karten
+       - Pro Karte anzeigen:
+         * Name (fett hervorgehoben)
+         * UID (monospace, formatiert als XX:XX:XX:XX)
+         * Status-Badge: Aktiv (gruen) / Deaktiviert (rot)
+         * Zugeordnete Geraete (Chips/Tags)
+         * Letzte Benutzung (relative Zeitanzeige)
+         * Anzahl Nutzungen
+         * Registriert am / durch wen
+       - Suchfeld zum Filtern nach Name oder UID
+       - Filter nach Status (Alle / Aktiv / Deaktiviert)
+       - Filter nach Geraet
+
+    b) Karte bearbeiten (Modal/Dialog):
+       - Name aendern
+       - Notizen hinzufuegen/bearbeiten
+       - Karte aktivieren/deaktivieren (Toggle)
+       - Geraetezuordnung aendern (Checkboxen fuer verfuegbare Geraete)
+
+    c) Karte manuell hinzufuegen (Modal/Dialog):
+       - UID manuell eingeben (Validierung: hexadezimales Format)
+       - Name zuordnen
+       - Geraete zuordnen
+       - Hinweis: "Alternativ im Anlernmodus die Karte am Leser vorhalten"
+
+    d) Karte loeschen:
+       - Bestaetigung erforderlich
+       - Hinweis: "Die Karte wird auch von allen ESP32-Geraeten entfernt"
+
+3.4 Access-Logs (Tab/Unterbereich "Zugangs-Logs"):
+
+    a) Log-Tabelle:
+       - Zeitstempel
+       - Karten-Name (oder "Unbekannt" bei unregistrierten Karten)
+       - Karten-UID
+       - Geraet (Name + ID)
+       - Aktion mit farbigen Badges:
+         * ACCESS_GRANTED - Gruen
+         * ACCESS_DENIED - Rot
+         * CARD_REGISTERED - Blau
+         * CARD_UNKNOWN - Orange/Gelb
+       - Validierungsmethode (Lokal / Server)
+       - Details
+
+    b) Filter:
+       - Zeitraum (Von/Bis Datum)
+       - Geraet (Dropdown)
+       - Karte/Name (Textsuche)
+       - Aktion (Dropdown: Alle, Zugang gewaehrt, Zugang verweigert, etc.)
+
+    c) Statistiken (optional, oben angezeigt):
+       - Zugaenge heute / diese Woche / diesen Monat
+       - Abgelehnte Versuche heute
+       - Meistgenutzte Karte
+       - Letzter Zugang
+
+3.5 Integration in bestehende Logs:
+    - Die bestehenden Audit-Logs (Admin-Panel -> Audit-Logs) sollen um
+      RFID-spezifische Aktionen erweitert werden:
+      * RFID_DEVICE_CREATED
+      * RFID_DEVICE_UPDATED
+      * RFID_DEVICE_DELETED
+      * RFID_CARD_REGISTERED
+      * RFID_CARD_UPDATED
+      * RFID_CARD_DELETED
+      * RFID_CARD_ENABLED
+      * RFID_CARD_DISABLED
+      * RFID_LEARNING_MODE_STARTED
+      * RFID_LEARNING_MODE_STOPPED
+      * RFID_ACCESS_GRANTED
+      * RFID_ACCESS_DENIED
+    - Diese sollen im bestehenden Audit-Log-Viewer filterbar sein
+
+3.6 Dashboard-Integration (optional):
+    - Kleines Status-Widget auf der Hauptseite (nicht im Admin-Bereich):
+      "Tuer-Status: Gesichert | Letzter Zugang: Max M. vor 10 Min."
+    - Nur sichtbar fuer eingeloggte Benutzer
+
+
+--------------------------------------------------------------------------------
+4. STYLING & UX-ANFORDERUNGEN
+--------------------------------------------------------------------------------
+
+4.1 Das Design muss sich nahtlos in das bestehende Gewaechshaus-UI einfuegen:
+    - Gleiche Farbvariablen verwenden (aus colorScheme / CSS-Variablen)
+    - Gleiche Card-Styles, Button-Styles, Tabellen-Styles
+    - Responsive Design: Mobile-first, funktioniert auf Tablet und Desktop
+    - Gleiche Modal/Dialog-Patterns wie bei der Benutzerverwaltung
+
+4.2 Status-Anzeigen:
+    - Pulsierender gruener Punkt fuer Online-Geraete
+    - Statischer roter Punkt fuer Offline-Geraete
+    - Blinkender gelber Punkt fuer Anlernmodus
+    - Farbige Badges fuer Karten-Status und Log-Aktionen
+
+4.3 Interaktions-Feedback:
+    - Loading-Spinner bei API-Aufrufen
+    - Toast-Benachrichtigungen bei Erfolg/Fehler (bestehende Notification nutzen)
+    - Bestaetigung-Dialoge bei destruktiven Aktionen (Loeschen)
+    - Echtzeit-Updates fuer Geraete-Status (Polling alle 10 Sekunden)
+
+
+--------------------------------------------------------------------------------
+5. SICHERHEITSANFORDERUNGEN
+--------------------------------------------------------------------------------
+
+5.1 API-Key-Sicherheit:
+    - API-Keys werden serverseitig mit crypto.randomBytes generiert
+    - Keys werden nur einmal bei der Erstellung im Klartext angezeigt
+    - In data.json werden die Keys als Hash gespeichert (scrypt)
+    - ESP32 sendet den Key im Header: "X-API-Key: <key>"
+
+5.2 Eingabevalidierung:
+    - UID-Format validieren (hexadezimal, korrekte Laenge)
+    - Device-ID: Nur alphanumerisch + Bindestriche, 3-50 Zeichen
+    - Name: Max 100 Zeichen, kein HTML
+    - Rate-Limiting auf ESP-Endpunkten (max 60 Requests/Minute pro Device)
+
+5.3 Zugriffskontrolle:
+    - Alle Verwaltungsendpunkte nur fuer ADMIN-Rolle
+    - ESP-Endpunkte nur mit gueltigem API-Key
+    - Access-Logs nur fuer ADMIN einsehbar
+    - Keine sensiblen Daten in Client-Responses (keine API-Keys in GET-Antworten)
+
+5.4 Hinweis:
+    - Da es sich um ein Schulprojekt/Prototyp handelt, sind folgende Punkte
+      bewusst vereinfacht:
+    - Keine TLS/HTTPS-Erzwingung (lokales Netzwerk)
+    - Keine verschluesselten API-Keys auf dem ESP (im NVS gespeichert)
+    - Kein TOTP/2FA fuer den Tuerzugang
+
+
+--------------------------------------------------------------------------------
+6. ESP32-FIRMWARE DATEISTRUKTUR
+--------------------------------------------------------------------------------
+
+Erstelle den ESP32-Code als PlatformIO-Projekt oder als Arduino-Sketch im
+Verzeichnis: Gewaechshaus/esp32-rfid-door/
+
+Vorgeschlagene Dateistruktur:
+    esp32-rfid-door/
+    ├── esp32-rfid-door.ino      // Haupt-Sketch (oder main.cpp bei PlatformIO)
+    ├── config.h                  // Konfigurationsdatei (WiFi, Server-URL, etc.)
+    ├── rfid_handler.h/.cpp       // RFID-Lese/Schreib-Logik
+    ├── api_client.h/.cpp         // HTTP-Client fuer Server-Kommunikation
+    ├── card_storage.h/.cpp       // NVS/EEPROM Kartenspeicherung
+    ├── door_control.h/.cpp       // Relais/Tuer-Steuerung
+    ├── led_buzzer.h/.cpp         // LED- und Buzzer-Feedback
+    └── README.md                 // Verkabelungsanleitung, Setup-Instruktionen
+
+
+--------------------------------------------------------------------------------
+7. WICHTIGE IMPLEMENTIERUNGSHINWEISE
+--------------------------------------------------------------------------------
+
+7.1 Backend (server-simple.js):
+    - Der Server nutzt KEIN Express-Framework, sondern raw Node.js http.createServer
+    - Routing erfolgt manuell ueber URL-Matching in der handleAPI()-Funktion
+    - Neue Endpunkte muessen in derselben Funktion ergaenzt werden
+    - JSON-Body-Parsing erfolgt ueber die bestehende parseBody()-Funktion
+    - Authentifizierung: Bestehende requireAuth() und requireAdmin() nutzen,
+      PLUS neue requireApiKey()-Hilfsfunktion fuer ESP-Endpunkte
+    - Daten werden in der globalen "data"-Variable gehalten und periodisch
+      in data.json gespeichert (dataChanged-Flag setzen!)
+
+7.2 Frontend (script.js):
+    - Das Frontend ist eine Single-Page-Application in Vanilla JavaScript
+    - Es gibt KEIN Framework (kein React, kein Vue)
+    - Neue UI-Elemente werden als HTML-Strings oder per DOM-Manipulation erstellt
+    - Das Admin-Panel wird dynamisch generiert
+    - Bestehende Patterns fuer Modals, Tabellen und Formulare wiederverwenden
+    - API-Aufrufe erfolgen ueber fetch() mit credentials: 'include'
+    - Neue Funktionen als Methoden der bestehenden Klassen oder als
+      eigenstaendige Funktionen im globalen Scope hinzufuegen
+
+7.3 HTML (index.html):
+    - Neue Abschnitte fuer das Admin-Panel als versteckte Divs hinzufuegen
+    - Navigation im Admin-Bereich um RFID-Tabs erweitern
+    - Modal-Templates fuer Geraete- und Kartendialoge hinzufuegen
+
+7.4 Reihenfolge der Implementierung (empfohlen):
+    1. Datenstrukturen und Normalisierung in server-simple.js
+    2. Backend-API-Endpunkte (CRUD fuer Devices und Cards)
+    3. ESP32-spezifische Endpunkte (Access, Heartbeat, Mode, Sync)
+    4. Access-Log-Endpunkte
+    5. Frontend: Admin-Panel Navigation und Tab-Struktur
+    6. Frontend: Geraete-Verwaltung UI
+    7. Frontend: Karten-Verwaltung UI
+    8. Frontend: Access-Log-Viewer
+    9. Frontend: Anlernmodus mit Countdown und Echtzeit-Feedback
+    10. ESP32-Firmware
+    11. Integration & Tests
+    12. Audit-Log-Integration
+
+7.5 Testbarkeit:
+    - Die Backend-API sollte mit curl oder Postman testbar sein, auch ohne
+      echten ESP32
+    - Im Frontend sollte es eine Moeglichkeit geben, einen "simulierten"
+      Kartenscan auszuloesen (z.B. Button "Scan simulieren" im Dev-Modus)
+    - Device-Status kann manuell ueber die API gesetzt werden
+
+
+--------------------------------------------------------------------------------
+8. ZUSAMMENFASSUNG DER AENDERUNGEN
+--------------------------------------------------------------------------------
+
+DATEIEN DIE GEAENDERT WERDEN:
+    - Gewaechshaus/server-simple.js   (Backend: neue Endpunkte + Datenstrukturen)
+    - Gewaechshaus/index.html          (Frontend: neue Admin-Panel-Abschnitte)
+    - Gewaechshaus/script.js           (Frontend: RFID-Verwaltungslogik)
+    - Gewaechshaus/styles.css          (Frontend: Styling fuer neue Komponenten)
+
+NEUE DATEIEN:
+    - Gewaechshaus/esp32-rfid-door/    (Komplettes ESP32-Firmware-Verzeichnis)
+
+NICHT AENDERN:
+    - Gewaechshaus/auth.js             (Bestehende Auth-Logik bleibt)
+    - Gewaechshaus/color-manager.js    (Farbverwaltung bleibt)
+    - Gewaechshaus/log-utils.js        (Log-Utilities bleiben)
+    - data.json wird automatisch um neue Felder erweitert (Normalisierung)
+
+================================================================================
+ENDE DES FEATURE-PROMPTS
+================================================================================
