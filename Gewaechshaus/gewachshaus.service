@@ -24,7 +24,7 @@ ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=/home/pi/gewachshaus
 
-# Umgebungsvariablen
+# Umgebungsvariablen 
 Environment=NODE_ENV=production
 Environment=PORT=3001
 
