@@ -16,7 +16,7 @@
 
 ---
 ## Disclaimer
-This project was created for school. It's about learning technology. However, since we are not developers, we relied on AI for this project. The code here should only be used if it has been reviewed and understood beforehand. 
+This project was created for school. It's about learning technology. However, since we are not developers, we partially relied on AI for this project. The code here should only be used if it has been reviewed and understood beforehand. 
 ---
 ## Table of Contents
 
