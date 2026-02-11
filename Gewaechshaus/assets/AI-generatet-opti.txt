@@ -1,7 +1,7 @@
 ================================================================================
   PERFORMANCE-OPTIMIERUNGS-PROMPT - Gewächshaus Steuerungssystem v3.0
 ================================================================================
-
+###Dieser Prompt wurde von claude code erstellt. Er muss noch reviwed werden. Er ist aktuell nicht produktiv.
 Du bist ein erfahrener Performance-Ingenieur. Optimiere das Gewächshaus-Steuerungssystem
 (Smart Greenhouse) für maximale Geschwindigkeit, minimalen Speicherverbrauch und bessere
 Skalierbarkeit. Das System läuft auf einem Raspberry Pi 4B+ mit begrenzten Ressourcen
