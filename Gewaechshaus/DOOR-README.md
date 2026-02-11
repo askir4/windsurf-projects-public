@@ -2,7 +2,7 @@
 
 # ESP32 RFID Door Access Control - Complete Setup Guide
 
-**Step-by-step instructions for building and configuring the greenhouse door controller**
+**Step-by-step instructions for building and configuring the Project Iron Garden door controller**
 
 </div>
 
@@ -43,7 +43,7 @@
 
 ## Overview
 
-This guide walks you through building an ESP32-based RFID door access controller for the greenhouse project. The system uses an MFRC522 RFID reader to scan NFC/RFID cards, verifies access through a central server (or locally when offline), and triggers a relay to open the door. Visual and audio feedback is provided through three colored LEDs and a buzzer.
+This guide walks you through building an ESP32-based RFID door access controller for the Project Iron Garden project. The system uses an MFRC522 RFID reader to scan NFC/RFID cards, verifies access through a central server (or locally when offline), and triggers a relay to open the door. Visual and audio feedback is provided through three colored LEDs and a buzzer.
 
 **Key features:**
 
@@ -85,7 +85,7 @@ You will need the following components:
 | 10k Ohm resistor | Pull-up for MFRC522 RST pin (if unstable) |
 | Flyback diode (1N4007) | Protect relay from back-EMF of solenoid |
 | Screw terminal block | Secure connection for door lock wires |
-| Project enclosure | Weatherproofing for outdoor greenhouse use |
+| Project enclosure | Weatherproofing for outdoor Project Iron Garden use |
 | Wire ferrules & crimps | Professional wire termination |
 
 ---
@@ -266,7 +266,7 @@ An active buzzer provides audio feedback for access events.
 
 - Use a dedicated **5V 2A power supply** connected to the ESP32's **VIN** and **GND** pins.
 - If the door lock requires 12V, use a separate 12V supply for the relay output side. Keep the grounds connected.
-- For outdoor greenhouse installations, use a weatherproof enclosure and sealed cable glands.
+- For outdoor Project Iron Garden installations, use a weatherproof enclosure and sealed cable glands.
 
 **Power wiring summary:**
 
@@ -392,7 +392,7 @@ Open `config.h` and update the following values:
 #define WIFI_PASSWORD   "YourWiFiPassword"     // Your WiFi password
 
 // ============== Server Configuration ==============
-#define SERVER_URL      "http://192.168.1.100:3001"  // Your greenhouse server IP and port
+#define SERVER_URL      "http://192.168.1.100:3001"  // Your Project Iron Garden server IP and port
 #define DEVICE_ID       "esp32-door-01"               // Must match server registration
 #define API_KEY         "your-api-key-here"            // From the server admin panel
 ```
@@ -404,7 +404,7 @@ Open `config.h` and update the following values:
 | `WIFI_SSID` | Must be a **2.4 GHz** network. The ESP32 does NOT support 5 GHz WiFi. |
 | `WIFI_PASSWORD` | Your WiFi password. Supports WPA2. |
 | `SERVER_URL` | The full URL including protocol and port. Must be reachable from the ESP32's network. |
-| `DEVICE_ID` | This ID must match exactly what you register in the greenhouse server admin panel. |
+| `DEVICE_ID` | This ID must match exactly what you register in the Project Iron Garden server admin panel. |
 | `API_KEY` | Generated when you register the device on the server. Copy it exactly. |
 
 **Optional: Adjust timing parameters** (usually the defaults are fine):
@@ -453,16 +453,16 @@ Open `config.h` and update the following values:
 
 ## Server-Side Device Registration
 
-Before the ESP32 can communicate with the greenhouse server, you must register it as a device:
+Before the ESP32 can communicate with the Project Iron Garden server, you must register it as a device:
 
-1. Open the greenhouse web interface (e.g., `http://192.168.1.100:3001`).
+1. Open the Project Iron Garden web interface (e.g., `http://192.168.1.100:3001`).
 2. Log in with an **admin account**.
 3. Navigate to the **RFID Door Access** section in the admin panel.
 4. Click **"Add Device"** (or "Register Device").
 5. Fill in the device details:
    - **Device ID:** Must match the `DEVICE_ID` in your `config.h` (e.g., `esp32-door-01`)
-   - **Name:** A descriptive name (e.g., "Greenhouse Main Door")
-   - **Location:** Where the reader is installed (e.g., "Greenhouse Entrance")
+   - **Name:** A descriptive name (e.g., "Project Iron Garden Main Door")
+   - **Location:** Where the reader is installed (e.g., "Project Iron Garden Entrance")
 6. After saving, the server will generate an **API Key**.
 7. **Copy this API Key** and paste it into `config.h` as the `API_KEY` value.
 8. Re-upload the firmware if you changed the API key.
@@ -611,7 +611,7 @@ esp32-rfid-door.ino          ← Main sketch: setup(), loop(), state machine
     ├── card_storage.h/.cpp   ← NVS-based persistent storage for up to 50 cards
     │                            Supports add, remove, check, replace operations
     │
-    ├── api_client.h/.cpp     ← All HTTP communication with the greenhouse server
+    ├── api_client.h/.cpp     ← All HTTP communication with the Project Iron Garden server
     │                            Handles heartbeat, access checks, card sync,
     │                            learning mode registration, and offline event buffering
     │
@@ -697,7 +697,7 @@ esp32-rfid-door.ino          ← Main sketch: setup(), loop(), state machine
    - This is a supplementary access control system, not a high-security lock.
    - Mount the ESP32 and reader on the secure side of the door where possible.
    - Use a proper enclosure to protect electronics from moisture and tampering.
-   - For greenhouse use, consider IP65-rated enclosures.
+   - For Project Iron Garden use, consider IP65-rated enclosures.
 
 3. **Network Security:**
    - Change the default API key immediately after setup.

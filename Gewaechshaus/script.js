@@ -395,7 +395,7 @@ class FertilizerControlSystem {
                 body: JSON.stringify({
                     recipients: [testRecipient],
                     subject: 'SMTP Test',
-                    body: 'Dies ist eine Test-E-Mail vom Gewächshaus-System.'
+                    body: 'Dies ist eine Test-E-Mail vom Project Iron Garden System.'
                 })
             });
             if (!res.ok) throw new Error(await res.text());

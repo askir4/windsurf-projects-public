@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Gewächshaus Steuerungssystem - Raspberry Pi Optimierte Version
+ * Project Iron Garden Steuerungssystem - Raspberry Pi Optimierte Version
  * Minimale Abhängigkeiten, geringer Ressourcenverbrauch
  */
 
@@ -13,7 +13,7 @@ const nodemailer = require('nodemailer');
 // ============== KONFIGURATION ==============
 const PORT = process.env.PORT || 3001;
 const DB_FILE = path.join(__dirname, 'data.json');
-const SESSION_SECRET = process.env.SESSION_SECRET || 'gewachshaus-fixed-secret-key-2024';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'project-iron-garden-fixed-secret-key-2024';
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.ADMIN_PASS || 'admin';
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
@@ -1814,14 +1814,14 @@ process.on('unhandledRejection', (reason) => {
 
 // ============== SERVER STARTEN ==============
 loadData();
-if (SESSION_SECRET === 'gewachshaus-fixed-secret-key-2024') {
+if (SESSION_SECRET === 'project-iron-garden-fixed-secret-key-2024') {
     log('WARN', 'SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen');
 }
 
 server.listen(PORT, '0.0.0.0', () => {
     console.log('');
     console.log('╔════════════════════════════════════════════════════════╗');
-    console.log('║     🌱 Gewächshaus Steuerungssystem gestartet 🌱       ║');
+    console.log('║     🌱 Project Iron Garden Steuerungssystem gestartet 🌱       ║');
     console.log('╠════════════════════════════════════════════════════════╣');
     console.log(`║  Server:     http://localhost:${PORT}                     ║`);
     console.log(`║  API:        http://localhost:${PORT}/api                 ║`);

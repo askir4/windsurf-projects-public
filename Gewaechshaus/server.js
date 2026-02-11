@@ -14,10 +14,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Environment Variables mit Defaults
-const SESSION_SECRET = process.env.SESSION_SECRET || 'gewachshaus-secret-change-in-production-' + uuidv4();
+const SESSION_SECRET = process.env.SESSION_SECRET || 'project-iron-garden-secret-change-in-production-' + uuidv4();
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@gewachshaus.local';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@project-iron-garden.local';
 const BCRYPT_ROUNDS = 12;
 
 // Rollen-Konstanten

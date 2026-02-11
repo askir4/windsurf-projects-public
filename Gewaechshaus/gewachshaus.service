@@ -1,5 +1,5 @@
 [Unit]
-Description=Gewächshaus Steuerungssystem
+Description=Project Iron Garden Steuerungssystem
 After=network.target
 StartLimitIntervalSec=60
 StartLimitBurst=3
@@ -7,12 +7,12 @@ StartLimitBurst=3
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/gewachshaus
-ExecStart=/usr/bin/node /home/pi/gewachshaus/server-simple.js
+WorkingDirectory=/home/pi/project-iron-garden
+ExecStart=/usr/bin/node /home/pi/project-iron-garden/server-simple.js
 Restart=always
 RestartSec=10
-StandardOutput=append:/home/pi/gewachshaus/server.log
-StandardError=append:/home/pi/gewachshaus/server.log
+StandardOutput=append:/home/pi/project-iron-garden/server.log
+StandardError=append:/home/pi/project-iron-garden/server.log
 
 # Ressourcenbeschränkungen für Raspberry Pi
 MemoryMax=150M
@@ -22,7 +22,7 @@ CPUQuota=50%
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/pi/gewachshaus
+ReadWritePaths=/home/pi/project-iron-garden
 
 # Umgebungsvariablen 
 Environment=NODE_ENV=production

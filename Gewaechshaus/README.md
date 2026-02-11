@@ -1,8 +1,8 @@
 <div align="center">
 
-# Greenhouse Webapp
+# Project Iron Garden Webapp
 
-**Smart Greenhouse Management with Precision Fertilization**
+**Smart Project Iron Garden Management with Precision Fertilization**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
@@ -16,7 +16,7 @@
 
 ---
 ## Disclaimer
-This project was created for school. It's about learning technology. However, since we are not developers, we partially relied on AI for this project. The code here should only be used if it has been reviewed and understood beforehand. 
+This project was created for school. It's about learning technology. However, since we are not developers, we partially relied on AI for this project. The code here should only be used if it has been reviewed and understood beforehand. Please do not use this code for production environments. Do not publish the server to the internet. If you want to use this project, that is still in development, please use in the internal network.
 ---
 ## Table of Contents
 
@@ -31,7 +31,7 @@ This project was created for school. It's about learning technology. However, si
 
 ## Project Overview
 
-The Greenhouse Webapp is a comprehensive solution for intelligent management of greenhouse systems with precision fertilization. The system enables monitoring and control of raised beds, integration of sensor data, and automatic alarm notifications for critical values.
+The Project Iron Garden Webapp is a comprehensive solution for intelligent management of greenhouse systems with precision fertilization. The system enables monitoring and control of raised beds, integration of sensor data, and automatic alarm notifications for critical values.
 
 ### Core Features
 
