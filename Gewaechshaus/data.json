@@ -22,6 +22,81 @@
   ],
   "logs": [
     {
+      "timestamp": "2026-02-12T06:38:36.277Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-02-12T06:15:51.196Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-02-12T06:15:22.728Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-02-12T06:15:22.697Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-02-12T06:15:22.684Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-02-06T19:01:53.796Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-02-06T19:00:04.089Z",
+      "level": "INFO",
+      "message": "Login erfolgreich: admin"
+    },
+    {
+      "timestamp": "2026-02-06T18:59:36.005Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-02-06T18:59:35.972Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-02-06T18:59:35.958Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-02-06T18:59:32.294Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
+      "timestamp": "2026-02-06T18:57:24.998Z",
+      "level": "INFO",
+      "message": "Server gestartet auf Port 3001"
+    },
+    {
+      "timestamp": "2026-02-06T18:57:24.963Z",
+      "level": "WARN",
+      "message": "SESSION_SECRET Standardwert aktiv - bitte in Produktion setzen"
+    },
+    {
+      "timestamp": "2026-02-06T18:57:24.946Z",
+      "level": "INFO",
+      "message": "Daten geladen"
+    },
+    {
+      "timestamp": "2026-02-05T11:41:24.965Z",
+      "level": "INFO",
+      "message": "SIGTERM empfangen, Server wird beendet..."
+    },
+    {
       "timestamp": "2026-02-05T07:58:43.460Z",
       "level": "INFO",
       "message": "Server gestartet auf Port 3001"
@@ -425,5 +500,8 @@
     "defaultTemplateId": null,
     "recipients": []
   },
-  "emailLogs": []
+  "emailLogs": [],
+  "rfidDevices": [],
+  "rfidCards": [],
+  "rfidAccessLogs": []
 }

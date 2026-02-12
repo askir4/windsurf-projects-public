@@ -390,6 +390,12 @@ const MIME_TYPES = {
     '.woff2': 'font/woff2'
 };
 
+// ============== AVATAR UPLOAD DIRECTORY ==============
+const uploadsDir = path.join(__dirname, 'uploads', 'avatars');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // ============== HTTP HELPER ==============
 function parseBody(req) {
     return new Promise((resolve, reject) => {
@@ -408,6 +414,70 @@ function parseBody(req) {
                 resolve({});
             }
         });
+        req.on('error', reject);
+    });
+}
+
+// Parse multipart/form-data for avatar upload
+function parseMultipart(req) {
+    return new Promise((resolve, reject) => {
+        const contentType = req.headers['content-type'] || '';
+        const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+        if (!boundaryMatch) {
+            return reject(new Error('No boundary found'));
+        }
+        const boundary = boundaryMatch[1] || boundaryMatch[2];
+
+        const chunks = [];
+        let totalSize = 0;
+        const maxSize = 2 * 1024 * 1024; // 2MB
+
+        req.on('data', chunk => {
+            totalSize += chunk.length;
+            if (totalSize > maxSize) {
+                req.destroy();
+                return reject(new Error('File too large'));
+            }
+            chunks.push(chunk);
+        });
+
+        req.on('end', () => {
+            try {
+                const buffer = Buffer.concat(chunks);
+                const boundaryBuffer = Buffer.from('--' + boundary);
+
+                // Find first boundary
+                let start = buffer.indexOf(boundaryBuffer);
+                if (start === -1) return reject(new Error('Invalid multipart'));
+
+                // Find second boundary (end of first part)
+                start += boundaryBuffer.length + 2; // skip \r\n
+                const end = buffer.indexOf(boundaryBuffer, start);
+                if (end === -1) return reject(new Error('Invalid multipart'));
+
+                const part = buffer.slice(start, end - 2); // -2 for \r\n before boundary
+
+                // Parse headers
+                const headerEnd = part.indexOf('\r\n\r\n');
+                if (headerEnd === -1) return reject(new Error('Invalid part headers'));
+
+                const headerStr = part.slice(0, headerEnd).toString('utf8');
+                const fileData = part.slice(headerEnd + 4);
+
+                // Extract filename
+                const filenameMatch = headerStr.match(/filename="([^"]+)"/i);
+                const filename = filenameMatch ? filenameMatch[1] : 'upload';
+
+                // Extract content-type
+                const ctMatch = headerStr.match(/Content-Type:\s*([^\r\n]+)/i);
+                const mimeType = ctMatch ? ctMatch[1].trim() : 'application/octet-stream';
+
+                resolve({ filename, mimeType, data: fileData });
+            } catch (e) {
+                reject(e);
+            }
+        });
+
         req.on('error', reject);
     });
 }
@@ -951,11 +1021,53 @@ async function handleAPI(req, res, urlPath, method) {
         return sendJson(res, { success: true }, 200, req);
     }
     
-    // AVATAR UPLOAD (simplified - just acknowledge)
+    // AVATAR UPLOAD
     if (urlPath === '/api/users/avatar' && method === 'POST') {
         if (!requireAuth()) return;
-        // Simplified: don't actually handle file upload, just return success
-        return sendJson(res, { success: true, avatar_url: '/assets/default-avatar.svg' }, 200, req);
+
+        const contentType = req.headers['content-type'] || '';
+        if (!contentType.includes('multipart/form-data')) {
+            return sendError(res, 'Multipart form-data erforderlich', 400, req);
+        }
+
+        try {
+            const file = await parseMultipart(req);
+
+            // Validate file type
+            const ext = path.extname(file.filename).toLowerCase();
+            const allowedExts = ['.png', '.jpg', '.jpeg', '.webp'];
+            if (!allowedExts.includes(ext)) {
+                return sendError(res, 'Nur PNG, JPG, JPEG, WEBP erlaubt', 400, req);
+            }
+
+            const user = data.users.find(u => u.id === session.userId);
+            if (!user) return sendError(res, 'User nicht gefunden', 404, req);
+
+            // Delete old avatar if exists
+            if (user.avatar_url && user.avatar_url.startsWith('/uploads/avatars/')) {
+                const oldPath = path.join(__dirname, user.avatar_url);
+                try { fs.unlinkSync(oldPath); } catch (e) { /* ignore */ }
+            }
+
+            // Save new avatar
+            const filename = `${session.userId}_${Date.now()}${ext}`;
+            const filePath = path.join(uploadsDir, filename);
+            fs.writeFileSync(filePath, file.data);
+
+            // Update user
+            const avatarUrl = `/uploads/avatars/${filename}`;
+            user.avatar_url = avatarUrl;
+            user.updated_at = new Date().toISOString();
+            dataChanged = true;
+
+            addAuditLog(session, 'AVATAR_UPDATED', 'user', session.userId);
+            log('INFO', `Avatar aktualisiert für User ${user.username}`);
+
+            return sendJson(res, { success: true, avatar_url: avatarUrl }, 200, req);
+        } catch (e) {
+            log('ERROR', `Avatar-Upload Fehler: ${e.message}`);
+            return sendError(res, e.message || 'Upload fehlgeschlagen', 400, req);
+        }
     }
     
     // AUDIT LOGS
